@@ -20,6 +20,7 @@ import { useNavigate } from 'react-router-dom';
 import { KeyboardShortcuts } from '@/components/deckforge/KeyboardShortcuts';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 export default function DeckForge() {
   const { selectedId, deleteObject, undo, redo, getCanvasState, currentDesignId, setDesignId, setSaving, isSaving, objects, designName, createVersion, past, future, updateObject, saveToHistory } = useDeckForgeStore();
@@ -56,6 +57,7 @@ export default function DeckForge() {
           name: canvasState.name,
         });
         setSaveStatus('Saved!');
+        toast.success('Design saved successfully');
       } else {
         // Create new design
         const result = await designsAPI.create({
@@ -64,12 +66,14 @@ export default function DeckForge() {
         });
         setDesignId(result.design.id);
         setSaveStatus('Saved!');
+        toast.success('Design created successfully');
       }
 
       setTimeout(() => setSaveStatus(''), 2000);
     } catch (err) {
       console.error('Save failed:', err);
       setSaveStatus('Save failed');
+      toast.error('Failed to save design. Please try again.');
       setTimeout(() => setSaveStatus(''), 2000);
     } finally {
       setSaving(false);
@@ -94,10 +98,12 @@ export default function DeckForge() {
       downloadBlob(blob, filename);
 
       setSaveStatus('Exported PNG!');
+      toast.success(`Exported as ${filename}`);
       setTimeout(() => setSaveStatus(''), 2000);
     } catch (err) {
       console.error('Export failed:', err);
       setSaveStatus('Export failed');
+      toast.error('Failed to export PNG. Please try again.');
       setTimeout(() => setSaveStatus(''), 2000);
     } finally {
       setIsExporting(false);
@@ -120,10 +126,12 @@ export default function DeckForge() {
       downloadBlob(blob, filename);
 
       setSaveStatus('Exported SVG!');
+      toast.success(`Exported vector as ${filename}`);
       setTimeout(() => setSaveStatus(''), 2000);
     } catch (err) {
       console.error('SVG export failed:', err);
       setSaveStatus('Export failed');
+      toast.error('Failed to export SVG. Please try again.');
       setTimeout(() => setSaveStatus(''), 2000);
     } finally {
       setIsExporting(false);
@@ -526,12 +534,11 @@ export default function DeckForge() {
           });
           
           // Show success message
-          const message = changedCount > 0 
-            ? `Applied "${kit.name}" - ${changedCount} color${changedCount !== 1 ? 's' : ''} changed`
-            : `Applied "${kit.name}" - No matching colors found`;
-          
-          setSaveStatus(message);
-          setTimeout(() => setSaveStatus(''), 3000);
+          if (changedCount > 0) {
+            toast.success(`Applied "${kit.name}" - ${changedCount} color${changedCount !== 1 ? 's' : ''} changed`);
+          } else {
+            toast.info(`Applied "${kit.name}" - No matching colors found`);
+          }
         }}
       />
     </div>
