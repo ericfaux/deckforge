@@ -11,9 +11,12 @@ interface PenToolProps {
   onComplete: (pathData: string, strokeWidth: number) => void;
   onCancel: () => void;
   stageRef: React.RefObject<SVGSVGElement>;
+  deckX: number;
+  deckY: number;
+  stageScale: number;
 }
 
-export function PenTool({ isActive, onComplete, onCancel, stageRef }: PenToolProps) {
+export function PenTool({ isActive, onComplete, onCancel, stageRef, deckX, deckY, stageScale }: PenToolProps) {
   const [points, setPoints] = useState<Point[]>([]);
   const [currentPoint, setCurrentPoint] = useState<Point | null>(null);
   const [mode, setMode] = useState<'click' | 'draw'>('click');
@@ -50,8 +53,9 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef }: PenToolPro
     if (!isActive || !stageRef.current || mode === 'draw') return;
 
     const rect = stageRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    // Transform screen coordinates to deck-relative coordinates
+    const x = (e.clientX - rect.left - deckX) / stageScale;
+    const y = (e.clientY - rect.top - deckY) / stageScale;
 
     // First click - add point
     if (points.length === 0) {
@@ -73,8 +77,9 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef }: PenToolPro
     if (!isActive || !stageRef.current || mode !== 'draw') return;
 
     const rect = stageRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    // Transform screen coordinates to deck-relative coordinates
+    const x = (e.clientX - rect.left - deckX) / stageScale;
+    const y = (e.clientY - rect.top - deckY) / stageScale;
 
     setIsDrawing(true);
     setPoints([{ x, y }]);
@@ -84,8 +89,9 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef }: PenToolPro
     if (!isActive || !stageRef.current) return;
 
     const rect = stageRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    // Transform screen coordinates to deck-relative coordinates
+    const x = (e.clientX - rect.left - deckX) / stageScale;
+    const y = (e.clientY - rect.top - deckY) / stageScale;
     setCurrentPoint({ x, y });
 
     // Free draw mode
@@ -205,13 +211,16 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef }: PenToolPro
         onMouseUp={handleMouseUp}
       />
 
-      {/* Draw preview path */}
+      {/* Draw preview path - transform to screen coordinates */}
       {previewPath && (
-        <g style={{ pointerEvents: 'none' }}>
+        <g 
+          transform={`translate(${deckX}, ${deckY}) scale(${stageScale})`}
+          style={{ pointerEvents: 'none' }}
+        >
           <path
             d={previewPath}
             stroke="#ccff00"
-            strokeWidth={strokeWidth}
+            strokeWidth={strokeWidth / stageScale}
             fill="none"
             strokeDasharray={mode === 'click' ? "4 4" : "none"}
             strokeLinecap="round"
@@ -224,10 +233,10 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef }: PenToolPro
               key={index}
               cx={point.x}
               cy={point.y}
-              r={5}
+              r={5 / stageScale}
               fill={index === 0 ? '#ccff00' : '#ffffff'}
               stroke="#000000"
-              strokeWidth={2}
+              strokeWidth={2 / stageScale}
             />
           ))}
           
@@ -236,7 +245,7 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef }: PenToolPro
             <circle
               cx={currentPoint.x}
               cy={currentPoint.y}
-              r={4}
+              r={4 / stageScale}
               fill="#ccff00"
               opacity={0.6}
             />

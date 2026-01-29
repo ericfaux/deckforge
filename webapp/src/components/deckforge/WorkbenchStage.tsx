@@ -1033,6 +1033,9 @@ export function WorkbenchStage() {
           onComplete={handlePenToolComplete}
           onCancel={() => setActiveTool(null)}
           stageRef={svgRef}
+          deckX={deckX}
+          deckY={deckY}
+          stageScale={stageScale}
         />
       </svg>
 
