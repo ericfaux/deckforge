@@ -270,6 +270,15 @@ function CanvasObjectItem({
     const centerX = obj.x + obj.width / 2;
     const centerY = obj.y + obj.height / 2;
     
+    // Calculate dash array based on style
+    const getDashArray = () => {
+      const strokeWidth = obj.strokeWidth || 2;
+      if (!obj.strokeDashStyle || obj.strokeDashStyle === 'solid') return 'none';
+      if (obj.strokeDashStyle === 'dashed') return `${strokeWidth * 3} ${strokeWidth * 1.5}`;
+      if (obj.strokeDashStyle === 'dotted') return `1 ${strokeWidth * 1.5}`;
+      return 'none';
+    };
+    
     return (
       <g transform={`rotate(${obj.rotation} ${centerX} ${centerY})`}>
         {/* Invisible thick stroke for easier clicking/dragging */}
@@ -290,6 +299,7 @@ function CanvasObjectItem({
           fill={obj.pathClosed ? (obj.fill || 'none') : 'none'}
           stroke={obj.stroke || '#000000'}
           strokeWidth={obj.strokeWidth || 2}
+          strokeDasharray={getDashArray()}
           opacity={obj.opacity}
           style={{ filter: filterStyle, pointerEvents: 'none' }}
           strokeLinecap="round"
@@ -505,9 +515,22 @@ function CanvasObjectItem({
     const capStyle = obj.lineCapStyle || 'round';
     const lineType = obj.lineType || 'straight';
 
+    // Calculate dash array based on strokeDashStyle
+    const getLineDashArray = () => {
+      // Legacy: if lineType is 'dashed', use old behavior for backward compatibility
+      if (lineType === 'dashed' && !obj.strokeDashStyle) {
+        return `${strokeW * 2},${strokeW * 2}`;
+      }
+      // New: use strokeDashStyle
+      if (!obj.strokeDashStyle || obj.strokeDashStyle === 'solid') return undefined;
+      if (obj.strokeDashStyle === 'dashed') return `${strokeW * 3} ${strokeW * 1.5}`;
+      if (obj.strokeDashStyle === 'dotted') return `1 ${strokeW * 1.5}`;
+      return undefined;
+    };
+
     // Calculate path based on line type
     let pathD = '';
-    if (lineType === 'straight') {
+    if (lineType === 'straight' || lineType === 'dashed') {
       pathD = `M 0 0 L ${endX} ${endY}`;
     } else if (lineType === 'curved') {
       // Quadratic bezier curve
@@ -525,8 +548,6 @@ function CanvasObjectItem({
         path += ` L ${segWidth * i} ${(endY / segments) * i + yOffset}`;
       }
       pathD = path;
-    } else if (lineType === 'dashed') {
-      pathD = `M 0 0 L ${endX} ${endY}`;
     }
 
     return (
@@ -541,7 +562,7 @@ function CanvasObjectItem({
           stroke={strokeColor}
           strokeWidth={strokeW}
           strokeLinecap={capStyle}
-          strokeDasharray={lineType === 'dashed' ? `${strokeW * 2},${strokeW * 2}` : undefined}
+          strokeDasharray={getLineDashArray()}
           fill="none"
         />
         {/* Invisible wider path for easier selection */}
@@ -882,7 +903,7 @@ export function WorkbenchStage() {
   }, [selectObject, activeTool]);
 
   // Handle pen tool path completion
-  const handlePenToolComplete = useCallback((pathData: string, strokeWidth: number, strokeColor: string) => {
+  const handlePenToolComplete = useCallback((pathData: string, strokeWidth: number, strokeColor: string, opacity: number, dashStyle: 'solid' | 'dashed' | 'dotted') => {
     // Close tool immediately to prevent further clicks
     setActiveTool(null);
     
@@ -927,13 +948,14 @@ export function WorkbenchStage() {
         width: 100,
         height: 100,
         rotation: 0,
-        opacity: 1,
+        opacity: opacity,
         scaleX: 1,
         scaleY: 1,
         pathPoints,
         pathClosed: false,
         stroke: strokeColor,
         strokeWidth: strokeWidth,
+        strokeDashStyle: dashStyle,
         fill: 'none',
       });
     }

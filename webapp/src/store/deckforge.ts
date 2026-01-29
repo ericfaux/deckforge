@@ -61,6 +61,7 @@ export interface CanvasObject {
   strokeWidth?: number;
   solidFill?: boolean;
   stroke?: string;
+  strokeDashStyle?: 'solid' | 'dashed' | 'dotted';
   // For textures
   textureUrl?: string;
   blendMode?: 'multiply' | 'overlay' | 'soft-light' | 'color-burn' | 'normal';

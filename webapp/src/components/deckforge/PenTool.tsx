@@ -6,9 +6,11 @@ interface Point {
   y: number;
 }
 
+type DashStyle = 'solid' | 'dashed' | 'dotted';
+
 interface PenToolProps {
   isActive: boolean;
-  onComplete: (pathData: string, strokeWidth: number, strokeColor: string) => void;
+  onComplete: (pathData: string, strokeWidth: number, strokeColor: string, opacity: number, dashStyle: DashStyle) => void;
   onCancel: () => void;
   stageRef: React.RefObject<SVGSVGElement>;
   deckX: number;
@@ -23,6 +25,8 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef, deckX, deckY
   const [isDrawing, setIsDrawing] = useState(false);
   const [strokeWidth, setStrokeWidth] = useState(2);
   const [strokeColor, setStrokeColor] = useState('#ffffff');
+  const [opacity, setOpacity] = useState(1.0);
+  const [dashStyle, setDashStyle] = useState<DashStyle>('solid');
 
   useEffect(() => {
     if (!isActive) {
@@ -68,7 +72,7 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef, deckX, deckY
     if (points.length === 1) {
       const pathData = `M ${points[0].x} ${points[0].y} L ${x} ${y}`;
       setPoints([]); // Clear state immediately
-      onComplete(pathData, strokeWidth, strokeColor);
+      onComplete(pathData, strokeWidth, strokeColor, opacity, dashStyle);
       return;
     }
   };
@@ -151,7 +155,7 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef, deckX, deckY
       }
     }
 
-    onComplete(pathData, strokeWidth, strokeColor);
+    onComplete(pathData, strokeWidth, strokeColor, opacity, dashStyle);
   };
 
   const handleCancelClick = (e: React.MouseEvent) => {
@@ -223,7 +227,16 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef, deckX, deckY
             stroke={strokeColor}
             strokeWidth={strokeWidth / stageScale}
             fill="none"
-            strokeDasharray={mode === 'click' ? "4 4" : "none"}
+            opacity={opacity}
+            strokeDasharray={
+              mode === 'click' 
+                ? "4 4" 
+                : dashStyle === 'dashed' 
+                  ? `${strokeWidth * 2} ${strokeWidth}`
+                  : dashStyle === 'dotted'
+                    ? `1 ${strokeWidth}`
+                    : "none"
+            }
             strokeLinecap="round"
             strokeLinejoin="round"
           />
@@ -255,7 +268,7 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef, deckX, deckY
       )}
 
       {/* Toolbar */}
-      <foreignObject x={10} y={10} width={500} height={200}>
+      <foreignObject x={10} y={10} width={520} height={280}>
         <div 
           className="bg-card border-2 border-accent p-4 shadow-xl"
           onMouseDown={(e) => e.stopPropagation()}
@@ -337,6 +350,56 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef, deckX, deckY
                     }`}
                     style={{ backgroundColor: color }}
                   />
+                ))}
+              </div>
+            </div>
+
+            {/* Opacity */}
+            <div className="flex items-center gap-3">
+              <span className="text-[10px] text-muted-foreground uppercase tracking-widest whitespace-nowrap">
+                Opacity
+              </span>
+              <input
+                type="range"
+                min="0.1"
+                max="1"
+                step="0.1"
+                value={opacity}
+                onChange={(e) => setOpacity(Number(e.target.value))}
+                onMouseDown={(e) => e.stopPropagation()}
+                onClick={(e) => e.stopPropagation()}
+                className="flex-1 h-2 bg-secondary border border-border appearance-none cursor-pointer"
+                style={{
+                  accentColor: 'hsl(var(--accent))',
+                }}
+              />
+              <span className="text-sm font-mono text-foreground w-8 text-right">
+                {Math.round(opacity * 100)}%
+              </span>
+            </div>
+
+            {/* Dash Style */}
+            <div className="flex items-center gap-3">
+              <span className="text-[10px] text-muted-foreground uppercase tracking-widest whitespace-nowrap">
+                Line Style
+              </span>
+              <div className="flex gap-1 flex-1">
+                {(['solid', 'dashed', 'dotted'] as DashStyle[]).map((style) => (
+                  <button
+                    key={style}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setDashStyle(style);
+                    }}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    className={`flex-1 px-2 py-1.5 text-[10px] uppercase tracking-wider border-2 transition-all ${
+                      dashStyle === style
+                        ? 'bg-accent text-accent-foreground border-accent'
+                        : 'bg-secondary text-muted-foreground border-border hover:border-accent'
+                    }`}
+                  >
+                    {style === 'solid' ? '━━' : style === 'dashed' ? '╌╌' : '┄┄'}
+                  </button>
                 ))}
               </div>
             </div>

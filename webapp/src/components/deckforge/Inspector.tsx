@@ -211,6 +211,28 @@ export function Inspector() {
                   </div>
                 </div>
 
+                {/* Stroke Dash Style */}
+                <div className="space-y-2">
+                  <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                    Line Style
+                  </Label>
+                  <div className="grid grid-cols-3 gap-1">
+                    {(['solid', 'dashed', 'dotted'] as const).map((style) => (
+                      <button
+                        key={style}
+                        onClick={() => updateWithHistory({ strokeDashStyle: style })}
+                        className={`px-2 py-1.5 text-[10px] uppercase tracking-wider border transition-colors ${
+                          (selectedObject.strokeDashStyle || 'solid') === style
+                            ? 'bg-primary text-primary-foreground border-primary'
+                            : 'bg-secondary text-muted-foreground border-border hover:border-primary'
+                        }`}
+                      >
+                        {style === 'solid' ? '━━' : style === 'dashed' ? '╌╌' : '┄┄'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 {/* Solid Fill Toggle */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
@@ -345,6 +367,28 @@ export function Inspector() {
                     <span className="text-[11px] font-mono w-10 text-right">
                       {selectedObject.strokeWidth ?? 3}px
                     </span>
+                  </div>
+                </div>
+
+                {/* Stroke Dash Style */}
+                <div className="space-y-2">
+                  <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                    Line Style
+                  </Label>
+                  <div className="grid grid-cols-3 gap-1">
+                    {(['solid', 'dashed', 'dotted'] as const).map((style) => (
+                      <button
+                        key={style}
+                        onClick={() => updateWithHistory({ strokeDashStyle: style })}
+                        className={`px-2 py-1.5 text-[10px] uppercase tracking-wider border transition-colors ${
+                          (selectedObject.strokeDashStyle || 'solid') === style
+                            ? 'bg-primary text-primary-foreground border-primary'
+                            : 'bg-secondary text-muted-foreground border-border hover:border-primary'
+                        }`}
+                      >
+                        {style === 'solid' ? '━━' : style === 'dashed' ? '╌╌' : '┄┄'}
+                      </button>
+                    ))}
                   </div>
                 </div>
 
