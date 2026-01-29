@@ -22,7 +22,7 @@ import { designsAPI } from '@/lib/api';
 import { exportToPNG, exportToSVG, downloadBlob } from '@/lib/export';
 import { preloadUserFonts } from '@/lib/fonts';
 import { Button } from '@/components/ui/button';
-import { Save, Download, User, Sparkles, Clock, Menu, Share2, Play, ChevronDown, Palette, Undo, Redo, Type } from 'lucide-react';
+import { Save, Download, User, Sparkles, Clock, Menu, Share2, Play, ChevronDown, Palette, Undo, Redo, Type, Ruler } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { KeyboardShortcuts } from '@/components/deckforge/KeyboardShortcuts';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -30,7 +30,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
 export default function DeckForge() {
-  const { selectedId, deleteObject, undo, redo, getCanvasState, currentDesignId, setDesignId, setSaving, isSaving, objects, designName, createVersion, past, future, updateObject, saveToHistory, addObject, selectObject, setActiveTool, stageScale, setStageScale, arrayDuplicate } = useDeckForgeStore();
+  const { selectedId, deleteObject, undo, redo, getCanvasState, currentDesignId, setDesignId, setSaving, isSaving, objects, designName, createVersion, past, future, updateObject, saveToHistory, addObject, selectObject, setActiveTool, stageScale, setStageScale, arrayDuplicate, showRulers, toggleRulers } = useDeckForgeStore();
   const { isAuthenticated } = useAuthStore();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -291,6 +291,17 @@ export default function DeckForge() {
         e.preventDefault();
         selectObject(null);
         setActiveTool(null);
+        return;
+      }
+
+      // === VIEW TOGGLES ===
+      
+      // Toggle rulers (Ctrl+Shift+R)
+      if (ctrl && shift && key === 'r') {
+        e.preventDefault();
+        useDeckForgeStore.getState().toggleRulers();
+        const newState = useDeckForgeStore.getState().showRulers;
+        toast.success(newState ? 'Rulers enabled' : 'Rulers disabled');
         return;
       }
 
@@ -716,6 +727,19 @@ export default function DeckForge() {
               >
                 <User className="w-4 h-4" />
                 {isAuthenticated ? 'My Designs' : 'Login'}
+              </Button>
+
+              <Button
+                size="sm"
+                variant={showRulers ? "default" : "ghost"}
+                onClick={() => {
+                  toggleRulers();
+                  toast.success(showRulers ? 'Rulers hidden' : 'Rulers visible');
+                }}
+                className="gap-2"
+                title="Toggle rulers (Ctrl+Shift+R)"
+              >
+                <Ruler className="w-4 h-4" />
               </Button>
 
               <KeyboardShortcuts />

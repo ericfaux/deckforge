@@ -157,6 +157,7 @@ interface DeckForgeState {
 
   // Hardware guide (visual only, not exported)
   showHardwareGuide: boolean;
+  showRulers: boolean; // Ruler overlay toggle
 
   // Background color
   backgroundColor: string;
@@ -190,6 +191,7 @@ interface DeckForgeState {
   generatePattern: (sourceId: string, gap: number, randomRotation: number, deckWidth: number, deckHeight: number) => void;
   arrayDuplicate: (sourceId: string, rows: number, cols: number, gapX: number, gapY: number) => void;
   toggleHardwareGuide: () => void;
+  toggleRulers: () => void;
   setBackgroundColor: (color: string) => void;
   
   // Design management
@@ -229,6 +231,7 @@ export const useDeckForgeStore = create<DeckForgeState>((set, get) => ({
   currentVersionId: null,
   textureOverlays: defaultTextureOverlays,
   showHardwareGuide: false,
+  showRulers: false,
   backgroundColor: '#ffffff',
   currentDesignId: null,
   designName: 'Untitled Design',
@@ -582,6 +585,10 @@ export const useDeckForgeStore = create<DeckForgeState>((set, get) => ({
 
   toggleHardwareGuide: () => {
     set((state) => ({ showHardwareGuide: !state.showHardwareGuide }));
+  },
+
+  toggleRulers: () => {
+    set((state) => ({ showRulers: !state.showRulers }));
   },
 
   setBackgroundColor: (color) => {

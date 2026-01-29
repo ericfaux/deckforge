@@ -4,6 +4,7 @@ import { ZoomControls } from './ZoomControls';
 import { PenTool } from './PenTool';
 import { TransformHandles } from './TransformHandles';
 import { SnapGuides, calculateSnapGuides } from './SnapGuides';
+import { RulerOverlay } from './RulerOverlay';
 import type { LucideIcon } from 'lucide-react';
 import { Skull, Flame, Zap, Sword, Ghost, Bug, Eye, Target, Radio, Disc3, Music2, Rocket, Crown, Anchor, Sun, Moon, Triangle, Hexagon, Circle, Square, Star, Heart, Sparkles, Hand, Cat, Dog, Fish, Bird, Leaf, Cloud } from 'lucide-react';
 
@@ -800,6 +801,7 @@ export function WorkbenchStage() {
     saveToHistory,
     textureOverlays,
     showHardwareGuide,
+    showRulers,
     activeTool,
     setActiveTool,
     backgroundColor,
@@ -1140,6 +1142,14 @@ export function WorkbenchStage() {
               stageScale={stageScale}
             />
           )}
+
+          {/* Ruler overlay */}
+          <RulerOverlay
+            deckX={deckX}
+            deckY={deckY}
+            stageScale={stageScale}
+            enabled={showRulers}
+          />
 
           {/* Texture overlays with blend modes */}
           {enabledTextures.map((texture) => (

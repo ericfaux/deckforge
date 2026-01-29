@@ -1,9 +1,13 @@
 import { DECK_WIDTH, DECK_HEIGHT } from './WorkbenchStage';
 
 interface SnapGuide {
-  type: 'vertical' | 'horizontal';
+  type: 'vertical' | 'horizontal' | 'spacing';
   position: number; // x for vertical, y for horizontal
   label?: string;
+  // For spacing guides
+  start?: number;
+  end?: number;
+  distance?: number;
 }
 
 interface SnapGuidesProps {
@@ -19,6 +23,69 @@ export function SnapGuides({ guides, deckX, deckY, stageScale }: SnapGuidesProps
   return (
     <g transform={`translate(${deckX}, ${deckY}) scale(${stageScale})`} style={{ pointerEvents: 'none' }}>
       {guides.map((guide, index) => {
+        if (guide.type === 'spacing') {
+          // Render spacing measurement
+          const isVertical = guide.start !== undefined && guide.end !== undefined;
+          if (!isVertical || guide.distance === undefined) return null;
+          
+          const midPoint = (guide.start! + guide.end!) / 2;
+          const length = Math.abs(guide.end! - guide.start!);
+          
+          return (
+            <g key={`spacing-${index}`}>
+              {/* Measurement line */}
+              <line
+                x1={guide.position}
+                y1={guide.start}
+                x2={guide.position}
+                y2={guide.end}
+                stroke="#00d9ff"
+                strokeWidth={1.5 / stageScale}
+                opacity={0.9}
+              />
+              {/* End caps */}
+              <line
+                x1={guide.position - 5 / stageScale}
+                y1={guide.start}
+                x2={guide.position + 5 / stageScale}
+                y2={guide.start}
+                stroke="#00d9ff"
+                strokeWidth={1.5 / stageScale}
+              />
+              <line
+                x1={guide.position - 5 / stageScale}
+                y1={guide.end}
+                x2={guide.position + 5 / stageScale}
+                y2={guide.end}
+                stroke="#00d9ff"
+                strokeWidth={1.5 / stageScale}
+              />
+              {/* Distance label */}
+              <g>
+                <rect
+                  x={guide.position - 25 / stageScale}
+                  y={midPoint - 10 / stageScale}
+                  width={50 / stageScale}
+                  height={20 / stageScale}
+                  fill="rgba(0, 217, 255, 0.95)"
+                  rx={4 / stageScale}
+                />
+                <text
+                  x={guide.position}
+                  y={midPoint + 2 / stageScale}
+                  textAnchor="middle"
+                  fill="white"
+                  fontSize={11 / stageScale}
+                  fontFamily="monospace"
+                  fontWeight="600"
+                >
+                  {Math.round(guide.distance)}px
+                </text>
+              </g>
+            </g>
+          );
+        }
+        
         if (guide.type === 'vertical') {
           return (
             <g key={`v-${index}`}>
@@ -185,6 +252,80 @@ export function calculateSnapGuides(
     // Bottom to top alignment
     if (Math.abs(draggedBottom - other.y) < snapThreshold) {
       guides.push({ type: 'horizontal', position: other.y });
+    }
+  });
+
+  // Add spacing measurements for nearby objects
+  otherObjects.forEach((other) => {
+    const otherWidth = other.width * other.scaleX;
+    const otherHeight = other.height * other.scaleY;
+    const otherRight = other.x + otherWidth;
+    const otherBottom = other.y + otherHeight;
+    
+    // Check for vertical spacing (objects side by side)
+    const horizontalOverlap = 
+      (draggedObject.y < otherBottom && draggedBottom > other.y);
+    
+    if (horizontalOverlap) {
+      // Object to the right
+      if (draggedRight < other.x && other.x - draggedRight < 100) {
+        const distance = other.x - draggedRight;
+        const centerY = Math.max(draggedObject.y, other.y) + 
+                       Math.min(draggedBottom - draggedObject.y, otherBottom - other.y) / 2;
+        guides.push({
+          type: 'spacing',
+          position: draggedRight + distance / 2,
+          start: centerY - 20,
+          end: centerY + 20,
+          distance: distance,
+        });
+      }
+      // Object to the left
+      if (draggedObject.x > otherRight && draggedObject.x - otherRight < 100) {
+        const distance = draggedObject.x - otherRight;
+        const centerY = Math.max(draggedObject.y, other.y) + 
+                       Math.min(draggedBottom - draggedObject.y, otherBottom - other.y) / 2;
+        guides.push({
+          type: 'spacing',
+          position: otherRight + distance / 2,
+          start: centerY - 20,
+          end: centerY + 20,
+          distance: distance,
+        });
+      }
+    }
+    
+    // Check for horizontal spacing (objects stacked)
+    const verticalOverlap = 
+      (draggedObject.x < otherRight && draggedRight > other.x);
+    
+    if (verticalOverlap) {
+      // Object below
+      if (draggedBottom < other.y && other.y - draggedBottom < 100) {
+        const distance = other.y - draggedBottom;
+        const centerX = Math.max(draggedObject.x, other.x) + 
+                       Math.min(draggedRight - draggedObject.x, otherRight - other.x) / 2;
+        guides.push({
+          type: 'spacing',
+          position: centerX,
+          start: draggedBottom,
+          end: other.y,
+          distance: distance,
+        });
+      }
+      // Object above
+      if (draggedObject.y > otherBottom && draggedObject.y - otherBottom < 100) {
+        const distance = draggedObject.y - otherBottom;
+        const centerX = Math.max(draggedObject.x, other.x) + 
+                       Math.min(draggedRight - draggedObject.x, otherRight - other.x) / 2;
+        guides.push({
+          type: 'spacing',
+          position: centerX,
+          start: otherBottom,
+          end: draggedObject.y,
+          distance: distance,
+        });
+      }
     }
   });
 
