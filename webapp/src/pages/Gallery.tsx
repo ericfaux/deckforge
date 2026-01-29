@@ -4,8 +4,9 @@ import { useAuthStore } from '@/store/auth';
 import { useDeckForgeStore } from '@/store/deckforge';
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
-import { Heart, Eye, Download, Copy, Loader2, TrendingUp, Clock, ThumbsUp } from 'lucide-react';
+import { Heart, Eye, Download, Copy, Loader2, TrendingUp, Clock, ThumbsUp, MessageSquare, X } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { Comments } from '@/components/Comments';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -26,6 +27,7 @@ export default function Gallery() {
   const [isLoading, setIsLoading] = useState(true);
   const [sort, setSort] = useState<'recent' | 'popular' | 'liked'>('recent');
   const [likedDesigns, setLikedDesigns] = useState<Set<string>>(new Set());
+  const [selectedDesign, setSelectedDesign] = useState<PublicDesign | null>(null);
   const { isAuthenticated } = useAuthStore();
   const { loadDesign } = useDeckForgeStore();
   const navigate = useNavigate();
@@ -215,7 +217,8 @@ export default function Gallery() {
                 return (
                   <div
                     key={design.id}
-                    className="group border border-border hover:border-primary transition-colors bg-card overflow-hidden"
+                    className="group border border-border hover:border-primary transition-colors bg-card overflow-hidden cursor-pointer"
+                    onClick={() => setSelectedDesign(design)}
                   >
                     {/* Thumbnail */}
                     <div className="aspect-[32/98] bg-muted flex items-center justify-center overflow-hidden relative">
@@ -288,6 +291,98 @@ export default function Gallery() {
           </>
         )}
       </div>
+
+      {/* Design Detail Modal */}
+      {selectedDesign && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => setSelectedDesign(null)}
+          />
+          <div className="relative bg-card border-2 border-border shadow-xl w-full max-w-4xl max-h-[90vh] overflow-auto">
+            {/* Header */}
+            <div className="sticky top-0 bg-card border-b border-border p-4 flex items-center justify-between z-10">
+              <div>
+                <h2 className="font-display text-lg uppercase tracking-wider">
+                  {selectedDesign.name}
+                </h2>
+                {selectedDesign.description && (
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {selectedDesign.description}
+                  </p>
+                )}
+              </div>
+              <button
+                onClick={() => setSelectedDesign(null)}
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="p-6 space-y-6">
+              {/* Preview */}
+              <div className="aspect-[32/98] bg-muted flex items-center justify-center overflow-hidden border border-border">
+                {selectedDesign.thumbnail_url ? (
+                  <img
+                    src={selectedDesign.thumbnail_url}
+                    alt={selectedDesign.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="text-muted-foreground text-sm uppercase tracking-widest">
+                    {selectedDesign.name}
+                  </div>
+                )}
+              </div>
+
+              {/* Stats & Actions */}
+              <div className="flex items-center justify-between pb-6 border-b border-border">
+                <div className="flex gap-4 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-1">
+                    <Eye className="w-4 h-4" />
+                    {selectedDesign.view_count} views
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Heart className="w-4 h-4" />
+                    {selectedDesign.like_count} likes
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRemix(selectedDesign, e);
+                      setSelectedDesign(null);
+                    }}
+                    className="gap-2"
+                  >
+                    <Copy className="w-4 h-4" />
+                    Remix
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={likedDesigns.has(selectedDesign.id) ? 'default' : 'outline'}
+                    onClick={(e) => handleLike(selectedDesign.id, e)}
+                  >
+                    <Heart
+                      className={`w-4 h-4 ${
+                        likedDesigns.has(selectedDesign.id) ? 'fill-current' : ''
+                      }`}
+                    />
+                  </Button>
+                </div>
+              </div>
+
+              {/* Comments */}
+              <Comments designId={selectedDesign.id} />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
