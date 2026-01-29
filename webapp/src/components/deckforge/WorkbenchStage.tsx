@@ -424,6 +424,126 @@ function CanvasObjectItem({
     );
   }
 
+  // Render path (pen tool / bezier curves)
+  if (obj.type === 'path' && obj.pathPoints && obj.pathPoints.length > 0) {
+    const strokeColor = obj.stroke || '#ffffff';
+    const strokeW = obj.strokeWidth || 3;
+    const capStyle = obj.lineCapStyle || 'round';
+    const fillColor = obj.solidFill !== false ? (obj.fill || '#ffffff') : 'none';
+
+    // Generate SVG path data from points
+    let pathD = `M ${obj.pathPoints[0].x} ${obj.pathPoints[0].y}`;
+
+    for (let i = 1; i < obj.pathPoints.length; i++) {
+      const point = obj.pathPoints[i];
+      const prevPoint = obj.pathPoints[i - 1];
+
+      // Check if this segment uses bezier curves
+      if (prevPoint.cp2x !== undefined && prevPoint.cp2y !== undefined &&
+          point.cp1x !== undefined && point.cp1y !== undefined) {
+        // Cubic bezier curve
+        pathD += ` C ${prevPoint.cp2x} ${prevPoint.cp2y}, ${point.cp1x} ${point.cp1y}, ${point.x} ${point.y}`;
+      } else if (prevPoint.cp2x !== undefined && prevPoint.cp2y !== undefined) {
+        // Quadratic bezier curve
+        pathD += ` Q ${prevPoint.cp2x} ${prevPoint.cp2y}, ${point.x} ${point.y}`;
+      } else {
+        // Straight line
+        pathD += ` L ${point.x} ${point.y}`;
+      }
+    }
+
+    // Close path if specified
+    if (obj.pathClosed) {
+      pathD += ' Z';
+    }
+
+    return (
+      <g
+        transform={`translate(${obj.x}, ${obj.y}) rotate(${obj.rotation}) scale(${obj.scaleX}, ${obj.scaleY})`}
+        opacity={obj.opacity}
+        style={{ cursor, filter: filterStyle }}
+        onMouseDown={handleMouseDown}
+      >
+        <path
+          d={pathD}
+          stroke={strokeColor}
+          strokeWidth={strokeW}
+          strokeLinecap={capStyle}
+          strokeLinejoin="round"
+          fill={fillColor}
+        />
+        {/* Invisible wider path for easier selection */}
+        <path
+          d={pathD}
+          stroke="transparent"
+          strokeWidth={Math.max(strokeW + 10, 15)}
+          fill="none"
+        />
+        {isSelected && (
+          <>
+            {/* Anchor points */}
+            {obj.pathPoints.map((point, index) => (
+              <g key={`point-${index}`}>
+                <circle
+                  cx={point.x}
+                  cy={point.y}
+                  r={4}
+                  fill="#00d9ff"
+                  stroke="#fff"
+                  strokeWidth={1.5}
+                />
+                {/* Control point 1 */}
+                {point.cp1x !== undefined && point.cp1y !== undefined && (
+                  <>
+                    <line
+                      x1={point.x}
+                      y1={point.y}
+                      x2={point.cp1x}
+                      y2={point.cp1y}
+                      stroke="#ff6600"
+                      strokeWidth={1}
+                      strokeDasharray="3,3"
+                    />
+                    <circle
+                      cx={point.cp1x}
+                      cy={point.cp1y}
+                      r={3}
+                      fill="#ff6600"
+                      stroke="#fff"
+                      strokeWidth={1}
+                    />
+                  </>
+                )}
+                {/* Control point 2 */}
+                {point.cp2x !== undefined && point.cp2y !== undefined && (
+                  <>
+                    <line
+                      x1={point.x}
+                      y1={point.y}
+                      x2={point.cp2x}
+                      y2={point.cp2y}
+                      stroke="#ff6600"
+                      strokeWidth={1}
+                      strokeDasharray="3,3"
+                    />
+                    <circle
+                      cx={point.cp2x}
+                      cy={point.cp2y}
+                      r={3}
+                      fill="#ff6600"
+                      stroke="#fff"
+                      strokeWidth={1}
+                    />
+                  </>
+                )}
+              </g>
+            ))}
+          </>
+        )}
+      </g>
+    );
+  }
+
   return null;
 }
 

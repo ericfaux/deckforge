@@ -799,6 +799,91 @@ function DrawerContent({ tool, onAddObject, deckCenterX, deckCenterY }: DrawerCo
     );
   }
 
+  if (tool === 'pen') {
+    const addPath = () => {
+      // Start with a simple curved path
+      onAddObject({
+        type: 'path',
+        x: deckCenterX - 30,
+        y: deckCenterY - 30,
+        width: 60,
+        height: 60,
+        rotation: 0,
+        opacity: 1,
+        scaleX: 1,
+        scaleY: 1,
+        stroke: '#ffffff',
+        strokeWidth: 3,
+        solidFill: false,
+        pathPoints: [
+          { x: 0, y: 30 },
+          { x: 30, y: 0, cp1x: 10, cp1y: 30, cp2x: 20, cp2y: 0 },
+          { x: 60, y: 30, cp1x: 40, cp1y: 0, cp2x: 50, cp2y: 30 },
+        ],
+        pathClosed: false,
+      });
+    };
+
+    const addClosedPath = () => {
+      // Triangle-ish closed path
+      onAddObject({
+        type: 'path',
+        x: deckCenterX - 25,
+        y: deckCenterY - 25,
+        width: 50,
+        height: 50,
+        rotation: 0,
+        opacity: 1,
+        scaleX: 1,
+        scaleY: 1,
+        fill: '#ccff00',
+        stroke: '#ffffff',
+        strokeWidth: 2,
+        solidFill: true,
+        pathPoints: [
+          { x: 25, y: 0 },
+          { x: 50, y: 43, cp1x: 50, cp1y: 15, cp2x: 50, cp2y: 28 },
+          { x: 0, y: 43, cp1x: 0, cp1y: 28, cp2x: 0, cp2y: 15 },
+        ],
+        pathClosed: true,
+      });
+    };
+
+    return (
+      <div className="space-y-3">
+        <div className="space-y-2">
+          <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
+            Quick Start
+          </span>
+          <button
+            onClick={addPath}
+            className="w-full btn-brutal text-left"
+          >
+            + Curved Path
+          </button>
+          <button
+            onClick={addClosedPath}
+            className="w-full btn-brutal text-left"
+          >
+            + Closed Shape
+          </button>
+        </div>
+
+        <div className="space-y-2 pt-3 border-t border-border">
+          <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
+            Instructions
+          </span>
+          <div className="text-xs text-muted-foreground space-y-2">
+            <p><strong>Select a path</strong> to see anchor points (blue) and control handles (orange).</p>
+            <p><strong>Drag</strong> the path to move it around the canvas.</p>
+            <p><strong>Edit points</strong> in the Inspector panel to add/remove anchors or adjust curves.</p>
+            <p>Use <strong>Transform tools</strong> to scale and rotate paths.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (tool === 'text') {
     return (
       <div className="space-y-3">
@@ -861,6 +946,7 @@ const toolLabels: Record<ToolType, string> = {
   patterns: 'Patterns',
   textures: 'Textures',
   lines: 'Lines',
+  pen: 'Pen Tool',
 };
 
 export function ToolDrawer() {

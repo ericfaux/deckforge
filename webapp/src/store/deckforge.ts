@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-export type ToolType = 'templates' | 'graphics' | 'text' | 'uploads' | 'background' | 'finishes' | 'stickers' | 'patterns' | 'textures' | 'lines';
+export type ToolType = 'templates' | 'graphics' | 'text' | 'uploads' | 'background' | 'finishes' | 'stickers' | 'patterns' | 'textures' | 'lines' | 'pen';
 
 export type TextureType = 'scratched-wood' | 'grip-tape-dust' | 'halftone-dots';
 
@@ -20,9 +20,18 @@ export interface BackgroundPattern {
   scale: number;
 }
 
+export interface PathPoint {
+  x: number;
+  y: number;
+  cp1x?: number; // Control point 1 x (for bezier curves)
+  cp1y?: number; // Control point 1 y
+  cp2x?: number; // Control point 2 x (for bezier curves)
+  cp2y?: number; // Control point 2 y
+}
+
 export interface CanvasObject {
   id: string;
-  type: 'image' | 'text' | 'shape' | 'sticker' | 'texture' | 'line';
+  type: 'image' | 'text' | 'shape' | 'sticker' | 'texture' | 'line' | 'path';
   x: number;
   y: number;
   width: number;
@@ -44,6 +53,9 @@ export interface CanvasObject {
   src?: string;
   // For shapes
   shapeType?: 'rect' | 'circle' | 'star';
+  // For paths (pen tool / bezier curves)
+  pathPoints?: PathPoint[];
+  pathClosed?: boolean; // Whether path is closed (connects back to start)
   // For stickers (Lucide icons)
   iconName?: string;
   strokeWidth?: number;

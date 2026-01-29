@@ -1,4 +1,4 @@
-import { LayoutTemplate, ImageIcon, Type, Upload, Palette, Layers, Sticker, Grid3X3, Mountain, Minus } from 'lucide-react';
+import { LayoutTemplate, ImageIcon, Type, Upload, Palette, Layers, Sticker, Grid3X3, Mountain, Minus, Pen } from 'lucide-react';
 import { useDeckForgeStore, ToolType } from '@/store/deckforge';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -10,6 +10,7 @@ interface ToolItem {
 }
 
 const tools: ToolItem[] = [
+  { id: 'pen', icon: Pen, label: 'Pen Tool' },
   { id: 'stickers', icon: Sticker, label: 'Stickers' },
   { id: 'lines', icon: Minus, label: 'Lines' },
   { id: 'patterns', icon: Grid3X3, label: 'Patterns' },
