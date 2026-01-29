@@ -4,10 +4,12 @@ import { useAuthStore } from '@/store/auth';
 import { useDeckForgeStore } from '@/store/deckforge';
 import { designsAPI } from '@/lib/api';
 import { batchExportDesigns, downloadBlob } from '@/lib/batch-export';
+import { FoldersPanel } from '@/components/FoldersPanel';
 import { Button } from '@/components/ui/button';
-import { Plus, Trash2, Download, Eye, Loader2, CheckSquare, Square, Globe, Lock } from 'lucide-react';
+import { Plus, Trash2, Download, Eye, Loader2, CheckSquare, Square, Globe, Lock, FolderInput } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import axios from 'axios';
+import { foldersAPI } from '@/lib/folders';
 
 export default function Designs() {
   const [designs, setDesigns] = useState<any[]>([]);
@@ -15,9 +17,15 @@ export default function Designs() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isExporting, setIsExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState({ current: 0, total: 0 });
+  const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
   const { isAuthenticated, logout } = useAuthStore();
   const { loadDesign, resetCanvas } = useDeckForgeStore();
   const navigate = useNavigate();
+
+  // Filter designs by folder
+  const filteredDesigns = selectedFolder
+    ? designs.filter((d) => d.folder_id === selectedFolder)
+    : designs;
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -81,10 +89,45 @@ export default function Designs() {
   };
 
   const selectAll = () => {
-    if (selectedIds.size === designs.length) {
+    if (selectedIds.size === filteredDesigns.length) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(designs.map((d) => d.id)));
+      setSelectedIds(new Set(filteredDesigns.map((d) => d.id)));
+    }
+  };
+
+  const moveToFolder = async (designId: string, folderId: string | null, e: React.MouseEvent) => {
+    e.stopPropagation();
+
+    try {
+      if (folderId) {
+        await foldersAPI.moveDesign(folderId, designId);
+      } else {
+        // Remove from current folder
+        const design = designs.find((d) => d.id === designId);
+        if (design?.folder_id) {
+          await foldersAPI.removeDesign(design.folder_id, designId);
+        }
+      }
+
+      // Update local state
+      setDesigns((prev) =>
+        prev.map((d) =>
+          d.id === designId ? { ...d, folder_id: folderId } : d
+        )
+      );
+
+      toast({
+        title: '✓ Design moved',
+        description: folderId ? 'Design moved to folder' : 'Design moved to All Designs',
+      });
+    } catch (error) {
+      console.error('Move to folder failed:', error);
+      toast({
+        title: 'Failed to move design',
+        description: 'Please try again',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -186,9 +229,9 @@ export default function Designs() {
   const hasSelection = selectedIds.size > 0;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <header className="h-16 border-b border-border flex items-center px-6 bg-card">
+      <header className="h-16 border-b border-border flex items-center px-6 bg-card shrink-0">
         <h1 className="font-display text-xl uppercase tracking-widest">
           My <span className="text-primary">Designs</span>
         </h1>
@@ -230,12 +273,21 @@ export default function Designs() {
       </header>
 
       {/* Main content */}
-      <div className="container mx-auto px-6 py-8">
+      <div className="flex-1 flex overflow-hidden">
+        {/* Folders sidebar */}
+        <FoldersPanel
+          selectedFolder={selectedFolder}
+          onFolderSelect={setSelectedFolder}
+        />
+
+        {/* Designs area */}
+        <div className="flex-1 overflow-auto">
+          <div className="container mx-auto px-6 py-8">
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
           </div>
-        ) : designs.length === 0 ? (
+        ) : filteredDesigns.length === 0 ? (
           <div className="text-center py-20 space-y-6">
             <div>
               <h2 className="text-2xl font-display uppercase tracking-widest mb-2">
@@ -260,7 +312,7 @@ export default function Designs() {
                 onClick={selectAll}
                 className="gap-2"
               >
-                {selectedIds.size === designs.length ? (
+                {selectedIds.size === filteredDesigns.length ? (
                   <>
                     <CheckSquare className="w-4 h-4" />
                     Deselect All
@@ -273,13 +325,14 @@ export default function Designs() {
                 )}
               </Button>
               <span className="text-sm text-muted-foreground">
-                {designs.length} design{designs.length !== 1 ? 's' : ''}
+                {filteredDesigns.length} design{filteredDesigns.length !== 1 ? 's' : ''}
+                {selectedFolder && ` in folder`}
               </span>
             </div>
 
             {/* Design grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {designs.map((design) => {
+              {filteredDesigns.map((design) => {
                 const isSelected = selectedIds.has(design.id);
                 
                 return (
@@ -386,6 +439,8 @@ export default function Designs() {
             </div>
           </>
         )}
+          </div>
+        </div>
       </div>
     </div>
   );
