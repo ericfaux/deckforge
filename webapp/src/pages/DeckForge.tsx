@@ -15,14 +15,14 @@ import { useAuthStore } from '@/store/auth';
 import { designsAPI } from '@/lib/api';
 import { exportToPNG, exportToSVG, downloadBlob } from '@/lib/export';
 import { Button } from '@/components/ui/button';
-import { Save, Download, User, Sparkles, Clock, Menu, Share2, Play, ChevronDown, Palette } from 'lucide-react';
+import { Save, Download, User, Sparkles, Clock, Menu, Share2, Play, ChevronDown, Palette, Undo, Redo } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { KeyboardShortcuts } from '@/components/deckforge/KeyboardShortcuts';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 
 export default function DeckForge() {
-  const { selectedId, deleteObject, undo, redo, getCanvasState, currentDesignId, setDesignId, setSaving, isSaving, objects, designName, createVersion } = useDeckForgeStore();
+  const { selectedId, deleteObject, undo, redo, getCanvasState, currentDesignId, setDesignId, setSaving, isSaving, objects, designName, createVersion, past, future } = useDeckForgeStore();
   const { isAuthenticated } = useAuthStore();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -202,6 +202,36 @@ export default function DeckForge() {
               {saveStatus && (
                 <span className="text-xs text-primary">{saveStatus}</span>
               )}
+
+              {/* Undo/Redo with history indicator */}
+              <div className="flex items-center gap-1 border border-border rounded">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={undo}
+                  disabled={past.length === 0}
+                  className="gap-1.5 rounded-r-none border-r border-border"
+                  title={`Undo (Ctrl+Z) - ${past.length} action${past.length !== 1 ? 's' : ''} available`}
+                >
+                  <Undo className="w-4 h-4" />
+                  <span className="text-[10px] text-muted-foreground font-mono">
+                    {past.length}
+                  </span>
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={redo}
+                  disabled={future.length === 0}
+                  className="gap-1.5 rounded-l-none"
+                  title={`Redo (Ctrl+Shift+Z) - ${future.length} action${future.length !== 1 ? 's' : ''} available`}
+                >
+                  <Redo className="w-4 h-4" />
+                  <span className="text-[10px] text-muted-foreground font-mono">
+                    {future.length}
+                  </span>
+                </Button>
+              </div>
               
               <Button
                 size="sm"
