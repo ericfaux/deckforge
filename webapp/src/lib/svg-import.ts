@@ -224,8 +224,32 @@ function parseComplexShape(
   svgHeight: number,
   opacity: number
 ): Omit<CanvasObject, 'id'> {
-  // Get bounding box to determine dimensions
-  const bbox = element.getBBox ? element.getBBox() : { x: 0, y: 0, width: 100, height: 100 };
+  // Try to get bounding box, with fallback
+  let bbox = { x: 0, y: 0, width: 100, height: 100 };
+  
+  try {
+    // Temporarily attach to DOM to get accurate bounding box
+    const tempSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    tempSvg.style.position = 'absolute';
+    tempSvg.style.visibility = 'hidden';
+    const tempClone = element.cloneNode(true) as SVGElement;
+    tempSvg.appendChild(tempClone);
+    document.body.appendChild(tempSvg);
+    
+    if (tempClone.getBBox) {
+      const computedBox = tempClone.getBBox();
+      bbox = {
+        x: computedBox.x,
+        y: computedBox.y,
+        width: computedBox.width,
+        height: computedBox.height,
+      };
+    }
+    
+    document.body.removeChild(tempSvg);
+  } catch (err) {
+    console.warn('Failed to get accurate bounding box, using defaults', err);
+  }
   
   // Clone the element and wrap in a standalone SVG
   const clone = element.cloneNode(true) as SVGElement;

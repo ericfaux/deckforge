@@ -610,6 +610,41 @@ function CanvasObjectItem({
     );
   }
 
+  // Render image (regular images + imported SVGs)
+  if (obj.type === 'image' && obj.src) {
+    const width = obj.width * obj.scaleX;
+    const height = obj.height * obj.scaleY;
+
+    const el = (
+      <g
+        transform={`translate(${obj.x}, ${obj.y}) rotate(${obj.rotation}, ${width/2}, ${height/2})`}
+        opacity={obj.opacity}
+        style={{ cursor, filter: filterStyle }}
+        onMouseDown={handleMouseDown}
+      >
+        <image
+          href={obj.src}
+          width={width}
+          height={height}
+          preserveAspectRatio="xMidYMid meet"
+        />
+        {isSelected && (
+          <rect
+            x={0}
+            y={0}
+            width={width}
+            height={height}
+            fill="none"
+            stroke="#ccff00"
+            strokeWidth={2}
+            strokeDasharray="4,2"
+          />
+        )}
+      </g>
+    );
+    return renderWithColorize(el);
+  }
+
   return null;
 }
 
