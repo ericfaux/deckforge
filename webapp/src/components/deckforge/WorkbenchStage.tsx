@@ -5,6 +5,7 @@ import { PenTool } from './PenTool';
 import { TransformHandles } from './TransformHandles';
 import { SnapGuides, calculateSnapGuides } from './SnapGuides';
 import { RulerOverlay } from './RulerOverlay';
+import { ContextMenu } from './ContextMenu';
 import type { LucideIcon } from 'lucide-react';
 import { Skull, Flame, Zap, Sword, Ghost, Bug, Eye, Target, Radio, Disc3, Music2, Rocket, Crown, Anchor, Sun, Moon, Triangle, Hexagon, Circle, Square, Star, Heart, Sparkles, Hand, Cat, Dog, Fish, Bird, Leaf, Cloud } from 'lucide-react';
 
@@ -118,6 +119,7 @@ function CanvasObjectItem({
   onDragStart,
   onDragMove,
   onDragEnd,
+  onContextMenu,
 }: {
   obj: CanvasObject;
   isSelected: boolean;
@@ -129,6 +131,7 @@ function CanvasObjectItem({
   onDragStart?: () => void;
   onDragMove?: (obj: CanvasObject) => void;
   onDragEnd?: () => void;
+  onContextMenu?: (e: React.MouseEvent, objId: string) => void;
 }) {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ objX: 0, objY: 0, clientX: 0, clientY: 0 });
@@ -152,6 +155,14 @@ function CanvasObjectItem({
       clientY: e.clientY,
     });
     onDragStart?.();
+  };
+
+  const handleRightClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (onContextMenu) {
+      onContextMenu(e, obj.id);
+    }
   };
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
@@ -226,6 +237,7 @@ function CanvasObjectItem({
         opacity={obj.opacity}
         style={{ cursor }}
         onMouseDown={handleMouseDown}
+        onContextMenu={handleRightClick}
       >
         {/* Render all children */}
         {obj.children.map((child) => (
@@ -839,6 +851,7 @@ export function WorkbenchStage() {
   const [touchDistance, setTouchDistance] = useState<number | null>(null);
   const [snapGuides, setSnapGuides] = useState<Array<{ type: 'vertical' | 'horizontal'; position: number; label?: string }>>([]);
   const [isDraggingObject, setIsDraggingObject] = useState(false);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; objectId: string } | null>(null);
 
   const {
     objects,
@@ -1157,6 +1170,13 @@ export function WorkbenchStage() {
                   setIsDraggingObject(false);
                   setSnapGuides([]);
                 }}
+                onContextMenu={(e, objId) => {
+                  setContextMenu({
+                    x: e.clientX,
+                    y: e.clientY,
+                    objectId: objId,
+                  });
+                }}
               />
             ))}
 
@@ -1448,6 +1468,16 @@ export function WorkbenchStage() {
 
       {/* Zoom controls */}
       <ZoomControls />
+
+      {/* Context menu */}
+      {contextMenu && (
+        <ContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          objectId={contextMenu.objectId}
+          onClose={() => setContextMenu(null)}
+        />
+      )}
     </div>
   );
 }
