@@ -6,6 +6,7 @@ import { Inspector } from '@/components/deckforge/Inspector';
 import { VersionHistory } from '@/components/deckforge/VersionHistory';
 import { ShareModal } from '@/components/deckforge/ShareModal';
 import { AnimationPreview } from '@/components/deckforge/AnimationPreview';
+import { BrandKitModal } from '@/components/deckforge/BrandKitModal';
 import { MobileToolbar } from '@/components/deckforge/MobileToolbar';
 import { MobileDrawer } from '@/components/deckforge/MobileDrawer';
 import { LayerList } from '@/components/deckforge/LayerList';
@@ -14,7 +15,7 @@ import { useAuthStore } from '@/store/auth';
 import { designsAPI } from '@/lib/api';
 import { exportToPNG, exportToSVG, downloadBlob } from '@/lib/export';
 import { Button } from '@/components/ui/button';
-import { Save, Download, User, Sparkles, Clock, Menu, Share2, Play, ChevronDown } from 'lucide-react';
+import { Save, Download, User, Sparkles, Clock, Menu, Share2, Play, ChevronDown, Palette } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { KeyboardShortcuts } from '@/components/deckforge/KeyboardShortcuts';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -31,6 +32,7 @@ export default function DeckForge() {
   const [isVersionHistoryOpen, setIsVersionHistoryOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isAnimationPreviewOpen, setIsAnimationPreviewOpen] = useState(false);
+  const [isBrandKitModalOpen, setIsBrandKitModalOpen] = useState(false);
   const [mobileInspectorOpen, setMobileInspectorOpen] = useState(false);
   const [mobileLayersOpen, setMobileLayersOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -244,6 +246,17 @@ export default function DeckForge() {
                 )}
               </div>
 
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setIsBrandKitModalOpen(true)}
+                className="gap-2"
+              >
+                <Palette className="w-4 h-4" />
+                Brand Kits
+                <span className="ml-1 text-[9px] text-accent">PRO</span>
+              </Button>
+
               {currentDesignId && (
                 <Button
                   size="sm"
@@ -420,6 +433,26 @@ export default function DeckForge() {
       <AnimationPreview
         isOpen={isAnimationPreviewOpen}
         onClose={() => setIsAnimationPreviewOpen(false)}
+      />
+
+      {/* Brand Kit Modal */}
+      <BrandKitModal
+        isOpen={isBrandKitModalOpen}
+        onClose={() => setIsBrandKitModalOpen(false)}
+        currentColors={(() => {
+          // Extract unique colors from all objects
+          const colors = new Set<string>();
+          objects.forEach(obj => {
+            if (obj.fill) colors.add(obj.fill);
+            if (obj.stroke) colors.add(obj.stroke);
+            if (obj.colorize) colors.add(obj.colorize);
+          });
+          return Array.from(colors);
+        })()}
+        onApplyKit={(kit) => {
+          // TODO: Apply brand kit colors to canvas (replace existing colors)
+          console.log('Applying brand kit:', kit);
+        }}
       />
     </div>
   );

@@ -12,6 +12,7 @@ import galleryRouter from "./routes/gallery";
 import commentsRouter from "./routes/comments";
 import foldersRouter from "./routes/folders";
 import tagsRouter from "./routes/tags";
+import brandKitsRouter from "./routes/brand-kits";
 import { logger } from "hono/logger";
 
 const app = new Hono();
@@ -51,6 +52,7 @@ app.route("/api/gallery", galleryRouter);
 app.route("/api/comments", commentsRouter);
 app.route("/api/folders", foldersRouter);
 app.route("/api/tags", tagsRouter);
+app.route("/api/brand-kits", brandKitsRouter);
 
 const port = Number(process.env.PORT) || 3000;
 

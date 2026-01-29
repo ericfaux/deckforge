@@ -303,3 +303,46 @@ function getImageDimensions(file: File): Promise<{width: number; height: number}
     img.src = url;
   });
 }
+
+// Brand Kits API (Premium feature)
+export const brandKitsAPI = {
+  async list() {
+    const response = await apiRequest('/api/brand-kits');
+    if (!response.ok) {
+      throw new Error('Failed to list brand kits');
+    }
+    return response.json();
+  },
+
+  async create(kit: { name: string; description?: string; colors: string[]; fonts?: any[]; is_default?: boolean }) {
+    const response = await apiRequest('/api/brand-kits', {
+      method: 'POST',
+      body: JSON.stringify(kit),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to create brand kit');
+    }
+    return response.json();
+  },
+
+  async update(id: string, updates: Partial<{ name: string; description: string; colors: string[]; fonts: any[]; is_default: boolean }>) {
+    const response = await apiRequest(`/api/brand-kits/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(updates),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to update brand kit');
+    }
+    return response.json();
+  },
+
+  async delete(id: string) {
+    const response = await apiRequest(`/api/brand-kits/${id}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) {
+      throw new Error('Failed to delete brand kit');
+    }
+    return response.json();
+  },
+};
