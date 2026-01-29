@@ -30,9 +30,11 @@ const shortcuts: Shortcut[] = [
   { keys: ['Ctrl', 'Z'], description: 'Undo', category: 'Editing' },
   { keys: ['Ctrl', 'Shift', 'Z'], description: 'Redo', category: 'Editing' },
   { keys: ['Ctrl', 'D'], description: 'Duplicate', category: 'Editing' },
+  { keys: ['Ctrl', 'Shift', 'D'], description: 'Array duplicate (3×3 grid)', category: 'Editing' },
   { keys: ['Ctrl', 'C'], description: 'Copy to clipboard', category: 'Editing' },
   { keys: ['Ctrl', 'V'], description: 'Paste from clipboard', category: 'Editing' },
   { keys: ['Ctrl', 'A'], description: 'Select all (top object)', category: 'Editing' },
+  { keys: ['Ctrl', 'L'], description: 'Lock/unlock object', category: 'Editing' },
   
   // Transform
   { keys: ['Drag'], description: 'Move object', category: 'Transform' },

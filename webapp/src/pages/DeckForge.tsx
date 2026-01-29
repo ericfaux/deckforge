@@ -215,7 +215,7 @@ export default function DeckForge() {
       }
 
       // Duplicate (Ctrl+D)
-      if (ctrl && key === 'd' && selectedId) {
+      if (ctrl && key === 'd' && !shift && selectedId) {
         e.preventDefault();
         const obj = objects.find(o => o.id === selectedId);
         if (obj) {
@@ -226,6 +226,34 @@ export default function DeckForge() {
             y: obj.y + 10,
           });
           toast.success('Object duplicated');
+        }
+        return;
+      }
+
+      // Array Duplicate (Ctrl+Shift+D) - Creates 3x3 grid
+      if (ctrl && shift && key === 'd' && selectedId) {
+        e.preventDefault();
+        const obj = objects.find(o => o.id === selectedId);
+        if (obj) {
+          const { id, ...objWithoutId } = obj;
+          const spacing = Math.max(obj.width * obj.scaleX, obj.height * obj.scaleY) + 10;
+          let count = 0;
+          
+          // Create 3x3 grid (skip center which is original)
+          for (let row = 0; row < 3; row++) {
+            for (let col = 0; col < 3; col++) {
+              if (row === 0 && col === 0) continue; // Skip first position
+              
+              addObject({
+                ...objWithoutId,
+                x: obj.x + (col * spacing),
+                y: obj.y + (row * spacing),
+              });
+              count++;
+            }
+          }
+          
+          toast.success(`Created ${count} copies in 3×3 grid`);
         }
         return;
       }
