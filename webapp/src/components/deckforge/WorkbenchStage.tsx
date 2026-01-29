@@ -2,6 +2,7 @@ import { useRef, useEffect, useState, useCallback } from 'react';
 import { useDeckForgeStore, CanvasObject } from '@/store/deckforge';
 import { ZoomControls } from './ZoomControls';
 import { PenTool } from './PenTool';
+import { TransformHandles } from './TransformHandles';
 import type { LucideIcon } from 'lucide-react';
 import { Skull, Flame, Zap, Sword, Ghost, Bug, Eye, Target, Radio, Disc3, Music2, Rocket, Crown, Anchor, Sun, Moon, Triangle, Hexagon, Circle, Square, Star, Heart, Sparkles, Hand, Cat, Dog, Fish, Bird, Leaf, Cloud } from 'lucide-react';
 
@@ -921,6 +922,28 @@ export function WorkbenchStage() {
                 deckY={deckY}
               />
             ))}
+
+            {/* Transform handles for selected object */}
+            {selectedId && activeTool !== 'pen' && (() => {
+              const selectedObj = objects.find(obj => obj.id === selectedId);
+              if (!selectedObj) return null;
+              
+              return (
+                <TransformHandles
+                  object={selectedObj}
+                  stageScale={stageScale}
+                  onUpdate={(updates) => {
+                    updateObject(selectedId, updates);
+                  }}
+                  onStartTransform={() => {
+                    saveToHistory();
+                  }}
+                  onEndTransform={() => {
+                    // Optional: could trigger another history save or validation
+                  }}
+                />
+              );
+            })()}
           </g>
 
           {/* Texture overlays with blend modes */}
