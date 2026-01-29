@@ -1,12 +1,14 @@
-import { Download, Grid3X3, RotateCcw, ChevronDown } from 'lucide-react';
-import { useState } from 'react';
+import { Download, Grid3X3, RotateCcw, ChevronDown, Type } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { useDeckForgeStore, CanvasObject } from '@/store/deckforge';
 import { Slider } from '@/components/ui/slider';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { LayerList } from './LayerList';
 import { AdvancedEffects } from './AdvancedEffects';
+import { FontUploadModal } from './FontUploadModal';
 import { DECK_WIDTH, DECK_HEIGHT } from './WorkbenchStage';
+import { preloadUserFonts, Font } from '@/lib/fonts';
 import {
   Accordion,
   AccordionContent,
@@ -21,6 +23,15 @@ export function Inspector() {
   // Pattern generator state
   const [patternGap, setPatternGap] = useState(5);
   const [patternRandomRotation, setPatternRandomRotation] = useState(0);
+
+  // Font management state
+  const [isFontModalOpen, setIsFontModalOpen] = useState(false);
+  const [userFonts, setUserFonts] = useState<Font[]>([]);
+
+  // Load user fonts on mount
+  useEffect(() => {
+    preloadUserFonts().then(setUserFonts);
+  }, []);
 
   const handleExport = () => {
     // Export functionality - placeholder for now
@@ -441,6 +452,45 @@ export function Inspector() {
                   />
                 </div>
                 <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                      Font Family
+                    </Label>
+                    <button
+                      onClick={() => setIsFontModalOpen(true)}
+                      className="text-[10px] uppercase tracking-widest text-accent hover:text-accent/80 transition-colors flex items-center gap-1"
+                    >
+                      <Type className="w-3 h-3" />
+                      Manage
+                    </button>
+                  </div>
+                  <select
+                    value={selectedObject.fontFamily || 'Arial'}
+                    onChange={(e) => updateWithHistory({ fontFamily: e.target.value })}
+                    className="w-full h-8 text-xs bg-secondary border border-border px-2 cursor-pointer"
+                  >
+                    <optgroup label="System Fonts">
+                      <option value="Arial">Arial</option>
+                      <option value="Helvetica">Helvetica</option>
+                      <option value="Times New Roman">Times New Roman</option>
+                      <option value="Courier New">Courier New</option>
+                      <option value="Georgia">Georgia</option>
+                      <option value="Verdana">Verdana</option>
+                      <option value="Impact">Impact</option>
+                      <option value="Comic Sans MS">Comic Sans MS</option>
+                    </optgroup>
+                    {userFonts.length > 0 && (
+                      <optgroup label="Custom Fonts">
+                        {userFonts.map((font) => (
+                          <option key={font.id} value={font.font_family}>
+                            {font.name}
+                          </option>
+                        ))}
+                      </optgroup>
+                    )}
+                  </select>
+                </div>
+                <div className="space-y-2">
                   <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
                     Font Size
                   </Label>
@@ -791,6 +841,15 @@ export function Inspector() {
 
       {/* Layer list */}
       <LayerList />
+
+      {/* Font Upload Modal */}
+      <FontUploadModal
+        isOpen={isFontModalOpen}
+        onClose={() => setIsFontModalOpen(false)}
+        onFontUploaded={(font) => {
+          setUserFonts([...userFonts, font]);
+        }}
+      />
     </div>
   );
 }
