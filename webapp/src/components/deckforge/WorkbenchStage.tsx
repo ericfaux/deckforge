@@ -134,7 +134,15 @@ function CanvasObjectItem({
 
   const handleMouseDown = (e: React.MouseEvent) => {
     e.stopPropagation();
+    
+    // Locked objects can be selected but not moved
     onSelect();
+    
+    if (obj.locked) {
+      // Show toast that object is locked
+      return;
+    }
+    
     setIsDragging(true);
     setDragStart({
       objX: obj.x,
@@ -1061,7 +1069,7 @@ export function WorkbenchStage() {
             {/* Transform handles for selected object */}
             {selectedId && activeTool !== 'pen' && !isDraggingObject && (() => {
               const selectedObj = objects.find(obj => obj.id === selectedId);
-              if (!selectedObj) return null;
+              if (!selectedObj || selectedObj.locked) return null;
               
               return (
                 <TransformHandles

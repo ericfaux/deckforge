@@ -40,6 +40,7 @@ export interface CanvasObject {
   opacity: number;
   scaleX: number;
   scaleY: number;
+  locked?: boolean; // Lock object to prevent moving/editing
   // For text
   text?: string;
   fontSize?: number;

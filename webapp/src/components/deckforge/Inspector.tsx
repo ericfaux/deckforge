@@ -1,4 +1,4 @@
-import { Download, Grid3X3, RotateCcw, ChevronDown, Type } from 'lucide-react';
+import { Download, Grid3X3, RotateCcw, ChevronDown, Type, Lock, Unlock } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useDeckForgeStore, CanvasObject } from '@/store/deckforge';
 import { Slider } from '@/components/ui/slider';
@@ -63,10 +63,31 @@ export function Inspector() {
       <div className="flex-1 overflow-auto">
         {selectedObject ? (
           <div className="p-3 space-y-4">
-            <div className="py-2 border-b border-border">
+            <div className="py-2 border-b border-border flex items-center justify-between">
               <span className="font-display text-[10px] uppercase tracking-widest text-muted-foreground">
                 Properties
               </span>
+              <button
+                onClick={() => updateWithHistory({ locked: !selectedObject.locked })}
+                className={`flex items-center gap-1.5 px-2 py-1 text-xs transition-colors ${
+                  selectedObject.locked
+                    ? 'bg-destructive/20 text-destructive hover:bg-destructive/30'
+                    : 'bg-secondary text-muted-foreground hover:bg-secondary/80'
+                }`}
+                title={selectedObject.locked ? 'Unlock object' : 'Lock object'}
+              >
+                {selectedObject.locked ? (
+                  <>
+                    <Lock className="w-3 h-3" />
+                    <span className="uppercase tracking-wider">Locked</span>
+                  </>
+                ) : (
+                  <>
+                    <Unlock className="w-3 h-3" />
+                    <span className="uppercase tracking-wider">Unlocked</span>
+                  </>
+                )}
+              </button>
             </div>
 
             {/* Opacity */}
