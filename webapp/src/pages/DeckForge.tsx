@@ -12,6 +12,7 @@ import { ExportPreview } from '@/components/deckforge/ExportPreview';
 import { MobileToolbar } from '@/components/deckforge/MobileToolbar';
 import { MobileDrawer } from '@/components/deckforge/MobileDrawer';
 import { LayerList } from '@/components/deckforge/LayerList';
+import { DECK_WIDTH, DECK_HEIGHT } from '@/components/deckforge/WorkbenchStage';
 import { useDeckForgeStore, CanvasObject } from '@/store/deckforge';
 import { useAuthStore } from '@/store/auth';
 import { designsAPI } from '@/lib/api';
@@ -26,7 +27,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
 export default function DeckForge() {
-  const { selectedId, deleteObject, undo, redo, getCanvasState, currentDesignId, setDesignId, setSaving, isSaving, objects, designName, createVersion, past, future, updateObject, saveToHistory } = useDeckForgeStore();
+  const { selectedId, deleteObject, undo, redo, getCanvasState, currentDesignId, setDesignId, setSaving, isSaving, objects, designName, createVersion, past, future, updateObject, saveToHistory, addObject, selectObject, setActiveTool } = useDeckForgeStore();
   const { isAuthenticated } = useAuthStore();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -169,28 +170,231 @@ export default function DeckForge() {
         return;
       }
 
+      const key = e.key.toLowerCase();
+      const ctrl = e.ctrlKey || e.metaKey;
+      const shift = e.shiftKey;
+      const alt = e.altKey;
+
+      // === FILE OPERATIONS ===
+      
+      // Save (Ctrl+S)
+      if (ctrl && key === 's') {
+        e.preventDefault();
+        handleSave();
+        return;
+      }
+
+      // Export (Ctrl+E)
+      if (ctrl && key === 'e') {
+        e.preventDefault();
+        handleExport();
+        return;
+      }
+
+      // === EDITING ===
+
       // Delete selected object
-      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedId) {
+      if ((key === 'delete' || key === 'backspace') && selectedId) {
         e.preventDefault();
         deleteObject(selectedId);
+        return;
       }
 
-      // Undo
-      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+      // Undo (Ctrl+Z)
+      if (ctrl && key === 'z' && !shift) {
         e.preventDefault();
         undo();
+        return;
       }
 
-      // Redo
-      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && e.shiftKey) {
+      // Redo (Ctrl+Shift+Z)
+      if (ctrl && key === 'z' && shift) {
         e.preventDefault();
         redo();
+        return;
+      }
+
+      // Duplicate (Ctrl+D)
+      if (ctrl && key === 'd' && selectedId) {
+        e.preventDefault();
+        const obj = objects.find(o => o.id === selectedId);
+        if (obj) {
+          const { id, ...objWithoutId } = obj;
+          addObject({
+            ...objWithoutId,
+            x: obj.x + 10,
+            y: obj.y + 10,
+          });
+          toast.success('Object duplicated');
+        }
+        return;
+      }
+
+      // === TOOL SELECTION ===
+
+      // Text tool (T)
+      if (key === 't' && !ctrl && !alt) {
+        e.preventDefault();
+        setActiveTool('text');
+        return;
+      }
+
+      // Pen tool (P)
+      if (key === 'p' && !ctrl && !alt) {
+        e.preventDefault();
+        setActiveTool('pen');
+        return;
+      }
+
+      // Graphics/Shapes (G)
+      if (key === 'g' && !ctrl && !alt) {
+        e.preventDefault();
+        setActiveTool('graphics');
+        return;
+      }
+
+      // Lines (L)
+      if (key === 'l' && !ctrl && !alt) {
+        e.preventDefault();
+        setActiveTool('lines');
+        return;
+      }
+
+      // Stickers (S)
+      if (key === 's' && !ctrl && !alt) {
+        e.preventDefault();
+        setActiveTool('stickers');
+        return;
+      }
+
+      // Uploads (U)
+      if (key === 'u' && !ctrl && !alt) {
+        e.preventDefault();
+        setActiveTool('uploads');
+        return;
+      }
+
+      // Escape to deselect/close tools
+      if (key === 'escape') {
+        e.preventDefault();
+        selectObject(null);
+        setActiveTool(null);
+        return;
+      }
+
+      // === LAYER ORDERING ===
+      
+      if (selectedId) {
+        const currentIndex = objects.findIndex(o => o.id === selectedId);
+        if (currentIndex === -1) return;
+
+        // Bring forward (Ctrl+])
+        if (ctrl && !shift && key === ']') {
+          e.preventDefault();
+          if (currentIndex < objects.length - 1) {
+            const newObjects = [...objects];
+            [newObjects[currentIndex], newObjects[currentIndex + 1]] = [newObjects[currentIndex + 1], newObjects[currentIndex]];
+            useDeckForgeStore.setState({ objects: newObjects });
+            toast.success('Brought forward');
+          }
+          return;
+        }
+
+        // Send backward (Ctrl+[)
+        if (ctrl && !shift && key === '[') {
+          e.preventDefault();
+          if (currentIndex > 0) {
+            const newObjects = [...objects];
+            [newObjects[currentIndex], newObjects[currentIndex - 1]] = [newObjects[currentIndex - 1], newObjects[currentIndex]];
+            useDeckForgeStore.setState({ objects: newObjects });
+            toast.success('Sent backward');
+          }
+          return;
+        }
+
+        // Bring to front (Ctrl+Shift+])
+        if (ctrl && shift && key === ']') {
+          e.preventDefault();
+          const newObjects = objects.filter(o => o.id !== selectedId);
+          newObjects.push(objects[currentIndex]);
+          useDeckForgeStore.setState({ objects: newObjects });
+          toast.success('Brought to front');
+          return;
+        }
+
+        // Send to back (Ctrl+Shift+[)
+        if (ctrl && shift && key === '[') {
+          e.preventDefault();
+          const newObjects = objects.filter(o => o.id !== selectedId);
+          newObjects.unshift(objects[currentIndex]);
+          useDeckForgeStore.setState({ objects: newObjects });
+          toast.success('Sent to back');
+          return;
+        }
+      }
+
+      // === ALIGNMENT (Alt + key) ===
+      
+      if (selectedId && alt) {
+        const obj = objects.find(o => o.id === selectedId);
+        if (!obj) return;
+
+        const centerX = (DECK_WIDTH - obj.width * obj.scaleX) / 2;
+        const centerY = (DECK_HEIGHT - obj.height * obj.scaleY) / 2;
+
+        // Align left (Alt+L)
+        if (key === 'l') {
+          e.preventDefault();
+          updateObject(selectedId, { x: 0 });
+          toast.success('Aligned left');
+          return;
+        }
+
+        // Align right (Alt+R)
+        if (key === 'r') {
+          e.preventDefault();
+          updateObject(selectedId, { x: DECK_WIDTH - obj.width * obj.scaleX });
+          toast.success('Aligned right');
+          return;
+        }
+
+        // Align center (Alt+C)
+        if (key === 'c') {
+          e.preventDefault();
+          updateObject(selectedId, { x: centerX });
+          toast.success('Aligned center');
+          return;
+        }
+
+        // Align top (Alt+T)
+        if (key === 't') {
+          e.preventDefault();
+          updateObject(selectedId, { y: 0 });
+          toast.success('Aligned top');
+          return;
+        }
+
+        // Align bottom (Alt+B)
+        if (key === 'b') {
+          e.preventDefault();
+          updateObject(selectedId, { y: DECK_HEIGHT - obj.height * obj.scaleY });
+          toast.success('Aligned bottom');
+          return;
+        }
+
+        // Align middle (Alt+M)
+        if (key === 'm') {
+          e.preventDefault();
+          updateObject(selectedId, { y: centerY });
+          toast.success('Aligned middle');
+          return;
+        }
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedId, deleteObject, undo, redo]);
+  }, [selectedId, deleteObject, undo, redo, objects, handleSave, handleExport, addObject, selectObject, setActiveTool, updateObject]);
 
   return (
     <div className="h-screen w-screen flex flex-col bg-background overflow-hidden">
