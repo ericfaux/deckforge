@@ -36,9 +36,10 @@ export function TransformHandles({
   const y = object.y;
   const rotation = object.rotation || 0;
 
-  // Handle size scaled to screen (so they're always visible)
-  const handleSize = 10 / stageScale;
-  const rotateHandleDistance = 35 / stageScale;
+  // Handle size scaled to screen (larger on mobile for touch)
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  const handleSize = (isMobile ? 16 : 10) / stageScale;
+  const rotateHandleDistance = (isMobile ? 45 : 35) / stageScale;
 
   // Handle positions (before rotation)
   const handles = {

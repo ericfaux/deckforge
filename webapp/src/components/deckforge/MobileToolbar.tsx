@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { 
+import {
   Save, 
   Download, 
   Undo, 
@@ -9,7 +9,8 @@ import {
   Clock,
   Menu,
   X,
-  ChevronUp
+  ChevronUp,
+  Trash2
 } from 'lucide-react';
 import { useDeckForgeStore } from '@/store/deckforge';
 import { cn } from '@/lib/utils';
@@ -33,8 +34,32 @@ export function MobileToolbar({
   isSaving,
   isExporting,
 }: MobileToolbarProps) {
-  const { undo, redo, past, future } = useDeckForgeStore();
+  const { undo, redo, past, future, selectedId, deleteObject } = useDeckForgeStore();
   const [isExpanded, setIsExpanded] = useState(false);
+
+  // Haptic feedback helper
+  const vibrate = (pattern: number | number[] = 10) => {
+    if ('vibrate' in navigator) {
+      navigator.vibrate(pattern);
+    }
+  };
+
+  const handleUndo = () => {
+    vibrate(10);
+    undo();
+  };
+
+  const handleRedo = () => {
+    vibrate(10);
+    redo();
+  };
+
+  const handleDelete = () => {
+    if (selectedId) {
+      vibrate([10, 50, 10]); // Double vibration for destructive action
+      deleteObject(selectedId);
+    }
+  };
 
   return (
     <>
@@ -66,44 +91,54 @@ export function MobileToolbar({
         </button>
 
         {/* Main toolbar */}
-        <div className="h-14 flex items-center justify-around px-2">
+        <div className="h-14 flex items-center justify-around px-1">
           <button
-            onClick={undo}
+            onClick={handleUndo}
             disabled={past.length === 0}
-            className="flex flex-col items-center gap-0.5 p-2 disabled:opacity-30 disabled:cursor-not-allowed"
+            className="flex flex-col items-center gap-0.5 p-2 min-w-[56px] disabled:opacity-30 disabled:cursor-not-allowed active:scale-95 transition-transform"
           >
             <Undo className="w-5 h-5" />
             <span className="text-[9px] uppercase tracking-wider">Undo</span>
           </button>
 
           <button
-            onClick={redo}
+            onClick={handleRedo}
             disabled={future.length === 0}
-            className="flex flex-col items-center gap-0.5 p-2 disabled:opacity-30 disabled:cursor-not-allowed"
+            className="flex flex-col items-center gap-0.5 p-2 min-w-[56px] disabled:opacity-30 disabled:cursor-not-allowed active:scale-95 transition-transform"
           >
             <Redo className="w-5 h-5" />
             <span className="text-[9px] uppercase tracking-wider">Redo</span>
           </button>
 
+          {selectedId && (
+            <button
+              onClick={handleDelete}
+              className="flex flex-col items-center gap-0.5 p-2 min-w-[56px] text-destructive active:scale-95 transition-transform"
+            >
+              <Trash2 className="w-5 h-5" />
+              <span className="text-[9px] uppercase tracking-wider">Delete</span>
+            </button>
+          )}
+
           <button
-            onClick={onOpenLayers}
-            className="flex flex-col items-center gap-0.5 p-2"
+            onClick={() => { vibrate(10); onOpenLayers(); }}
+            className="flex flex-col items-center gap-0.5 p-2 min-w-[56px] active:scale-95 transition-transform"
           >
             <Layers className="w-5 h-5" />
             <span className="text-[9px] uppercase tracking-wider">Layers</span>
           </button>
 
           <button
-            onClick={onOpenInspector}
-            className="flex flex-col items-center gap-0.5 p-2"
+            onClick={() => { vibrate(10); onOpenInspector(); }}
+            className="flex flex-col items-center gap-0.5 p-2 min-w-[56px] active:scale-95 transition-transform"
           >
             <Settings className="w-5 h-5" />
             <span className="text-[9px] uppercase tracking-wider">Props</span>
           </button>
 
           <button
-            onClick={onOpenHistory}
-            className="flex flex-col items-center gap-0.5 p-2"
+            onClick={() => { vibrate(10); onOpenHistory(); }}
+            className="flex flex-col items-center gap-0.5 p-2 min-w-[56px] active:scale-95 transition-transform"
           >
             <Clock className="w-5 h-5" />
             <span className="text-[9px] uppercase tracking-wider">History</span>
