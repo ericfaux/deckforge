@@ -29,6 +29,30 @@ const DEFAULT_PARAMS: DeckParams = {
   thickness: 5,
 };
 
+// Deck shape presets
+const DECK_PRESETS = {
+  classic: {
+    name: 'Classic Popsicle',
+    params: { length: 96, width: 26, concaveDepth: 2, noseKick: 15, tailKick: 18, thickness: 5 },
+  },
+  street: {
+    name: 'Street Deck',
+    params: { length: 96, width: 28, concaveDepth: 2.5, noseKick: 18, tailKick: 20, thickness: 5 },
+  },
+  vert: {
+    name: 'Vert Deck',
+    params: { length: 100, width: 30, concaveDepth: 3, noseKick: 12, tailKick: 14, thickness: 6 },
+  },
+  cruiser: {
+    name: 'Cruiser',
+    params: { length: 90, width: 24, concaveDepth: 1.5, noseKick: 10, tailKick: 12, thickness: 4.5 },
+  },
+  tech: {
+    name: 'Tech Deck',
+    params: { length: 94, width: 25, concaveDepth: 3.5, noseKick: 20, tailKick: 22, thickness: 5 },
+  },
+};
+
 function FingerboardDeck({ 
   params, 
   textureUrl 
@@ -346,8 +370,24 @@ export default function DeckGenerator3D({ objects, onClose }: DeckGenerator3DPro
         {/* Controls Panel */}
         <div className="w-80 bg-gray-900 border-r border-gray-700 p-6 overflow-y-auto">
           <div className="space-y-6">
+            {/* Preset Shapes */}
             <div>
-              <h3 className="text-lg font-semibold text-white mb-4">Deck Parameters</h3>
+              <h3 className="text-lg font-semibold text-white mb-3">Deck Shape Presets</h3>
+              <div className="grid grid-cols-2 gap-2">
+                {Object.entries(DECK_PRESETS).map(([key, preset]) => (
+                  <button
+                    key={key}
+                    onClick={() => setParams(preset.params)}
+                    className="px-3 py-2 bg-gray-800 hover:bg-gray-700 text-white text-sm rounded-lg transition-colors border border-gray-600"
+                  >
+                    {preset.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="border-t border-gray-700 pt-6">
+              <h3 className="text-lg font-semibold text-white mb-4">Custom Parameters</h3>
               
               <div className="space-y-4">
                 <div>
