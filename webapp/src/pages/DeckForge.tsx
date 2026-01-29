@@ -3,21 +3,23 @@ import { ToolRail } from '@/components/deckforge/ToolRail';
 import { ToolDrawer } from '@/components/deckforge/ToolDrawer';
 import { WorkbenchStage } from '@/components/deckforge/WorkbenchStage';
 import { Inspector } from '@/components/deckforge/Inspector';
+import { VersionHistory } from '@/components/deckforge/VersionHistory';
 import { useDeckForgeStore } from '@/store/deckforge';
 import { useAuthStore } from '@/store/auth';
 import { designsAPI } from '@/lib/api';
 import { exportToPNG, downloadBlob } from '@/lib/export';
 import { Button } from '@/components/ui/button';
-import { Save, Download, User, Sparkles } from 'lucide-react';
+import { Save, Download, User, Sparkles, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { KeyboardShortcuts } from '@/components/deckforge/KeyboardShortcuts';
 
 export default function DeckForge() {
-  const { selectedId, deleteObject, undo, redo, getCanvasState, currentDesignId, setDesignId, setSaving, isSaving, objects, designName } = useDeckForgeStore();
+  const { selectedId, deleteObject, undo, redo, getCanvasState, currentDesignId, setDesignId, setSaving, isSaving, objects, designName, createVersion } = useDeckForgeStore();
   const { isAuthenticated } = useAuthStore();
   const navigate = useNavigate();
   const [saveStatus, setSaveStatus] = useState<string>('');
   const [isExporting, setIsExporting] = useState(false);
+  const [isVersionHistoryOpen, setIsVersionHistoryOpen] = useState(false);
 
   const handleSave = async () => {
     if (!isAuthenticated) {
@@ -84,6 +86,17 @@ export default function DeckForge() {
       setIsExporting(false);
     }
   };
+
+  // Auto-save versions every 5 minutes
+  useEffect(() => {
+    if (objects.length === 0) return; // Don't auto-save empty canvas
+
+    const interval = setInterval(() => {
+      createVersion(undefined, true); // Auto-save
+    }, 5 * 60 * 1000); // 5 minutes
+
+    return () => clearInterval(interval);
+  }, [objects.length, createVersion]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -159,6 +172,16 @@ export default function DeckForge() {
 
           <Button
             size="sm"
+            variant="outline"
+            onClick={() => setIsVersionHistoryOpen(true)}
+            className="gap-2"
+          >
+            <Clock className="w-4 h-4" />
+            History
+          </Button>
+
+          <Button
+            size="sm"
             variant="ghost"
             onClick={() => navigate('/templates')}
             className="gap-2"
@@ -195,6 +218,12 @@ export default function DeckForge() {
         {/* Right: Inspector */}
         <Inspector />
       </div>
+
+      {/* Version History Modal */}
+      <VersionHistory 
+        isOpen={isVersionHistoryOpen}
+        onClose={() => setIsVersionHistoryOpen(false)}
+      />
     </div>
   );
 }

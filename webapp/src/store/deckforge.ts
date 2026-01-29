@@ -108,6 +108,16 @@ interface HistoryState {
   objects: CanvasObject[];
 }
 
+export interface DesignVersion {
+  id: string;
+  name: string;
+  timestamp: number;
+  objects: CanvasObject[];
+  textureOverlays: TextureOverlay[];
+  thumbnail?: string; // base64 thumbnail image
+  autoSaved: boolean; // true if auto-saved, false if manually saved
+}
+
 interface DeckForgeState {
   // Canvas objects
   objects: CanvasObject[];
@@ -121,9 +131,13 @@ interface DeckForgeState {
   stageScale: number;
   stagePosition: { x: number; y: number };
 
-  // History for undo/redo
+  // History for undo/redo (in-session only)
   past: HistoryState[];
   future: HistoryState[];
+
+  // Version history (persistent snapshots)
+  versions: DesignVersion[];
+  currentVersionId: string | null;
 
   // Texture overlays
   textureOverlays: TextureOverlay[];
@@ -162,6 +176,12 @@ interface DeckForgeState {
   setSaving: (saving: boolean) => void;
   resetCanvas: () => void;
   getCanvasState: () => any;
+
+  // Version management
+  createVersion: (name?: string, autoSaved?: boolean) => void;
+  restoreVersion: (versionId: string) => void;
+  deleteVersion: (versionId: string) => void;
+  renameVersion: (versionId: string, newName: string) => void;
 }
 
 const generateId = () => `obj_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -181,6 +201,8 @@ export const useDeckForgeStore = create<DeckForgeState>((set, get) => ({
   stagePosition: { x: 0, y: 0 },
   past: [],
   future: [],
+  versions: [],
+  currentVersionId: null,
   textureOverlays: defaultTextureOverlays,
   showHardwareGuide: false,
   currentDesignId: null,
@@ -435,5 +457,68 @@ export const useDeckForgeStore = create<DeckForgeState>((set, get) => ({
       name: state.designName,
       id: state.currentDesignId,
     };
+  },
+
+  // Version management
+  createVersion: (name, autoSaved = false) => {
+    const state = get();
+    const timestamp = Date.now();
+    const versionName = name || (autoSaved ? `Auto-save ${new Date(timestamp).toLocaleTimeString()}` : `Version ${state.versions.length + 1}`);
+    
+    const newVersion: DesignVersion = {
+      id: `ver_${timestamp}_${Math.random().toString(36).substr(2, 9)}`,
+      name: versionName,
+      timestamp,
+      objects: JSON.parse(JSON.stringify(state.objects)),
+      textureOverlays: JSON.parse(JSON.stringify(state.textureOverlays)),
+      autoSaved,
+    };
+
+    set({
+      versions: [...state.versions, newVersion],
+      currentVersionId: newVersion.id,
+    });
+
+    // Keep only last 50 versions to prevent memory bloat
+    const { versions } = get();
+    if (versions.length > 50) {
+      set({ versions: versions.slice(-50) });
+    }
+  },
+
+  restoreVersion: (versionId) => {
+    const state = get();
+    const version = state.versions.find((v) => v.id === versionId);
+    
+    if (!version) return;
+
+    // Save current state as a version before restoring
+    state.createVersion('Before restore', true);
+
+    set({
+      objects: JSON.parse(JSON.stringify(version.objects)),
+      textureOverlays: JSON.parse(JSON.stringify(version.textureOverlays)),
+      selectedId: null,
+      past: [],
+      future: [],
+      currentVersionId: versionId,
+    });
+  },
+
+  deleteVersion: (versionId) => {
+    const state = get();
+    set({
+      versions: state.versions.filter((v) => v.id !== versionId),
+      currentVersionId: state.currentVersionId === versionId ? null : state.currentVersionId,
+    });
+  },
+
+  renameVersion: (versionId, newName) => {
+    const state = get();
+    set({
+      versions: state.versions.map((v) =>
+        v.id === versionId ? { ...v, name: newName } : v
+      ),
+    });
   },
 }));
