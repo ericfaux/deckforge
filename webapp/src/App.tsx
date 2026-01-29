@@ -14,6 +14,7 @@ import Marketplace from "./pages/Marketplace";
 import MarketplaceDesign from "./pages/MarketplaceDesign";
 import MarketplaceUpload from "./pages/MarketplaceUpload";
 import DesignerDashboard from "./pages/DesignerDashboard";
+import FingerparkBuilder from "./pages/FingerparkBuilder";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -35,6 +36,7 @@ const App = () => (
             <Route path="/marketplace/design/:id" element={<MarketplaceDesign />} />
             <Route path="/marketplace/upload" element={<MarketplaceUpload />} />
             <Route path="/marketplace/dashboard" element={<DesignerDashboard />} />
+            <Route path="/fingerpark" element={<FingerparkBuilder />} />
             <Route path="/share/:token" element={<ShareView />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
