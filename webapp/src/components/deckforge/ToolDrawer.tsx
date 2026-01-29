@@ -1,4 +1,4 @@
-import { X, Skull, Flame, Zap, Sword, Radio, Disc3, Music2, Triangle, Hexagon, Circle, Square, Star, Heart, Crown, Anchor, Target, Eye, Hand, Rocket, Ghost, Bug, Cat, Dog, Fish, Bird, Leaf, Sun, Moon, Cloud, Sparkles, Upload, Trash2, Loader2, FileImage } from 'lucide-react';
+import { X, Skull, Flame, Zap, Sword, Radio, Disc3, Music2, Triangle, Hexagon, Circle, Square, Star, Heart, Crown, Anchor, Target, Eye, Hand, Rocket, Ghost, Bug, Cat, Dog, Fish, Bird, Leaf, Sun, Moon, Cloud, Sparkles, Upload, Trash2, Loader2, FileImage, Mountain, Waves, Pizza, Coffee, Gamepad2, Headphones, Camera, Feather, Compass, Crosshair, Swords, Shield, Award, Trophy, Medal, Laugh, Frown, Smile, Glasses, Watch, Lock, Key, Fingerprint, Bomb, Cherry, Dumbbell } from 'lucide-react';
 import { useState, useRef } from 'react';
 import { useDeckForgeStore, ToolType, CanvasObject, TextureType } from '@/store/deckforge';
 import { cn } from '@/lib/utils';
@@ -22,6 +22,10 @@ const stickerCategories = {
     { name: 'Bug', icon: Bug },
     { name: 'Eye', icon: Eye },
     { name: 'Target', icon: Target },
+    { name: 'Bomb', icon: Bomb },
+    { name: 'Swords', icon: Swords },
+    { name: 'Shield', icon: Shield },
+    { name: 'Crosshair', icon: Crosshair },
   ],
   retro: [
     { name: 'Radio', icon: Radio },
@@ -32,6 +36,10 @@ const stickerCategories = {
     { name: 'Anchor', icon: Anchor },
     { name: 'Sun', icon: Sun },
     { name: 'Moon', icon: Moon },
+    { name: 'Camera', icon: Camera },
+    { name: 'Gamepad', icon: Gamepad2 },
+    { name: 'Headphones', icon: Headphones },
+    { name: 'Watch', icon: Watch },
   ],
   shapes: [
     { name: 'Triangle', icon: Triangle },
@@ -50,6 +58,31 @@ const stickerCategories = {
     { name: 'Bird', icon: Bird },
     { name: 'Leaf', icon: Leaf },
     { name: 'Cloud', icon: Cloud },
+    { name: 'Mountain', icon: Mountain },
+    { name: 'Waves', icon: Waves },
+    { name: 'Feather', icon: Feather },
+  ],
+  street: [
+    { name: 'Pizza', icon: Pizza },
+    { name: 'Coffee', icon: Coffee },
+    { name: 'Cherry', icon: Cherry },
+    { name: 'Glasses', icon: Glasses },
+    { name: 'Lock', icon: Lock },
+    { name: 'Key', icon: Key },
+    { name: 'Fingerprint', icon: Fingerprint },
+    { name: 'Compass', icon: Compass },
+  ],
+  sports: [
+    { name: 'Trophy', icon: Trophy },
+    { name: 'Award', icon: Award },
+    { name: 'Medal', icon: Medal },
+    { name: 'Dumbbell', icon: Dumbbell },
+    { name: 'Target', icon: Target },
+  ],
+  emoji: [
+    { name: 'Laugh', icon: Laugh },
+    { name: 'Smile', icon: Smile },
+    { name: 'Frown', icon: Frown },
   ],
 };
 
@@ -60,6 +93,9 @@ const patternPresets = [
   { id: 'halftone', name: 'Halftone', description: 'Comic book dots' },
   { id: 'noise', name: 'Noise', description: 'Grainy texture' },
   { id: 'tie-dye', name: 'Tie-Dye', description: 'Psychedelic swirl' },
+  { id: 'diagonal-stripes', name: 'Diagonal Stripes', description: 'Bold lines' },
+  { id: 'hexagons', name: 'Hexagons', description: 'Honeycomb pattern' },
+  { id: 'crosshatch', name: 'Crosshatch', description: 'Grid overlay' },
 ];
 
 // ============ TEXTURE QUERIES ============
@@ -69,6 +105,11 @@ const textureQueries = [
   { id: 'graffiti', name: 'Graffiti', query: 'graffiti wall' },
   { id: 'wood', name: 'Wood Grain', query: 'wood grain texture' },
   { id: 'sticker-bomb', name: 'Sticker Bomb', query: 'sticker collage' },
+  { id: 'asphalt', name: 'Asphalt', query: 'asphalt pavement' },
+  { id: 'brick', name: 'Brick Wall', query: 'red brick wall' },
+  { id: 'marble', name: 'Marble', query: 'white marble texture' },
+  { id: 'carbon-fiber', name: 'Carbon Fiber', query: 'carbon fiber weave' },
+  { id: 'splatter', name: 'Paint Splatter', query: 'paint splatter drips' },
 ];
 
 // Legacy assets
@@ -181,6 +222,12 @@ function PatternsContent({ onAddObject, deckCenterX, deckCenterY }: {
         return secondaryColor;
       case 'tie-dye':
         return `radial-gradient(ellipse at 30% 30%, ${primaryColor}, transparent 50%), radial-gradient(ellipse at 70% 70%, ${secondaryColor}, transparent 50%), ${primaryColor}`;
+      case 'diagonal-stripes':
+        return `repeating-linear-gradient(45deg, ${primaryColor} 0px, ${primaryColor} ${scale}px, ${secondaryColor} ${scale}px, ${secondaryColor} ${scale*2}px)`;
+      case 'hexagons':
+        return `repeating-conic-gradient(from 30deg, ${primaryColor} 0deg 60deg, ${secondaryColor} 60deg 120deg, ${primaryColor} 120deg 180deg, ${secondaryColor} 180deg 240deg, ${primaryColor} 240deg 300deg, ${secondaryColor} 300deg 360deg) 0 0/${scale*2}px ${scale*2}px`;
+      case 'crosshatch':
+        return `repeating-linear-gradient(0deg, transparent, transparent ${scale}px, ${secondaryColor} ${scale}px, ${secondaryColor} ${scale+2}px), repeating-linear-gradient(90deg, transparent, transparent ${scale}px, ${primaryColor} ${scale}px, ${primaryColor} ${scale+2}px)`;
       default:
         return primaryColor;
     }
