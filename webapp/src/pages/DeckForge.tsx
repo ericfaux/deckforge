@@ -5,6 +5,7 @@ import { WorkbenchStage } from '@/components/deckforge/WorkbenchStage';
 import { Inspector } from '@/components/deckforge/Inspector';
 import { VersionHistory } from '@/components/deckforge/VersionHistory';
 import { ShareModal } from '@/components/deckforge/ShareModal';
+import { AnimationPreview } from '@/components/deckforge/AnimationPreview';
 import { MobileToolbar } from '@/components/deckforge/MobileToolbar';
 import { MobileDrawer } from '@/components/deckforge/MobileDrawer';
 import { LayerList } from '@/components/deckforge/LayerList';
@@ -13,7 +14,7 @@ import { useAuthStore } from '@/store/auth';
 import { designsAPI } from '@/lib/api';
 import { exportToPNG, downloadBlob } from '@/lib/export';
 import { Button } from '@/components/ui/button';
-import { Save, Download, User, Sparkles, Clock, Menu, Share2 } from 'lucide-react';
+import { Save, Download, User, Sparkles, Clock, Menu, Share2, Play } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { KeyboardShortcuts } from '@/components/deckforge/KeyboardShortcuts';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -28,6 +29,7 @@ export default function DeckForge() {
   const [isExporting, setIsExporting] = useState(false);
   const [isVersionHistoryOpen, setIsVersionHistoryOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isAnimationPreviewOpen, setIsAnimationPreviewOpen] = useState(false);
   const [mobileInspectorOpen, setMobileInspectorOpen] = useState(false);
   const [mobileLayersOpen, setMobileLayersOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -217,6 +219,16 @@ export default function DeckForge() {
 
               <Button
                 size="sm"
+                variant="outline"
+                onClick={() => setIsAnimationPreviewOpen(true)}
+                className="gap-2"
+              >
+                <Play className="w-4 h-4" />
+                Preview
+              </Button>
+
+              <Button
+                size="sm"
                 variant="ghost"
                 onClick={() => navigate('/templates')}
                 className="gap-2"
@@ -354,6 +366,12 @@ export default function DeckForge() {
           designName={designName}
         />
       )}
+
+      {/* Animation Preview */}
+      <AnimationPreview
+        isOpen={isAnimationPreviewOpen}
+        onClose={() => setIsAnimationPreviewOpen(false)}
+      />
     </div>
   );
 }
