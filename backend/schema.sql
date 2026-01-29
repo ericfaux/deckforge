@@ -69,6 +69,18 @@ CREATE TABLE IF NOT EXISTS public.assets (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Fonts table (user-uploaded custom fonts)
+CREATE TABLE IF NOT EXISTS public.fonts (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  name TEXT NOT NULL,
+  font_family TEXT NOT NULL, -- CSS font-family name
+  file_url TEXT NOT NULL, -- Supabase Storage URL
+  file_type TEXT, -- font/ttf, font/woff2, etc.
+  file_size INTEGER, -- bytes
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- Enable RLS
 ALTER TABLE public.assets ENABLE ROW LEVEL SECURITY;
 
@@ -83,6 +95,22 @@ CREATE POLICY "Users can upload assets"
 
 CREATE POLICY "Users can delete own assets"
   ON public.assets FOR DELETE
+  USING (auth.uid() = user_id);
+
+-- Enable RLS for fonts
+ALTER TABLE public.fonts ENABLE ROW LEVEL SECURITY;
+
+-- Fonts policies
+CREATE POLICY "Users can view own fonts"
+  ON public.fonts FOR SELECT
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can upload fonts"
+  ON public.fonts FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete own fonts"
+  ON public.fonts FOR DELETE
   USING (auth.uid() = user_id);
 
 -- Likes table (for community marketplace)
@@ -114,6 +142,7 @@ CREATE INDEX IF NOT EXISTS designs_user_id_idx ON public.designs(user_id);
 CREATE INDEX IF NOT EXISTS designs_is_public_idx ON public.designs(is_public);
 CREATE INDEX IF NOT EXISTS designs_created_at_idx ON public.designs(created_at DESC);
 CREATE INDEX IF NOT EXISTS assets_user_id_idx ON public.assets(user_id);
+CREATE INDEX IF NOT EXISTS fonts_user_id_idx ON public.fonts(user_id);
 CREATE INDEX IF NOT EXISTS design_likes_design_id_idx ON public.design_likes(design_id);
 
 -- Function to automatically update updated_at timestamp
