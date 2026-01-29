@@ -1,11 +1,18 @@
-import { Download, Grid3X3, RotateCcw } from 'lucide-react';
+import { Download, Grid3X3, RotateCcw, ChevronDown } from 'lucide-react';
 import { useState } from 'react';
 import { useDeckForgeStore, CanvasObject } from '@/store/deckforge';
 import { Slider } from '@/components/ui/slider';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { LayerList } from './LayerList';
+import { AdvancedEffects } from './AdvancedEffects';
 import { DECK_WIDTH, DECK_HEIGHT } from './WorkbenchStage';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 
 export function Inspector() {
   const { objects, selectedId, updateObject, saveToHistory, generatePattern } = useDeckForgeStore();
@@ -688,6 +695,20 @@ export function Inspector() {
                 Reset All Filters
               </button>
             </div>
+
+            {/* Advanced Effects Section */}
+            <Accordion type="single" collapsible className="border-t border-border">
+              <AccordionItem value="effects" className="border-none">
+                <AccordionTrigger className="py-3 px-0 hover:no-underline">
+                  <span className="font-display text-[10px] uppercase tracking-widest text-muted-foreground">
+                    Advanced Effects
+                  </span>
+                </AccordionTrigger>
+                <AccordionContent className="pb-4">
+                  <AdvancedEffects />
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
 
             {/* Pattern Generator Section */}
             {(selectedObject.type === 'shape' || selectedObject.type === 'image' || selectedObject.type === 'sticker') && (
