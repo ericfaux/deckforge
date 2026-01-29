@@ -15,6 +15,7 @@ const FontUploadModal = lazy(() => import('@/components/deckforge/FontUploadModa
 const ArrayDuplicateModal = lazy(() => import('@/components/deckforge/ArrayDuplicateModal').then(m => ({ default: m.ArrayDuplicateModal })));
 const ExportPreview = lazy(() => import('@/components/deckforge/ExportPreview').then(m => ({ default: m.ExportPreview })));
 const ExportPresetsModal = lazy(() => import('@/components/deckforge/ExportPresetsModal').then(m => ({ default: m.ExportPresetsModal })));
+const TemplateGalleryModal = lazy(() => import('@/components/deckforge/TemplateGalleryModal').then(m => ({ default: m.TemplateGalleryModal })));
 import { MobileDrawer } from '@/components/deckforge/MobileDrawer';
 import { LayerList } from '@/components/deckforge/LayerList';
 import { DECK_WIDTH, DECK_HEIGHT } from '@/components/deckforge/WorkbenchStage';
@@ -47,6 +48,7 @@ export default function DeckForge() {
   const [isArrayDuplicateOpen, setIsArrayDuplicateOpen] = useState(false);
   const [isExportPreviewOpen, setIsExportPreviewOpen] = useState(false);
   const [isExportPresetsOpen, setIsExportPresetsOpen] = useState(false);
+  const [isTemplateGalleryOpen, setIsTemplateGalleryOpen] = useState(false);
   const [mobileInspectorOpen, setMobileInspectorOpen] = useState(false);
   const [mobileLayersOpen, setMobileLayersOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -736,6 +738,17 @@ export default function DeckForge() {
 
               <Button
                 size="sm"
+                variant="outline"
+                onClick={() => setIsTemplateGalleryOpen(true)}
+                className="gap-2"
+              >
+                <Sparkles className="w-4 h-4" />
+                Templates
+                <span className="ml-1 text-[9px] text-primary">NEW</span>
+              </Button>
+
+              <Button
+                size="sm"
                 variant="ghost"
                 onClick={() => navigate('/gallery')}
                 className="gap-2"
@@ -1004,6 +1017,11 @@ export default function DeckForge() {
         <ExportPresetsModal
           open={isExportPresetsOpen}
           onClose={() => setIsExportPresetsOpen(false)}
+        />
+
+        <TemplateGalleryModal
+          isOpen={isTemplateGalleryOpen}
+          onClose={() => setIsTemplateGalleryOpen(false)}
         />
       </Suspense>
 
