@@ -141,19 +141,73 @@ function renderText(
 ) {
   const fontSize = obj.fontSize || 20;
   const fontFamily = obj.fontFamily || 'Arial';
-  const fill = obj.fill || '#000000';
 
   ctx.font = `${fontSize}px ${fontFamily}`;
-  ctx.fillStyle = fill;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
+
+  // Apply gradient or solid fill
+  if (obj.fillType === 'linear-gradient' && obj.gradientStops) {
+    const angle = (obj.gradientAngle || 0) * Math.PI / 180;
+    const centerX = x + width / 2;
+    const centerY = y + height / 2;
+    const x1 = centerX - Math.cos(angle) * width / 2;
+    const y1 = centerY - Math.sin(angle) * height / 2;
+    const x2 = centerX + Math.cos(angle) * width / 2;
+    const y2 = centerY + Math.sin(angle) * height / 2;
+    
+    const gradient = ctx.createLinearGradient(x1, y1, x2, y2);
+    obj.gradientStops.forEach(stop => {
+      gradient.addColorStop(stop.offset, stop.color);
+    });
+    ctx.fillStyle = gradient;
+  } else if (obj.fillType === 'radial-gradient' && obj.gradientStops) {
+    const centerX = x + width / 2;
+    const centerY = y + height / 2;
+    const radius = Math.max(width, height) / 2;
+    
+    const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius);
+    obj.gradientStops.forEach(stop => {
+      gradient.addColorStop(stop.offset, stop.color);
+    });
+    ctx.fillStyle = gradient;
+  } else {
+    ctx.fillStyle = obj.fill || '#000000';
+  }
+
+  // Apply drop shadow
+  if (obj.dropShadow?.enabled) {
+    ctx.shadowOffsetX = obj.dropShadow.offsetX;
+    ctx.shadowOffsetY = obj.dropShadow.offsetY;
+    ctx.shadowBlur = obj.dropShadow.blur;
+    ctx.shadowColor = `${obj.dropShadow.color}${Math.round(obj.dropShadow.opacity * 255).toString(16).padStart(2, '0')}`;
+  }
 
   // Apply filters
   if (obj.contrast || obj.brightness || obj.grayscale || obj.threshold) {
     ctx.filter = buildFilterString(obj);
   }
 
+  // Apply glow effect
+  if (obj.glow?.enabled) {
+    const glowIterations = 3;
+    for (let i = 0; i < glowIterations; i++) {
+      ctx.save();
+      ctx.shadowColor = `${obj.glow.color}${Math.round(obj.glow.intensity * 255).toString(16).padStart(2, '0')}`;
+      ctx.shadowBlur = obj.glow.radius * (i + 1);
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.fillText(text, x + width / 2, y + height / 2);
+      ctx.restore();
+    }
+  }
+
   ctx.fillText(text, x + width / 2, y + height / 2);
+  
+  // Reset shadow and filter
+  ctx.shadowOffsetX = 0;
+  ctx.shadowOffsetY = 0;
+  ctx.shadowBlur = 0;
+  ctx.shadowColor = 'transparent';
   ctx.filter = 'none';
 }
 
@@ -165,19 +219,80 @@ function renderShape(
   height: number,
   obj: CanvasObject
 ) {
-  const fill = obj.fill || '#000000';
   const stroke = obj.stroke || '';
   const strokeWidth = obj.strokeWidth || 0;
 
-  ctx.fillStyle = fill;
+  // Apply gradient or solid fill
+  if (obj.fillType === 'linear-gradient' && obj.gradientStops) {
+    const angle = (obj.gradientAngle || 0) * Math.PI / 180;
+    const x1 = x + width / 2 - Math.cos(angle) * width / 2;
+    const y1 = y + height / 2 - Math.sin(angle) * height / 2;
+    const x2 = x + width / 2 + Math.cos(angle) * width / 2;
+    const y2 = y + height / 2 + Math.sin(angle) * height / 2;
+    
+    const gradient = ctx.createLinearGradient(x1, y1, x2, y2);
+    obj.gradientStops.forEach(stop => {
+      gradient.addColorStop(stop.offset, stop.color);
+    });
+    ctx.fillStyle = gradient;
+  } else if (obj.fillType === 'radial-gradient' && obj.gradientStops) {
+    const centerX = x + width / 2;
+    const centerY = y + height / 2;
+    const radius = Math.max(width, height) / 2;
+    
+    const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius);
+    obj.gradientStops.forEach(stop => {
+      gradient.addColorStop(stop.offset, stop.color);
+    });
+    ctx.fillStyle = gradient;
+  } else {
+    ctx.fillStyle = obj.fill || '#000000';
+  }
+
   if (stroke) {
     ctx.strokeStyle = stroke;
     ctx.lineWidth = strokeWidth;
   }
 
+  // Apply drop shadow
+  if (obj.dropShadow?.enabled) {
+    ctx.shadowOffsetX = obj.dropShadow.offsetX;
+    ctx.shadowOffsetY = obj.dropShadow.offsetY;
+    ctx.shadowBlur = obj.dropShadow.blur;
+    ctx.shadowColor = `${obj.dropShadow.color}${Math.round(obj.dropShadow.opacity * 255).toString(16).padStart(2, '0')}`;
+  }
+
   // Apply filters
   if (obj.contrast || obj.brightness || obj.grayscale || obj.threshold) {
     ctx.filter = buildFilterString(obj);
+  }
+
+  // Apply glow effect (render shape multiple times with blur)
+  if (obj.glow?.enabled) {
+    const glowIterations = 3;
+    for (let i = 0; i < glowIterations; i++) {
+      ctx.save();
+      ctx.shadowColor = `${obj.glow.color}${Math.round(obj.glow.intensity * 255).toString(16).padStart(2, '0')}`;
+      ctx.shadowBlur = obj.glow.radius * (i + 1);
+      ctx.globalCompositeOperation = 'lighter';
+      
+      switch (obj.shapeType) {
+        case 'rect':
+          ctx.fillRect(x, y, width, height);
+          break;
+        case 'circle':
+          ctx.beginPath();
+          ctx.arc(x + width / 2, y + height / 2, Math.min(width, height) / 2, 0, Math.PI * 2);
+          ctx.fill();
+          break;
+        case 'star':
+          drawStar(ctx, x + width / 2, y + height / 2, Math.min(width, height) / 2);
+          ctx.fill();
+          break;
+      }
+      
+      ctx.restore();
+    }
   }
 
   switch (obj.shapeType) {
@@ -200,6 +315,11 @@ function renderShape(
       break;
   }
 
+  // Reset shadow
+  ctx.shadowOffsetX = 0;
+  ctx.shadowOffsetY = 0;
+  ctx.shadowBlur = 0;
+  ctx.shadowColor = 'transparent';
   ctx.filter = 'none';
 }
 
