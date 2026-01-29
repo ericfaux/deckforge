@@ -8,6 +8,7 @@ import { ShareModal } from '@/components/deckforge/ShareModal';
 import { AnimationPreview } from '@/components/deckforge/AnimationPreview';
 import { BrandKitModal } from '@/components/deckforge/BrandKitModal';
 import { FontUploadModal } from '@/components/deckforge/FontUploadModal';
+import { ArrayDuplicateModal } from '@/components/deckforge/ArrayDuplicateModal';
 import { ExportPreview } from '@/components/deckforge/ExportPreview';
 import { MobileToolbar } from '@/components/deckforge/MobileToolbar';
 import { MobileDrawer } from '@/components/deckforge/MobileDrawer';
@@ -27,7 +28,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
 export default function DeckForge() {
-  const { selectedId, deleteObject, undo, redo, getCanvasState, currentDesignId, setDesignId, setSaving, isSaving, objects, designName, createVersion, past, future, updateObject, saveToHistory, addObject, selectObject, setActiveTool, stageScale, setStageScale } = useDeckForgeStore();
+  const { selectedId, deleteObject, undo, redo, getCanvasState, currentDesignId, setDesignId, setSaving, isSaving, objects, designName, createVersion, past, future, updateObject, saveToHistory, addObject, selectObject, setActiveTool, stageScale, setStageScale, arrayDuplicate } = useDeckForgeStore();
   const { isAuthenticated } = useAuthStore();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -39,6 +40,7 @@ export default function DeckForge() {
   const [isAnimationPreviewOpen, setIsAnimationPreviewOpen] = useState(false);
   const [isBrandKitModalOpen, setIsBrandKitModalOpen] = useState(false);
   const [isFontUploadModalOpen, setIsFontUploadModalOpen] = useState(false);
+  const [isArrayDuplicateOpen, setIsArrayDuplicateOpen] = useState(false);
   const [isExportPreviewOpen, setIsExportPreviewOpen] = useState(false);
   const [mobileInspectorOpen, setMobileInspectorOpen] = useState(false);
   const [mobileLayersOpen, setMobileLayersOpen] = useState(false);
@@ -230,31 +232,10 @@ export default function DeckForge() {
         return;
       }
 
-      // Array Duplicate (Ctrl+Shift+D) - Creates 3x3 grid
+      // Array Duplicate (Ctrl+Shift+D) - Open array duplicate modal
       if (ctrl && shift && key === 'd' && selectedId) {
         e.preventDefault();
-        const obj = objects.find(o => o.id === selectedId);
-        if (obj) {
-          const { id, ...objWithoutId } = obj;
-          const spacing = Math.max(obj.width * obj.scaleX, obj.height * obj.scaleY) + 10;
-          let count = 0;
-          
-          // Create 3x3 grid (skip center which is original)
-          for (let row = 0; row < 3; row++) {
-            for (let col = 0; col < 3; col++) {
-              if (row === 0 && col === 0) continue; // Skip first position
-              
-              addObject({
-                ...objWithoutId,
-                x: obj.x + (col * spacing),
-                y: obj.y + (row * spacing),
-              });
-              count++;
-            }
-          }
-          
-          toast.success(`Created ${count} copies in 3×3 grid`);
-        }
+        setIsArrayDuplicateOpen(true);
         return;
       }
 
@@ -857,6 +838,19 @@ export default function DeckForge() {
           toast.success(`${font.name} is now available!`, {
             description: 'You can now use this font in your text objects.',
           });
+        }}
+      />
+
+      {/* Array Duplicate Modal */}
+      <ArrayDuplicateModal
+        open={isArrayDuplicateOpen}
+        onClose={() => setIsArrayDuplicateOpen(false)}
+        onDuplicate={(rows, cols, gapX, gapY) => {
+          if (selectedId) {
+            arrayDuplicate(selectedId, rows, cols, gapX, gapY);
+            const totalCopies = (rows * cols) - 1;
+            toast.success(`Created ${totalCopies} ${totalCopies === 1 ? 'copy' : 'copies'} in ${rows}×${cols} grid`);
+          }
         }}
       />
 

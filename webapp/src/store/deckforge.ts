@@ -182,6 +182,7 @@ interface DeckForgeState {
   toggleTexture: (id: TextureType) => void;
   updateTexture: (id: TextureType, updates: Partial<TextureOverlay>) => void;
   generatePattern: (sourceId: string, gap: number, randomRotation: number, deckWidth: number, deckHeight: number) => void;
+  arrayDuplicate: (sourceId: string, rows: number, cols: number, gapX: number, gapY: number) => void;
   toggleHardwareGuide: () => void;
   setBackgroundColor: (color: string) => void;
   
@@ -425,6 +426,48 @@ export const useDeckForgeStore = create<DeckForgeState>((set, get) => ({
 
     set({
       objects: [...filteredObjects, ...tiledObjects],
+      selectedId: null,
+    });
+  },
+
+  arrayDuplicate: (sourceId, rows, cols, gapX, gapY) => {
+    const state = get();
+    const sourceObj = state.objects.find((obj) => obj.id === sourceId);
+    if (!sourceObj) return;
+
+    state.saveToHistory();
+
+    // Calculate spacing
+    const objWidth = sourceObj.width * sourceObj.scaleX;
+    const objHeight = sourceObj.height * sourceObj.scaleY;
+    const offsetX = objWidth + gapX;
+    const offsetY = objHeight + gapY;
+
+    // Generate grid of duplicates
+    const newObjects: Omit<CanvasObject, 'id'>[] = [];
+    
+    for (let row = 0; row < rows; row++) {
+      for (let col = 0; col < cols; col++) {
+        // Skip the original position (0,0)
+        if (row === 0 && col === 0) continue;
+        
+        const { id, ...objWithoutId } = sourceObj;
+        newObjects.push({
+          ...objWithoutId,
+          x: sourceObj.x + (col * offsetX),
+          y: sourceObj.y + (row * offsetY),
+        });
+      }
+    }
+
+    // Add all duplicates
+    const duplicatedObjects = newObjects.map((obj) => ({
+      ...obj,
+      id: generateId(),
+    }));
+
+    set({
+      objects: [...state.objects, ...duplicatedObjects],
       selectedId: null,
     });
   },
