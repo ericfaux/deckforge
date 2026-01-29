@@ -1139,19 +1139,146 @@ export function WorkbenchStage() {
           </g>
         )}
 
-        {/* Instructions when empty */}
-        {objects.length === 0 && (
-          <text
-            x={deckX + (DECK_WIDTH * stageScale) / 2}
-            y={deckY + DECK_HEIGHT * stageScale + 25}
-            textAnchor="middle"
-            fontSize={10}
-            fontFamily="JetBrains Mono, monospace"
-            fill="#666666"
-            pointerEvents="none"
-          >
-            Click tools on left to add elements
-          </text>
+        {/* Improved empty state with onboarding */}
+        {objects.length === 0 && activeTool !== 'pen' && (
+          <g transform={`translate(${deckX}, ${deckY}) scale(${stageScale})`} pointerEvents="none">
+            {/* Welcome message */}
+            <text
+              x={DECK_WIDTH / 2}
+              y={DECK_HEIGHT / 2 - 40}
+              textAnchor="middle"
+              fontSize={16 / stageScale}
+              fontFamily="Oswald, sans-serif"
+              fill="#ccff00"
+              fontWeight="bold"
+            >
+              Welcome to DeckForge
+            </text>
+            
+            <text
+              x={DECK_WIDTH / 2}
+              y={DECK_HEIGHT / 2 - 20}
+              textAnchor="middle"
+              fontSize={11 / stageScale}
+              fontFamily="sans-serif"
+              fill="#888888"
+            >
+              Design your custom fingerboard deck
+            </text>
+
+            {/* Quick start icons */}
+            <g transform={`translate(${DECK_WIDTH / 2 - 60}, ${DECK_HEIGHT / 2 + 10})`}>
+              {/* Text tool hint */}
+              <g>
+                <rect
+                  x={0}
+                  y={0}
+                  width={35}
+                  height={35}
+                  fill="rgba(204, 255, 0, 0.1)"
+                  stroke="#ccff00"
+                  strokeWidth={1 / stageScale}
+                  rx={3 / stageScale}
+                />
+                <text
+                  x={17.5}
+                  y={23}
+                  textAnchor="middle"
+                  fontSize={20 / stageScale}
+                  fill="#ccff00"
+                >
+                  T
+                </text>
+              </g>
+              
+              {/* Stickers hint */}
+              <g transform="translate(40, 0)">
+                <rect
+                  x={0}
+                  y={0}
+                  width={35}
+                  height={35}
+                  fill="rgba(204, 255, 0, 0.1)"
+                  stroke="#ccff00"
+                  strokeWidth={1 / stageScale}
+                  rx={3 / stageScale}
+                />
+                <text
+                  x={17.5}
+                  y={23}
+                  textAnchor="middle"
+                  fontSize={20 / stageScale}
+                  fill="#ccff00"
+                >
+                  S
+                </text>
+              </g>
+              
+              {/* Upload hint */}
+              <g transform="translate(80, 0)">
+                <rect
+                  x={0}
+                  y={0}
+                  width={35}
+                  height={35}
+                  fill="rgba(204, 255, 0, 0.1)"
+                  stroke="#ccff00"
+                  strokeWidth={1 / stageScale}
+                  rx={3 / stageScale}
+                />
+                <text
+                  x={17.5}
+                  y={23}
+                  textAnchor="middle"
+                  fontSize={20 / stageScale}
+                  fill="#ccff00"
+                >
+                  U
+                </text>
+              </g>
+            </g>
+
+            {/* Hints text */}
+            <text
+              x={DECK_WIDTH / 2}
+              y={DECK_HEIGHT / 2 + 60}
+              textAnchor="middle"
+              fontSize={9 / stageScale}
+              fontFamily="monospace"
+              fill="#666666"
+            >
+              Press T for Text  •  S for Stickers  •  U to Upload
+            </text>
+            
+            <text
+              x={DECK_WIDTH / 2}
+              y={DECK_HEIGHT / 2 + 75}
+              textAnchor="middle"
+              fontSize={9 / stageScale}
+              fontFamily="monospace"
+              fill="#555555"
+            >
+              Or click the tool rail on the left
+            </text>
+
+            {/* Arrow pointing to tool rail */}
+            <g transform={`translate(-10, ${DECK_HEIGHT / 2})`}>
+              <path
+                d="M 0 0 L -15 -5 L -15 5 Z"
+                fill="#ccff00"
+                opacity={0.6}
+              />
+              <line
+                x1={-15}
+                y1={0}
+                x2={-30}
+                y2={0}
+                stroke="#ccff00"
+                strokeWidth={2 / stageScale}
+                opacity={0.6}
+              />
+            </g>
+          </g>
         )}
 
         {/* Pen Tool - Must be LAST to be on top */}
