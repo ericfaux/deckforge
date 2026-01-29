@@ -952,7 +952,8 @@ const toolLabels: Record<ToolType, string> = {
 export function ToolDrawer() {
   const { activeTool, drawerOpen, toggleDrawer, addObject } = useDeckForgeStore();
 
-  if (!drawerOpen || !activeTool) return null;
+  // Hide drawer for pen tool (uses overlay interface instead)
+  if (!drawerOpen || !activeTool || activeTool === 'pen') return null;
 
   const deckCenterX = DECK_WIDTH / 2;
   const deckCenterY = DECK_HEIGHT / 2;
