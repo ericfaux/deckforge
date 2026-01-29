@@ -1,12 +1,64 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { ToolRail } from '@/components/deckforge/ToolRail';
 import { ToolDrawer } from '@/components/deckforge/ToolDrawer';
 import { WorkbenchStage } from '@/components/deckforge/WorkbenchStage';
 import { Inspector } from '@/components/deckforge/Inspector';
 import { useDeckForgeStore } from '@/store/deckforge';
+import { useAuthStore } from '@/store/auth';
+import { designsAPI } from '@/lib/api';
+import { Button } from '@/components/ui/button';
+import { Save, Download, User } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export default function DeckForge() {
-  const { selectedId, deleteObject, undo, redo } = useDeckForgeStore();
+  const { selectedId, deleteObject, undo, redo, getCanvasState, currentDesignId, setDesignId, setSaving, isSaving } = useDeckForgeStore();
+  const { isAuthenticated } = useAuthStore();
+  const navigate = useNavigate();
+  const [saveStatus, setSaveStatus] = useState<string>('');
+
+  const handleSave = async () => {
+    if (!isAuthenticated) {
+      navigate('/auth');
+      return;
+    }
+
+    setSaving(true);
+    setSaveStatus('Saving...');
+
+    try {
+      const canvasState = getCanvasState();
+      
+      if (currentDesignId) {
+        // Update existing design
+        await designsAPI.update(currentDesignId, {
+          canvas_data: canvasState,
+          name: canvasState.name,
+        });
+        setSaveStatus('Saved!');
+      } else {
+        // Create new design
+        const result = await designsAPI.create({
+          name: canvasState.name,
+          canvas_data: canvasState,
+        });
+        setDesignId(result.design.id);
+        setSaveStatus('Saved!');
+      }
+
+      setTimeout(() => setSaveStatus(''), 2000);
+    } catch (err) {
+      console.error('Save failed:', err);
+      setSaveStatus('Save failed');
+      setTimeout(() => setSaveStatus(''), 2000);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleExport = () => {
+    // TODO: Implement export to PNG/PDF
+    alert('Export feature coming soon!');
+  };
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -49,10 +101,45 @@ export default function DeckForge() {
         <div className="ml-4 flex items-center gap-2">
           <span className="tag-brutal">v1.0</span>
         </div>
-        <div className="ml-auto flex items-center gap-4">
-          <span className="text-[10px] text-muted-foreground uppercase tracking-widest hidden md:block">
+        <div className="ml-auto flex items-center gap-2">
+          <span className="text-[10px] text-muted-foreground uppercase tracking-widest hidden md:block mr-4">
             Fingerboard Graphics Editor
           </span>
+          
+          {saveStatus && (
+            <span className="text-xs text-primary">{saveStatus}</span>
+          )}
+          
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleSave}
+            disabled={isSaving}
+            className="gap-2"
+          >
+            <Save className="w-4 h-4" />
+            {isSaving ? 'Saving...' : 'Save'}
+          </Button>
+
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleExport}
+            className="gap-2"
+          >
+            <Download className="w-4 h-4" />
+            Export
+          </Button>
+
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => navigate(isAuthenticated ? '/designs' : '/auth')}
+            className="gap-2"
+          >
+            <User className="w-4 h-4" />
+            {isAuthenticated ? 'My Designs' : 'Login'}
+          </Button>
         </div>
       </header>
 

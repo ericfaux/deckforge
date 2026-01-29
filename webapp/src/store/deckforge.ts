@@ -93,6 +93,11 @@ interface DeckForgeState {
   // Hardware guide (visual only, not exported)
   showHardwareGuide: boolean;
 
+  // Design metadata
+  currentDesignId: string | null;
+  designName: string;
+  isSaving: boolean;
+
   // Actions
   addObject: (obj: Omit<CanvasObject, 'id'>) => void;
   addObjects: (objs: Omit<CanvasObject, 'id'>[]) => void;
@@ -111,6 +116,14 @@ interface DeckForgeState {
   updateTexture: (id: TextureType, updates: Partial<TextureOverlay>) => void;
   generatePattern: (sourceId: string, gap: number, randomRotation: number, deckWidth: number, deckHeight: number) => void;
   toggleHardwareGuide: () => void;
+  
+  // Design management
+  loadDesign: (designData: any) => void;
+  setDesignName: (name: string) => void;
+  setDesignId: (id: string | null) => void;
+  setSaving: (saving: boolean) => void;
+  resetCanvas: () => void;
+  getCanvasState: () => any;
 }
 
 const generateId = () => `obj_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -132,6 +145,9 @@ export const useDeckForgeStore = create<DeckForgeState>((set, get) => ({
   future: [],
   textureOverlays: defaultTextureOverlays,
   showHardwareGuide: false,
+  currentDesignId: null,
+  designName: 'Untitled Design',
+  isSaving: false,
 
   saveToHistory: () => {
     const { objects, past } = get();
@@ -338,5 +354,48 @@ export const useDeckForgeStore = create<DeckForgeState>((set, get) => ({
 
   toggleHardwareGuide: () => {
     set((state) => ({ showHardwareGuide: !state.showHardwareGuide }));
+  },
+
+  // Design management
+  loadDesign: (designData) => {
+    set({
+      objects: designData.objects || [],
+      textureOverlays: designData.textureOverlays || defaultTextureOverlays,
+      selectedId: null,
+      past: [],
+      future: [],
+      designName: designData.name || 'Untitled Design',
+      currentDesignId: designData.id || null,
+    });
+  },
+
+  setDesignName: (name) => set({ designName: name }),
+  
+  setDesignId: (id) => set({ currentDesignId: id }),
+  
+  setSaving: (saving) => set({ isSaving: saving }),
+  
+  resetCanvas: () => {
+    set({
+      objects: [],
+      selectedId: null,
+      past: [],
+      future: [],
+      textureOverlays: defaultTextureOverlays,
+      stageScale: 1,
+      stagePosition: { x: 0, y: 0 },
+      currentDesignId: null,
+      designName: 'Untitled Design',
+    });
+  },
+  
+  getCanvasState: () => {
+    const state = get();
+    return {
+      objects: state.objects,
+      textureOverlays: state.textureOverlays,
+      name: state.designName,
+      id: state.currentDesignId,
+    };
   },
 }));

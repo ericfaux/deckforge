@@ -1,111 +1,183 @@
-const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:3000";
+// API client for DeckForge backend
+import { createClient } from '@supabase/supabase-js';
 
-class ApiError extends Error {
-  constructor(message: string, public status: number, public data?: unknown) {
-    super(message);
-    this.name = "ApiError";
-  }
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://hvulzgcqdwurrhaebhyy.supabase.co';
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+
+export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// Auth state
+let authToken: string | null = null;
+
+export function setAuthToken(token: string | null) {
+  authToken = token;
 }
 
-// Response envelope type - all app routes return { data: T }
-interface ApiResponse<T> {
-  data: T;
+export function getAuthToken(): string | null {
+  return authToken;
 }
 
-async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-  const url = `${API_BASE_URL}${endpoint}`;
-
-  const config: RequestInit = {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...options.headers,
-    },
-    credentials: "include",
+// API request wrapper
+async function apiRequest(
+  endpoint: string,
+  options: RequestInit = {}
+): Promise<Response> {
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+    ...options.headers,
   };
 
-  const response = await fetch(url, config);
-
-  if (!response.ok) {
-    const json = await response.json().catch(() => null);
-    throw new ApiError(
-      // Try app-route format first, fallback to generic message (Better Auth uses this)
-      json?.error?.message || json?.message || `Request failed with status ${response.status}`,
-      response.status,
-      json?.error || json
-    );
+  if (authToken) {
+    headers['Authorization'] = `Bearer ${authToken}`;
   }
 
-  // 1. Handle 204 No Content
-  if (response.status === 204) {
-    return undefined as T;
-  }
-
-  // 2. JSON responses: parse and unwrap { data }
-  const contentType = response.headers.get("content-type");
-  if (contentType?.includes("application/json")) {
-    const json: ApiResponse<T> = await response.json();
-    return json.data;
-  }
-
-  // 3. Non-JSON: return undefined (caller should use api.raw() for these)
-  return undefined as T;
-}
-
-// Raw request for non-JSON endpoints (uploads, downloads, streams)
-async function rawRequest(endpoint: string, options: RequestInit = {}): Promise<Response> {
-  const url = `${API_BASE_URL}${endpoint}`;
-  const config: RequestInit = {
+  const response = await fetch(`${BACKEND_URL}${endpoint}`, {
     ...options,
-    headers: {
-      ...options.headers,
-    },
-    credentials: "include",
-  };
-  return fetch(url, config);
+    headers,
+  });
+
+  return response;
 }
 
-export const api = {
-  get: <T>(endpoint: string, options?: RequestInit) =>
-    request<T>(endpoint, { ...options, method: "GET" }),
+// Auth API
+export const authAPI = {
+  async signup(email: string, password: string, username?: string) {
+    const response = await apiRequest('/api/auth/signup', {
+      method: 'POST',
+      body: JSON.stringify({ email, password, username }),
+    });
 
-  post: <T>(endpoint: string, data?: unknown, options?: RequestInit) =>
-    request<T>(endpoint, {
-      ...options,
-      method: "POST",
-      body: data ? JSON.stringify(data) : undefined,
-    }),
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Signup failed');
+    }
 
-  put: <T>(endpoint: string, data?: unknown, options?: RequestInit) =>
-    request<T>(endpoint, {
-      ...options,
-      method: "PUT",
-      body: data ? JSON.stringify(data) : undefined,
-    }),
+    const data = await response.json();
+    if (data.session?.access_token) {
+      setAuthToken(data.session.access_token);
+    }
+    return data;
+  },
 
-  patch: <T>(endpoint: string, data?: unknown, options?: RequestInit) =>
-    request<T>(endpoint, {
-      ...options,
-      method: "PATCH",
-      body: data ? JSON.stringify(data) : undefined,
-    }),
+  async login(email: string, password: string) {
+    const response = await apiRequest('/api/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    });
 
-  delete: <T>(endpoint: string, options?: RequestInit) =>
-    request<T>(endpoint, { ...options, method: "DELETE" }),
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Login failed');
+    }
 
-  // Escape hatch for non-JSON endpoints
-  raw: rawRequest,
+    const data = await response.json();
+    if (data.session?.access_token) {
+      setAuthToken(data.session.access_token);
+    }
+    return data;
+  },
+
+  async logout() {
+    const response = await apiRequest('/api/auth/logout', {
+      method: 'POST',
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Logout failed');
+    }
+
+    setAuthToken(null);
+    return response.json();
+  },
+
+  async me() {
+    const response = await apiRequest('/api/auth/me');
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to get user');
+    }
+
+    return response.json();
+  },
 };
 
-// Sample endpoint types (extend as needed)
-export interface SampleResponse {
-  message: string;
-  timestamp: string;
-}
+// Designs API
+export const designsAPI = {
+  async list() {
+    const response = await apiRequest('/api/designs');
 
-// Sample API functions
-export const sampleApi = {
-  getSample: () => api.get<SampleResponse>("/api/sample"),
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to list designs');
+    }
+
+    return response.json();
+  },
+
+  async get(id: string) {
+    const response = await apiRequest(`/api/designs/${id}`);
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to get design');
+    }
+
+    return response.json();
+  },
+
+  async create(design: {
+    name: string;
+    description?: string;
+    canvas_data: any;
+    thumbnail_url?: string;
+    is_public?: boolean;
+  }) {
+    const response = await apiRequest('/api/designs', {
+      method: 'POST',
+      body: JSON.stringify(design),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to create design');
+    }
+
+    return response.json();
+  },
+
+  async update(id: string, updates: {
+    name?: string;
+    description?: string;
+    canvas_data?: any;
+    thumbnail_url?: string;
+    is_public?: boolean;
+  }) {
+    const response = await apiRequest(`/api/designs/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(updates),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to update design');
+    }
+
+    return response.json();
+  },
+
+  async delete(id: string) {
+    const response = await apiRequest(`/api/designs/${id}`, {
+      method: 'DELETE',
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to delete design');
+    }
+
+    return response.json();
+  },
 };
-
-export { ApiError };
