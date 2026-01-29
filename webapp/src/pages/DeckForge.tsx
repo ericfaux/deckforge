@@ -7,6 +7,7 @@ import { VersionHistory } from '@/components/deckforge/VersionHistory';
 import { ShareModal } from '@/components/deckforge/ShareModal';
 import { AnimationPreview } from '@/components/deckforge/AnimationPreview';
 import { BrandKitModal } from '@/components/deckforge/BrandKitModal';
+import { ExportPreview } from '@/components/deckforge/ExportPreview';
 import { MobileToolbar } from '@/components/deckforge/MobileToolbar';
 import { MobileDrawer } from '@/components/deckforge/MobileDrawer';
 import { LayerList } from '@/components/deckforge/LayerList';
@@ -34,6 +35,7 @@ export default function DeckForge() {
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isAnimationPreviewOpen, setIsAnimationPreviewOpen] = useState(false);
   const [isBrandKitModalOpen, setIsBrandKitModalOpen] = useState(false);
+  const [isExportPreviewOpen, setIsExportPreviewOpen] = useState(false);
   const [mobileInspectorOpen, setMobileInspectorOpen] = useState(false);
   const [mobileLayersOpen, setMobileLayersOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -268,10 +270,14 @@ export default function DeckForge() {
                 {showExportMenu && !isExporting && (
                   <div className="absolute top-full mt-1 right-0 z-50 bg-card border border-border shadow-lg min-w-[120px]">
                     <button
-                      onClick={handleExport}
+                      onClick={() => {
+                        setShowExportMenu(false);
+                        setIsExportPreviewOpen(true);
+                      }}
                       className="w-full px-4 py-2 text-left text-sm hover:bg-secondary transition-colors"
                     >
                       PNG (High-Res)
+                      <span className="ml-2 text-[9px] text-muted-foreground">Preview first</span>
                     </button>
                     <button
                       onClick={handleExportSVG}
@@ -539,6 +545,17 @@ export default function DeckForge() {
           } else {
             toast.info(`Applied "${kit.name}" - No matching colors found`);
           }
+        }}
+      />
+
+      {/* Export Preview Modal */}
+      <ExportPreview
+        isOpen={isExportPreviewOpen}
+        onClose={() => setIsExportPreviewOpen(false)}
+        objects={objects}
+        designName={designName}
+        onConfirmExport={() => {
+          toast.success('Design exported successfully');
         }}
       />
     </div>
