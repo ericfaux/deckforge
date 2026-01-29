@@ -4,22 +4,31 @@ import { ToolDrawer } from '@/components/deckforge/ToolDrawer';
 import { WorkbenchStage } from '@/components/deckforge/WorkbenchStage';
 import { Inspector } from '@/components/deckforge/Inspector';
 import { VersionHistory } from '@/components/deckforge/VersionHistory';
+import { MobileToolbar } from '@/components/deckforge/MobileToolbar';
+import { MobileDrawer } from '@/components/deckforge/MobileDrawer';
+import { LayerList } from '@/components/deckforge/LayerList';
 import { useDeckForgeStore } from '@/store/deckforge';
 import { useAuthStore } from '@/store/auth';
 import { designsAPI } from '@/lib/api';
 import { exportToPNG, downloadBlob } from '@/lib/export';
 import { Button } from '@/components/ui/button';
-import { Save, Download, User, Sparkles, Clock } from 'lucide-react';
+import { Save, Download, User, Sparkles, Clock, Menu } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { KeyboardShortcuts } from '@/components/deckforge/KeyboardShortcuts';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { cn } from '@/lib/utils';
 
 export default function DeckForge() {
   const { selectedId, deleteObject, undo, redo, getCanvasState, currentDesignId, setDesignId, setSaving, isSaving, objects, designName, createVersion } = useDeckForgeStore();
   const { isAuthenticated } = useAuthStore();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [saveStatus, setSaveStatus] = useState<string>('');
   const [isExporting, setIsExporting] = useState(false);
   const [isVersionHistoryOpen, setIsVersionHistoryOpen] = useState(false);
+  const [mobileInspectorOpen, setMobileInspectorOpen] = useState(false);
+  const [mobileLayersOpen, setMobileLayersOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleSave = async () => {
     if (!isAuthenticated) {
@@ -132,92 +141,189 @@ export default function DeckForge() {
   return (
     <div className="h-screen w-screen flex flex-col bg-background overflow-hidden">
       {/* Header */}
-      <header className="h-12 border-b border-border flex items-center px-4 bg-card shrink-0">
-        <h1 className="font-display text-lg uppercase tracking-widest text-foreground">
+      <header className={cn(
+        "border-b border-border flex items-center px-4 bg-card shrink-0",
+        isMobile ? "h-12" : "h-12"
+      )}>
+        <h1 className={cn(
+          "font-display uppercase tracking-widest text-foreground",
+          isMobile ? "text-base" : "text-lg"
+        )}>
           Deck<span className="text-primary">Forge</span>
         </h1>
-        <div className="ml-4 flex items-center gap-2">
-          <span className="tag-brutal">v1.0</span>
-        </div>
+        
+        {!isMobile && (
+          <div className="ml-4 flex items-center gap-2">
+            <span className="tag-brutal">v1.0</span>
+          </div>
+        )}
+
         <div className="ml-auto flex items-center gap-2">
-          <span className="text-[10px] text-muted-foreground uppercase tracking-widest hidden md:block mr-4">
-            Fingerboard Graphics Editor
-          </span>
-          
-          {saveStatus && (
-            <span className="text-xs text-primary">{saveStatus}</span>
+          {!isMobile && (
+            <>
+              <span className="text-[10px] text-muted-foreground uppercase tracking-widest hidden md:block mr-4">
+                Fingerboard Graphics Editor
+              </span>
+              
+              {saveStatus && (
+                <span className="text-xs text-primary">{saveStatus}</span>
+              )}
+              
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleSave}
+                disabled={isSaving}
+                className="gap-2"
+              >
+                <Save className="w-4 h-4" />
+                {isSaving ? 'Saving...' : 'Save'}
+              </Button>
+
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleExport}
+                disabled={isExporting}
+                className="gap-2"
+              >
+                <Download className="w-4 h-4" />
+                {isExporting ? 'Exporting...' : 'Export PNG'}
+              </Button>
+
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setIsVersionHistoryOpen(true)}
+                className="gap-2"
+              >
+                <Clock className="w-4 h-4" />
+                History
+              </Button>
+
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => navigate('/templates')}
+                className="gap-2"
+              >
+                <Sparkles className="w-4 h-4" />
+                Templates
+              </Button>
+
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => navigate(isAuthenticated ? '/designs' : '/auth')}
+                className="gap-2"
+              >
+                <User className="w-4 h-4" />
+                {isAuthenticated ? 'My Designs' : 'Login'}
+              </Button>
+
+              <KeyboardShortcuts />
+            </>
           )}
-          
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={handleSave}
-            disabled={isSaving}
-            className="gap-2"
-          >
-            <Save className="w-4 h-4" />
-            {isSaving ? 'Saving...' : 'Save'}
-          </Button>
 
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={handleExport}
-            disabled={isExporting}
-            className="gap-2"
-          >
-            <Download className="w-4 h-4" />
-            {isExporting ? 'Exporting...' : 'Export PNG'}
-          </Button>
-
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => setIsVersionHistoryOpen(true)}
-            className="gap-2"
-          >
-            <Clock className="w-4 h-4" />
-            History
-          </Button>
-
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => navigate('/templates')}
-            className="gap-2"
-          >
-            <Sparkles className="w-4 h-4" />
-            Templates
-          </Button>
-
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => navigate(isAuthenticated ? '/designs' : '/auth')}
-            className="gap-2"
-          >
-            <User className="w-4 h-4" />
-            {isAuthenticated ? 'My Designs' : 'Login'}
-          </Button>
-
-          <KeyboardShortcuts />
+          {isMobile && (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setMobileMenuOpen(true)}
+              className="gap-2"
+            >
+              <Menu className="w-5 h-5" />
+            </Button>
+          )}
         </div>
       </header>
 
       {/* Main content */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Left: Tool Rail */}
-        <ToolRail />
+      <div className={cn(
+        "flex-1 flex overflow-hidden",
+        isMobile && "pb-14" // Space for mobile toolbar
+      )}>
+        {/* Desktop layout */}
+        {!isMobile && (
+          <>
+            <ToolRail />
+            <ToolDrawer />
+            <WorkbenchStage />
+            <Inspector />
+          </>
+        )}
 
-        {/* Tool Drawer */}
-        <ToolDrawer />
-
-        {/* Center: Workbench */}
-        <WorkbenchStage />
-
-        {/* Right: Inspector */}
-        <Inspector />
+        {/* Mobile layout */}
+        {isMobile && (
+          <>
+            <ToolRail />
+            <ToolDrawer />
+            <WorkbenchStage />
+          </>
+        )}
       </div>
+
+      {/* Mobile toolbar */}
+      {isMobile && (
+        <MobileToolbar
+          onSave={handleSave}
+          onExport={handleExport}
+          onOpenHistory={() => setIsVersionHistoryOpen(true)}
+          onOpenInspector={() => setMobileInspectorOpen(true)}
+          onOpenLayers={() => setMobileLayersOpen(true)}
+          isSaving={isSaving}
+          isExporting={isExporting}
+        />
+      )}
+
+      {/* Mobile drawers */}
+      <MobileDrawer
+        isOpen={mobileInspectorOpen}
+        onClose={() => setMobileInspectorOpen(false)}
+        title="Properties"
+      >
+        <Inspector />
+      </MobileDrawer>
+
+      <MobileDrawer
+        isOpen={mobileLayersOpen}
+        onClose={() => setMobileLayersOpen(false)}
+        title="Layers"
+      >
+        <LayerList />
+      </MobileDrawer>
+
+      <MobileDrawer
+        isOpen={mobileMenuOpen}
+        onClose={() => setMobileMenuOpen(false)}
+        title="Menu"
+      >
+        <div className="space-y-2">
+          <button
+            onClick={() => {
+              navigate('/templates');
+              setMobileMenuOpen(false);
+            }}
+            className="w-full btn-brutal text-left py-3 flex items-center gap-2"
+          >
+            <Sparkles className="w-4 h-4" />
+            Templates
+          </button>
+          <button
+            onClick={() => {
+              navigate(isAuthenticated ? '/designs' : '/auth');
+              setMobileMenuOpen(false);
+            }}
+            className="w-full btn-brutal text-left py-3 flex items-center gap-2"
+          >
+            <User className="w-4 h-4" />
+            {isAuthenticated ? 'My Designs' : 'Login'}
+          </button>
+          {saveStatus && (
+            <p className="text-xs text-primary text-center py-2">{saveStatus}</p>
+          )}
+        </div>
+      </MobileDrawer>
 
       {/* Version History Modal */}
       <VersionHistory 
