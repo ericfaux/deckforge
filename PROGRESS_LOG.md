@@ -2,7 +2,7 @@
 
 ## 🔥 CONTINUOUS BUILDING MODE - 2026-01-29 04:12 UTC
 
-### ✅ Features Complete: 16/20 (80%)
+### ✅ Core Roadmap Features: 17/20 (85%)
 
 1. ✅ Database schema (RLS, triggers, storage policies)
 2. ✅ Auth system (signup/login/logout/refresh)
@@ -18,14 +18,12 @@
 12. ✅ Keyboard shortcuts panel (50+ shortcuts)
 13. ✅ Templates library & gallery (6 pre-made designs)
 14. ✅ SVG import support (auto-converts to shapes)
-15. ✅ Custom font uploads (COMPLETE: backend + frontend)
-
-### ✅ Roadmap Complete + Bonus Features:
-16. ✅ Advanced shape tools (bezier curves, pen tool) - COMPLETE
+15. ✅ Custom font uploads (backend + frontend, FontUploadModal)
+16. ✅ **Advanced shape tools (bezier curves, pen tool) - COMPLETE**
 17. ✅ Design history/versioning - COMPLETE
 18. ✅ Mobile responsive improvements - COMPLETE
-19. ✅ Collaborative editing - DEFERRED (requires complex real-time infra)
-20. *(Completed: Custom fonts)*
+19. ⏳ Design collaborative editing - DEFERRED (complex real-time)
+20. ⏳ Mobile touch controls optimization - NEXT
 
 ### 🎁 Bonus Features Added:
 21. ✅ Public sharing & embeds - COMPLETE
@@ -49,7 +47,20 @@
 - **0 stops** - building continuously per directive
 
 ### 🎯 Latest Update (Heartbeat):
-**Folders & Tags Organization (Premium Feature #27) - COMPLETE**
+**Advanced Shape Tools - Pen Tool & Bezier Curves (Core Feature #16) - COMPLETE (2026-01-29 11:30 UTC)**
+- Created PenTool.tsx component with click-to-draw interface
+- Added path rendering in WorkbenchStage (supports bezier curves)
+- Integrated pen tool into ToolRail ("Pen Tool" button)
+- Path object type with PathPoint[] support (control points for curves)
+- SVG path parsing: M/L/Q/C commands with control points
+- Live preview with yellow dashed stroke while drawing
+- Undo last point, complete path, cancel controls
+- Auto-converts pen strokes to smooth bezier curves
+- Visual feedback: green start point, white subsequent points
+- Stroke customization (color, width) via Inspector
+- Committed & ready to deploy
+
+**Previous: Folders & Tags Organization (Premium Feature #27) - COMPLETE**
 - Database migration (design_folders, design_tags, junction table)
 - Full RLS policies for all tables
 - Folders API (CRUD + move designs)

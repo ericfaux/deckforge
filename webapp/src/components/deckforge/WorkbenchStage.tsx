@@ -1,6 +1,7 @@
 import { useRef, useEffect, useState, useCallback } from 'react';
 import { useDeckForgeStore, CanvasObject } from '@/store/deckforge';
 import { ZoomControls } from './ZoomControls';
+import { PenTool } from './PenTool';
 import type { LucideIcon } from 'lucide-react';
 import { Skull, Flame, Zap, Sword, Ghost, Bug, Eye, Target, Radio, Disc3, Music2, Rocket, Crown, Anchor, Sun, Moon, Triangle, Hexagon, Circle, Square, Star, Heart, Sparkles, Hand, Cat, Dog, Fish, Bird, Leaf, Cloud } from 'lucide-react';
 
@@ -195,6 +196,61 @@ function CanvasObjectItem({
       </text>
     );
     return textEl;
+  }
+
+  // Render path objects (pen tool / bezier curves)
+  if (obj.type === 'path' && obj.pathPoints && obj.pathPoints.length > 0) {
+    let pathData = `M ${obj.pathPoints[0].x} ${obj.pathPoints[0].y}`;
+    
+    for (let i = 1; i < obj.pathPoints.length; i++) {
+      const point = obj.pathPoints[i];
+      const prevPoint = obj.pathPoints[i - 1];
+      
+      if (point.cp1x !== undefined && point.cp1y !== undefined) {
+        // Bezier curve with control points
+        if (point.cp2x !== undefined && point.cp2y !== undefined) {
+          pathData += ` C ${point.cp1x} ${point.cp1y} ${point.cp2x} ${point.cp2y} ${point.x} ${point.y}`;
+        } else {
+          pathData += ` Q ${point.cp1x} ${point.cp1y} ${point.x} ${point.y}`;
+        }
+      } else {
+        // Straight line
+        pathData += ` L ${point.x} ${point.y}`;
+      }
+    }
+    
+    if (obj.pathClosed) {
+      pathData += ' Z';
+    }
+
+    const el = (
+      <path
+        d={pathData}
+        fill={obj.pathClosed ? (obj.fill || 'none') : 'none'}
+        stroke={obj.stroke || '#000000'}
+        strokeWidth={obj.strokeWidth || 2}
+        opacity={obj.opacity}
+        style={{ cursor, filter: filterStyle }}
+        onMouseDown={handleMouseDown}
+        transform={`rotate(${obj.rotation} ${obj.x + obj.width / 2} ${obj.y + obj.height / 2})`}
+      />
+    );
+    
+    if (isSelected) {
+      return (
+        <g>
+          {el}
+          <path
+            d={pathData}
+            fill="none"
+            stroke="#ccff00"
+            strokeWidth={2}
+            strokeDasharray="4 4"
+          />
+        </g>
+      );
+    }
+    return el;
   }
 
   if (obj.type === 'shape') {
@@ -559,6 +615,7 @@ function CanvasObjectItem({
 
 export function WorkbenchStage() {
   const containerRef = useRef<HTMLDivElement>(null);
+  const svgRef = useRef<SVGSVGElement>(null);
   const [containerSize, setContainerSize] = useState({ width: 800, height: 600 });
 
   const {
@@ -572,6 +629,8 @@ export function WorkbenchStage() {
     saveToHistory,
     textureOverlays,
     showHardwareGuide,
+    activeTool,
+    setActiveTool,
   } = useDeckForgeStore();
 
   // Handle container resize
@@ -647,6 +706,63 @@ export function WorkbenchStage() {
     }
   }, [selectObject]);
 
+  // Handle pen tool path completion
+  const handlePenToolComplete = useCallback((pathData: string) => {
+    // Parse SVG path data into PathPoints
+    const pathPoints: Array<{ x: number; y: number; cp1x?: number; cp1y?: number; cp2x?: number; cp2y?: number }> = [];
+    
+    // Simple regex to extract coordinates from path data
+    const commands = pathData.match(/[MLQCmlqc][^MLQCmlqc]*/g) || [];
+    
+    commands.forEach((cmd) => {
+      const type = cmd[0];
+      const coords = cmd.slice(1).trim().split(/[\s,]+/).map(Number);
+      
+      if (type === 'M' || type === 'm') {
+        pathPoints.push({ x: coords[0], y: coords[1] });
+      } else if (type === 'L' || type === 'l') {
+        pathPoints.push({ x: coords[0], y: coords[1] });
+      } else if (type === 'Q' || type === 'q') {
+        pathPoints.push({
+          x: coords[2],
+          y: coords[3],
+          cp1x: coords[0],
+          cp1y: coords[1],
+        });
+      } else if (type === 'C' || type === 'c') {
+        pathPoints.push({
+          x: coords[4],
+          y: coords[5],
+          cp1x: coords[0],
+          cp1y: coords[1],
+          cp2x: coords[2],
+          cp2y: coords[3],
+        });
+      }
+    });
+
+    if (pathPoints.length > 0) {
+      addObject({
+        type: 'path',
+        x: 0,
+        y: 0,
+        width: 100,
+        height: 100,
+        rotation: 0,
+        opacity: 1,
+        scaleX: 1,
+        scaleY: 1,
+        pathPoints,
+        pathClosed: false,
+        stroke: '#000000',
+        strokeWidth: 2,
+        fill: 'none',
+      });
+    }
+    
+    setActiveTool(null);
+  }, [addObject, setActiveTool]);
+
   // Get enabled textures
   const enabledTextures = textureOverlays.filter((t) => t.enabled);
 
@@ -664,6 +780,7 @@ export function WorkbenchStage() {
 
       {/* SVG Canvas */}
       <svg
+        ref={svgRef}
         className="absolute inset-0"
         width={containerSize.width}
         height={containerSize.height}
@@ -828,6 +945,14 @@ export function WorkbenchStage() {
             Click tools on left to add elements
           </text>
         )}
+
+        {/* Pen Tool */}
+        <PenTool
+          isActive={activeTool === 'pen'}
+          onComplete={handlePenToolComplete}
+          onCancel={() => setActiveTool(null)}
+          stageRef={svgRef}
+        />
       </svg>
 
       {/* Zoom controls */}
