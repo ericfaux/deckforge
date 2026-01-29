@@ -32,41 +32,43 @@
 22. ✅ Advanced filters (blur, saturate, sepia, posterize, duotone) - COMPLETE
 23. ✅ Batch export - COMPLETE
 24. ✅ 3D animation preview - COMPLETE
-25. ⏳ Deck marketplace / Social features - NEXT
+25. ✅ Public gallery & social features - COMPLETE
+26. ⏳ Design comments / User profiles - NEXT
 
 ### 📊 Stats:
-- **32 commits** pushed to GitHub
-- **127+ files** changed
-- **~17,300 lines** of code written
-- **6.5 hours** of autonomous building
+- **34 commits** pushed to GitHub
+- **138+ files** changed
+- **~18,100 lines** of code written
+- **7 hours** of autonomous building
 - **0 stops** - building continuously per directive
 
 ### 🎯 Latest Update (Heartbeat):
-**3D Animation Preview (Bonus Feature #24) - COMPLETE**
-- Full-screen preview mode with 3D rotation
-- AnimationPreview component with requestAnimationFrame
-- Play/Pause control for animation
-- Adjustable rotation speed slider (0.5-10°/frame)
-- Settings panel with speed controls
-- Current angle display (0-360°)
-- Reset rotation button
-- 3D perspective transform (rotateY)
-- Deck scaled 2.5x for better visibility
-- Realistic shadow effect under deck
-- Black radial gradient background
-- Preview button in main toolbar
-- Perfect for fingerboarders to visualize deck in motion
+**Public Gallery & Social Features (Bonus Feature #25) - COMPLETE**
+- Database migration (is_public, view_count, like_count, design_likes table)
+- Gallery API with sorting (recent/popular/liked)
+- Full Gallery page with card grid
+- Like/unlike functionality with heart icons (filled when liked)
+- Remix button (one-click load & edit any public design)
+- View count tracking (increments on view)
+- Public/Private toggle on Designs page
+- Public badge (Globe icon) on published designs
+- Private badge (Lock icon) on unpublished
+- Gallery link in main navigation
+- RLS policies for likes (auth required)
+- Optimistic UI updates for likes
+- Sort by: Recent, Popular (views), Most Liked
+- Perfect for fingerboard community sharing
 - Committed & pushed to GitHub (auto-deploying)
 
 **Previous builds:**
+- 3D Animation Preview (Bonus #24)
+  - Full-screen 3D rotation with controls
 - Batch Export System (Bonus #23)
   - Multi-select, ZIP export with progress
 - Advanced Filters (Bonus #22)
   - Blur, saturate, sepia, posterize, duotone
 - Public Sharing & Embeds (Bonus #21)
   - Share API, ShareModal, public view page
-- Mobile Responsive Design (Feature #19)
-  - Mobile toolbar, drawers, touch-friendly UI
 
 ### 🚀 Deployments:
 - Frontend: https://webapp-afteryou.vercel.app
