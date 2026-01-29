@@ -3,6 +3,7 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import "./env";
 import { sampleRouter } from "./routes/sample";
+import designsRouter from "./routes/designs";
 import { logger } from "hono/logger";
 
 const app = new Hono();
@@ -13,6 +14,8 @@ const allowed = [
   /^http:\/\/127\.0\.0\.1(:\d+)?$/,
   /^https:\/\/[a-z0-9-]+\.dev\.vibecode\.run$/,
   /^https:\/\/[a-z0-9-]+\.vibecode\.run$/,
+  /^https:\/\/.*\.vercel\.app$/,  // Vercel deployments
+  /^https:\/\/deckforge\..*$/,    // Custom domains
 ];
 
 app.use(
@@ -31,6 +34,7 @@ app.get("/health", (c) => c.json({ status: "ok" }));
 
 // Routes
 app.route("/api/sample", sampleRouter);
+app.route("/api/designs", designsRouter);
 
 const port = Number(process.env.PORT) || 3000;
 
