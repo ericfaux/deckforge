@@ -267,44 +267,48 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef, deckX, deckY
         </g>
       )}
 
-      {/* Toolbar */}
-      <foreignObject x={10} y={10} width={520} height={280}>
+      {/* Canva-style floating toolbar - clean and compact */}
+      <foreignObject x={20} y={100} width={240} height={420}>
         <div 
-          className="bg-card border-2 border-accent p-4 shadow-xl"
+          className="bg-card border border-border rounded-lg p-3 shadow-2xl"
           onMouseDown={(e) => e.stopPropagation()}
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="flex flex-col gap-3">
-            {/* Mode selector */}
-            <div className="flex gap-2">
+          <div className="flex flex-col gap-2.5">
+            {/* Mode selector - compact */}
+            <div className="flex gap-1 p-1 bg-secondary rounded">
               <button
                 onClick={(e) => handleModeSwitch('click', e)}
-                className={`flex-1 px-3 py-2 text-xs font-display uppercase tracking-wider transition-colors ${
+                className={`flex-1 px-2 py-1.5 text-xs rounded transition-colors ${
                   mode === 'click'
-                    ? 'bg-accent text-accent-foreground border-2 border-accent'
-                    : 'bg-secondary text-muted-foreground border-2 border-border hover:border-accent'
+                    ? 'bg-accent text-accent-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
                 }`}
+                title="Click to place points"
               >
-                <MousePointer2 className="w-3 h-3 inline mr-1" />
-                Click Points
+                <MousePointer2 className="w-3.5 h-3.5 mx-auto" />
               </button>
               <button
                 onClick={(e) => handleModeSwitch('draw', e)}
-                className={`flex-1 px-3 py-2 text-xs font-display uppercase tracking-wider transition-colors ${
+                className={`flex-1 px-2 py-1.5 text-xs rounded transition-colors ${
                   mode === 'draw'
-                    ? 'bg-accent text-accent-foreground border-2 border-accent'
-                    : 'bg-secondary text-muted-foreground border-2 border-border hover:border-accent'
+                    ? 'bg-accent text-accent-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
                 }`}
+                title="Free draw"
               >
-                Free Draw
+                <span className="text-sm">✏️</span>
               </button>
             </div>
 
-            {/* Stroke Width */}
-            <div className="flex items-center gap-3">
-              <span className="text-[10px] text-muted-foreground uppercase tracking-widest whitespace-nowrap">
-                Line Width
-              </span>
+            {/* Stroke Width - visual */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">Width</span>
+                <span className="text-xs font-mono bg-secondary px-1.5 py-0.5 rounded">
+                  {strokeWidth}px
+                </span>
+              </div>
               <input
                 type="range"
                 min="1"
@@ -313,31 +317,16 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef, deckX, deckY
                 onChange={(e) => setStrokeWidth(Number(e.target.value))}
                 onMouseDown={(e) => e.stopPropagation()}
                 onClick={(e) => e.stopPropagation()}
-                className="flex-1 h-2 bg-secondary border border-border appearance-none cursor-pointer"
-                style={{
-                  accentColor: 'hsl(var(--accent))',
-                }}
+                className="w-full h-1.5 bg-secondary rounded-full appearance-none cursor-pointer"
+                style={{ accentColor: strokeColor }}
               />
-              <span className="text-sm font-mono text-foreground w-8 text-right">
-                {strokeWidth}px
-              </span>
             </div>
 
-            {/* Line Color */}
-            <div className="flex items-center gap-3">
-              <span className="text-[10px] text-muted-foreground uppercase tracking-widest whitespace-nowrap">
-                Line Color
-              </span>
-              <input
-                type="color"
-                value={strokeColor}
-                onChange={(e) => setStrokeColor(e.target.value)}
-                onMouseDown={(e) => e.stopPropagation()}
-                onClick={(e) => e.stopPropagation()}
-                className="w-10 h-10 border-2 border-border cursor-pointer bg-transparent"
-              />
-              <div className="flex gap-1 flex-1">
-                {['#ffffff', '#000000', '#ccff00', '#ff6600', '#00ffff', '#ff00ff'].map((color) => (
+            {/* Color Swatches - Canva style */}
+            <div className="space-y-2">
+              <span className="text-xs text-muted-foreground">Color</span>
+              <div className="grid grid-cols-6 gap-1.5">
+                {['#000000', '#ffffff', '#ccff00', '#ff6600', '#00ffff', '#ff00ff'].map((color) => (
                   <button
                     key={color}
                     onClick={(e) => {
@@ -345,20 +334,33 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef, deckX, deckY
                       setStrokeColor(color);
                     }}
                     onMouseDown={(e) => e.stopPropagation()}
-                    className={`w-6 h-6 border-2 transition-all ${
-                      strokeColor === color ? 'border-accent scale-110' : 'border-border'
+                    className={`w-8 h-8 rounded-md border-2 transition-all hover:scale-110 ${
+                      strokeColor === color ? 'border-accent ring-2 ring-accent/30' : 'border-border/50'
                     }`}
                     style={{ backgroundColor: color }}
+                    title={color}
                   />
                 ))}
               </div>
+              <input
+                type="color"
+                value={strokeColor}
+                onChange={(e) => setStrokeColor(e.target.value)}
+                onMouseDown={(e) => e.stopPropagation()}
+                onClick={(e) => e.stopPropagation()}
+                className="w-full h-8 border border-border rounded cursor-pointer"
+                title="Custom color"
+              />
             </div>
 
             {/* Opacity */}
-            <div className="flex items-center gap-3">
-              <span className="text-[10px] text-muted-foreground uppercase tracking-widest whitespace-nowrap">
-                Opacity
-              </span>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">Opacity</span>
+                <span className="text-xs font-mono bg-secondary px-1.5 py-0.5 rounded">
+                  {Math.round(opacity * 100)}%
+                </span>
+              </div>
               <input
                 type="range"
                 min="0.1"
@@ -368,22 +370,15 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef, deckX, deckY
                 onChange={(e) => setOpacity(Number(e.target.value))}
                 onMouseDown={(e) => e.stopPropagation()}
                 onClick={(e) => e.stopPropagation()}
-                className="flex-1 h-2 bg-secondary border border-border appearance-none cursor-pointer"
-                style={{
-                  accentColor: 'hsl(var(--accent))',
-                }}
+                className="w-full h-1.5 bg-secondary rounded-full appearance-none cursor-pointer"
+                style={{ accentColor: strokeColor }}
               />
-              <span className="text-sm font-mono text-foreground w-8 text-right">
-                {Math.round(opacity * 100)}%
-              </span>
             </div>
 
-            {/* Dash Style */}
-            <div className="flex items-center gap-3">
-              <span className="text-[10px] text-muted-foreground uppercase tracking-widest whitespace-nowrap">
-                Line Style
-              </span>
-              <div className="flex gap-1 flex-1">
+            {/* Line Style - visual previews */}
+            <div className="space-y-2">
+              <span className="text-xs text-muted-foreground">Style</span>
+              <div className="flex gap-1.5">
                 {(['solid', 'dashed', 'dotted'] as DashStyle[]).map((style) => (
                   <button
                     key={style}
@@ -392,41 +387,48 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef, deckX, deckY
                       setDashStyle(style);
                     }}
                     onMouseDown={(e) => e.stopPropagation()}
-                    className={`flex-1 px-2 py-1.5 text-[10px] uppercase tracking-wider border-2 transition-all ${
+                    className={`flex-1 h-10 rounded border-2 transition-all hover:scale-105 ${
                       dashStyle === style
-                        ? 'bg-accent text-accent-foreground border-accent'
-                        : 'bg-secondary text-muted-foreground border-border hover:border-accent'
+                        ? 'bg-accent/10 border-accent'
+                        : 'bg-secondary border-border hover:border-accent/50'
                     }`}
+                    title={style}
                   >
-                    {style === 'solid' ? '━━' : style === 'dashed' ? '╌╌' : '┄┄'}
+                    <div className="h-full flex items-center justify-center">
+                      <div 
+                        className="w-8 h-0.5" 
+                        style={{
+                          background: strokeColor,
+                          borderTop: style === 'dashed' ? `2px dashed ${strokeColor}` : 
+                                     style === 'dotted' ? `2px dotted ${strokeColor}` : 
+                                     `2px solid ${strokeColor}`
+                        }}
+                      />
+                    </div>
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Instructions & controls */}
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-[10px] text-muted-foreground uppercase tracking-widest flex-1">
+            {/* Instructions - clean */}
+            <div className="pt-2 border-t border-border space-y-2">
+              <p className="text-xs text-muted-foreground text-center leading-relaxed">
                 {mode === 'click' 
                   ? points.length === 0
-                    ? 'Click START point • Click END point to finish'
-                    : points.length === 1
-                      ? 'Click END point to finish line'
-                      : 'Drawing...'
+                    ? 'Click to place start point'
+                    : 'Click to finish line'
                   : isDrawing
-                    ? 'Release mouse to finish • ESC to cancel'
-                    : 'Hold & drag to draw • Release to finish'
+                    ? 'Drawing...'
+                    : 'Click and drag to draw'
                 }
-              </span>
-              <div className="flex gap-1">
-                <button
-                  onClick={handleCancelClick}
-                  className="p-2 bg-destructive hover:bg-destructive/90 border border-destructive transition-colors"
-                  title="Cancel (ESC)"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
+              </p>
+              <button
+                onClick={handleCancelClick}
+                className="w-full py-2 px-3 text-xs bg-secondary hover:bg-destructive/10 text-muted-foreground hover:text-destructive border border-border hover:border-destructive/50 rounded transition-colors flex items-center justify-center gap-2"
+              >
+                <X className="w-3.5 h-3.5" />
+                Cancel (ESC)
+              </button>
             </div>
           </div>
         </div>
