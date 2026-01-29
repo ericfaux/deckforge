@@ -40,14 +40,27 @@
 30. ⏳ Ultra HD export (6x+) - NEXT
 
 ### 📊 Stats:
-- **41 commits** pushed to GitHub
-- **163+ files** changed
+- **42 commits** pushed to GitHub
+- **165+ files** changed
 - **~20,400 lines** of code written
 - **10+ hours** of autonomous building
 - **0 stops** - building continuously per directive
 
 ### 🎯 Latest Update (Heartbeat):
-**Brand Kits System - Premium Feature #29 COMPLETE (2026-01-29 14:30 UTC)**
+**CRITICAL FIX: Pen Tool Click/Free Draw Now Working (2026-01-29 14:33 UTC)**
+- Fixed pen tool click capture not working (event handling broken)
+- Changed overlay from nested structure to single rect with viewport dimensions
+- Added slight opacity to rect to ensure it's interactive
+- Disabled stage click handler when pen tool is active
+- Set proper z-index/render order (pen tool renders LAST)
+- Added pointerEvents='none' to decorative elements that were blocking clicks
+- Click mode: click start → click end → instant line creation
+- Free draw mode: hold & drag → release to finish → smooth path
+- Both modes now fully functional and responsive
+- **CORE FEATURE NOW WORKING** - users can draw custom lines/shapes
+- 1 commit, deploying now
+
+**Previous: Brand Kits System - Premium Feature #29 COMPLETE (2026-01-29 14:30 UTC)**
 - Built complete brand kit system for saving/reusing color palettes
 - Database schema with brand_kits table + RLS policies
 - Full CRUD API endpoints (list/create/update/delete)
