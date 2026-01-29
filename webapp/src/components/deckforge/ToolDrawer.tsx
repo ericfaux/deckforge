@@ -1,10 +1,13 @@
-import { X, Skull, Flame, Zap, Sword, Radio, Disc3, Music2, Triangle, Hexagon, Circle, Square, Star, Heart, Crown, Anchor, Target, Eye, Hand, Rocket, Ghost, Bug, Cat, Dog, Fish, Bird, Leaf, Sun, Moon, Cloud, Sparkles } from 'lucide-react';
-import { useState } from 'react';
+import { X, Skull, Flame, Zap, Sword, Radio, Disc3, Music2, Triangle, Hexagon, Circle, Square, Star, Heart, Crown, Anchor, Target, Eye, Hand, Rocket, Ghost, Bug, Cat, Dog, Fish, Bird, Leaf, Sun, Moon, Cloud, Sparkles, Upload, Trash2, Loader2 } from 'lucide-react';
+import { useState, useRef } from 'react';
 import { useDeckForgeStore, ToolType, CanvasObject, TextureType } from '@/store/deckforge';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { DECK_WIDTH, DECK_HEIGHT } from './WorkbenchStage';
 import { Slider } from '@/components/ui/slider';
+import { assetsAPI } from '@/lib/api';
+import { useAuthStore } from '@/store/auth';
+import { Button } from '@/components/ui/button';
 
 // ============ STICKER SYSTEM ============
 const stickerCategories = {
@@ -439,6 +442,179 @@ function LinesContent({ onAddObject, deckCenterX, deckCenterY }: {
   );
 }
 
+// ============ UPLOADS CONTENT ============
+function UploadsContent({ onAddObject, deckCenterX, deckCenterY }: {
+  onAddObject: (obj: Omit<CanvasObject, 'id'>) => void;
+  deckCenterX: number;
+  deckCenterY: number;
+}) {
+  const [assets, setAssets] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { isAuthenticated } = useAuthStore();
+
+  // Load user assets on mount
+  useState(() => {
+    if (isAuthenticated) {
+      loadAssets();
+    }
+  });
+
+  const loadAssets = async () => {
+    if (!isAuthenticated) return;
+    
+    setIsLoading(true);
+    try {
+      const data = await assetsAPI.list();
+      setAssets(data.assets || []);
+    } catch (err) {
+      console.error('Failed to load assets:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setIsUploading(true);
+    try {
+      for (const file of Array.from(files)) {
+        const { url, width, height } = await assetsAPI.upload(file);
+        
+        // Add to assets list
+        await loadAssets();
+      }
+    } catch (err) {
+      console.error('Upload failed:', err);
+      alert('Upload failed. Please try again.');
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const addAssetToCanvas = (asset: any) => {
+    const maxDim = 120;
+    const scale = Math.min(maxDim / asset.width, maxDim / asset.height);
+    const width = asset.width * scale;
+    const height = asset.height * scale;
+
+    onAddObject({
+      type: 'image',
+      x: deckCenterX - width / 2,
+      y: deckCenterY - height / 2,
+      width: asset.width,
+      height: asset.height,
+      rotation: 0,
+      opacity: 1,
+      scaleX: scale,
+      scaleY: scale,
+      src: asset.file_url,
+    });
+  };
+
+  const deleteAsset = async (id: string) => {
+    if (!confirm('Delete this asset?')) return;
+    
+    try {
+      await assetsAPI.delete(id);
+      await loadAssets();
+    } catch (err) {
+      console.error('Delete failed:', err);
+    }
+  };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="text-center py-8 space-y-4">
+        <p className="text-xs text-muted-foreground">
+          Login to upload custom images
+        </p>
+        <Button size="sm" onClick={() => window.location.href = '/auth'}>
+          Login
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        className="hidden"
+        onChange={handleFileSelect}
+      />
+
+      <div
+        onClick={() => fileInputRef.current?.click()}
+        className="border-2 border-dashed border-border p-6 text-center hover:border-primary transition-colors cursor-pointer"
+      >
+        {isUploading ? (
+          <>
+            <Loader2 className="w-6 h-6 mx-auto mb-2 animate-spin text-primary" />
+            <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
+              Uploading...
+            </span>
+          </>
+        ) : (
+          <>
+            <Upload className="w-6 h-6 mx-auto mb-2 text-muted-foreground" />
+            <span className="text-[10px] uppercase tracking-widest text-muted-foreground block mb-1">
+              Upload Images
+            </span>
+            <span className="text-xs text-muted-foreground">
+              PNG, JPG, SVG
+            </span>
+          </>
+        )}
+      </div>
+
+      {isLoading ? (
+        <div className="text-center py-4">
+          <Loader2 className="w-5 h-5 mx-auto animate-spin text-muted-foreground" />
+        </div>
+      ) : assets.length > 0 ? (
+        <div className="grid grid-cols-2 gap-2">
+          {assets.map((asset) => (
+            <div
+              key={asset.id}
+              className="relative group border border-border hover:border-primary transition-colors overflow-hidden aspect-square cursor-pointer"
+              onClick={() => addAssetToCanvas(asset)}
+            >
+              <img
+                src={asset.file_url}
+                alt={asset.name}
+                className="w-full h-full object-cover"
+              />
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  deleteAsset(asset.id);
+                }}
+                className="absolute top-1 right-1 p-1 bg-destructive text-destructive-foreground rounded opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                <Trash2 className="w-3 h-3" />
+              </button>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="text-center text-xs text-muted-foreground py-4">
+          No uploads yet. Click above to upload!
+        </p>
+      )}
+    </div>
+  );
+}
+
 // ============ FINISHES CONTENT ============
 function FinishesContent() {
   const { textureOverlays, toggleTexture, updateTexture } = useDeckForgeStore();
@@ -649,21 +825,7 @@ function DrawerContent({ tool, onAddObject, deckCenterX, deckCenterY }: DrawerCo
   }
 
   if (tool === 'uploads') {
-    return (
-      <div className="space-y-3">
-        <div className="border-2 border-dashed border-border p-6 text-center hover:border-primary transition-colors cursor-pointer">
-          <span className="text-[10px] uppercase tracking-widest text-muted-foreground block mb-2">
-            Drop files here
-          </span>
-          <span className="text-xs text-muted-foreground">
-            PNG, JPG, SVG
-          </span>
-        </div>
-        <p className="text-[10px] text-muted-foreground">
-          Use the IMAGES tab in Vibecode to upload custom graphics.
-        </p>
-      </div>
-    );
+    return <UploadsContent onAddObject={onAddObject} deckCenterX={deckCenterX} deckCenterY={deckCenterY} />;
   }
 
   if (tool === 'finishes') {

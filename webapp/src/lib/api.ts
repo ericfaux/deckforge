@@ -181,3 +181,125 @@ export const designsAPI = {
     return response.json();
   },
 };
+
+// Assets API
+export const assetsAPI = {
+  async list() {
+    const response = await apiRequest('/api/assets');
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to list assets');
+    }
+
+    return response.json();
+  },
+
+  async getUploadUrl(filename: string, contentType: string) {
+    const response = await apiRequest('/api/assets/upload-url', {
+      method: 'POST',
+      body: JSON.stringify({ filename, contentType }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to get upload URL');
+    }
+
+    return response.json();
+  },
+
+  async create(asset: {
+    name: string;
+    file_url: string;
+    file_type: string;
+    file_size: number;
+    width?: number;
+    height?: number;
+  }) {
+    const response = await apiRequest('/api/assets', {
+      method: 'POST',
+      body: JSON.stringify(asset),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to create asset');
+    }
+
+    return response.json();
+  },
+
+  async delete(id: string) {
+    const response = await apiRequest(`/api/assets/${id}`, {
+      method: 'DELETE',
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to delete asset');
+    }
+
+    return response.json();
+  },
+
+  async upload(file: File): Promise<{url: string; width: number; height: number}> {
+    // Get signed upload URL
+    const { uploadUrl, path } = await this.getUploadUrl(file.name, file.type);
+
+    // Upload file directly to Supabase Storage
+    const uploadResponse = await fetch(uploadUrl, {
+      method: 'PUT',
+      body: file,
+      headers: {
+        'Content-Type': file.type,
+      },
+    });
+
+    if (!uploadResponse.ok) {
+      throw new Error('Failed to upload file');
+    }
+
+    // Get image dimensions
+    const dimensions = await getImageDimensions(file);
+
+    // Construct public URL
+    const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/user-assets/${path}`;
+
+    // Record in database
+    await this.create({
+      name: file.name,
+      file_url: publicUrl,
+      file_type: file.type,
+      file_size: file.size,
+      width: dimensions.width,
+      height: dimensions.height,
+    });
+
+    return {
+      url: publicUrl,
+      width: dimensions.width,
+      height: dimensions.height,
+    };
+  },
+};
+
+// Helper: Get image dimensions from file
+function getImageDimensions(file: File): Promise<{width: number; height: number}> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      resolve({ width: img.width, height: img.height });
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error('Failed to load image'));
+    };
+
+    img.src = url;
+  });
+}
