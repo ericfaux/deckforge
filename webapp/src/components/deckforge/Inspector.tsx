@@ -9,7 +9,8 @@ import { AdvancedEffects } from './AdvancedEffects';
 import { FontUploadModal } from './FontUploadModal';
 import { GradientPicker } from './GradientPicker';
 import { DECK_WIDTH, DECK_HEIGHT } from './WorkbenchStage';
-import { preloadUserFonts, Font } from '@/lib/fonts';
+import { preloadUserFonts, Font, loadFont } from '@/lib/fonts';
+import { toast } from 'sonner';
 import {
   Accordion,
   AccordionContent,
@@ -453,21 +454,34 @@ export function Inspector() {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                      Font Family
+                      Font Family {userFonts.length > 0 && (
+                        <span className="text-accent font-normal">
+                          ({userFonts.length} custom)
+                        </span>
+                      )}
                     </Label>
                     <button
                       onClick={() => setIsFontModalOpen(true)}
                       className="text-[10px] uppercase tracking-widest text-accent hover:text-accent/80 transition-colors flex items-center gap-1"
                     >
                       <Type className="w-3 h-3" />
-                      Manage
+                      {userFonts.length > 0 ? 'Manage' : 'Upload'}
                     </button>
                   </div>
                   <select
                     value={selectedObject.fontFamily || 'Arial'}
                     onChange={(e) => updateWithHistory({ fontFamily: e.target.value })}
-                    className="w-full h-8 text-xs bg-secondary border border-border px-2 cursor-pointer"
+                    className="w-full h-8 text-xs bg-secondary border border-border px-2 cursor-pointer hover:border-primary transition-colors"
                   >
+                    {userFonts.length > 0 && (
+                      <optgroup label="✨ Your Custom Fonts">
+                        {userFonts.map((font) => (
+                          <option key={font.id} value={font.font_family}>
+                            {font.name}
+                          </option>
+                        ))}
+                      </optgroup>
+                    )}
                     <optgroup label="System Fonts">
                       <option value="Arial">Arial</option>
                       <option value="Helvetica">Helvetica</option>
@@ -478,15 +492,6 @@ export function Inspector() {
                       <option value="Impact">Impact</option>
                       <option value="Comic Sans MS">Comic Sans MS</option>
                     </optgroup>
-                    {userFonts.length > 0 && (
-                      <optgroup label="Custom Fonts">
-                        {userFonts.map((font) => (
-                          <option key={font.id} value={font.font_family}>
-                            {font.name}
-                          </option>
-                        ))}
-                      </optgroup>
-                    )}
                   </select>
                 </div>
                 <div className="space-y-2">
@@ -845,8 +850,31 @@ export function Inspector() {
       <FontUploadModal
         isOpen={isFontModalOpen}
         onClose={() => setIsFontModalOpen(false)}
-        onFontUploaded={(font) => {
+        onFontUploaded={async (font) => {
+          // Add to list
           setUserFonts([...userFonts, font]);
+          
+          // Load font dynamically so it's immediately available
+          try {
+            await loadFont(font);
+            toast.success(`Font "${font.name}" ready to use`, {
+              description: 'Select it from the font dropdown',
+              duration: 3000,
+            });
+            
+            // Auto-apply to selected text if applicable
+            if (selectedObject && selectedObject.type === 'text') {
+              updateWithHistory({ fontFamily: font.font_family });
+              toast.info('Applied to selected text', {
+                duration: 2000,
+              });
+            }
+          } catch (err) {
+            console.error('Failed to load font:', err);
+            toast.error('Font uploaded but failed to load', {
+              description: 'Try refreshing the page',
+            });
+          }
         }}
       />
     </div>
