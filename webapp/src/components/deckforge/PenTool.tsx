@@ -52,7 +52,16 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef }: PenToolPro
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
-    setPoints([...points, { x, y }]);
+    const newPoints = [...points, { x, y }];
+    setPoints(newPoints);
+
+    // Auto-complete on second click
+    if (newPoints.length === 2) {
+      setTimeout(() => {
+        const pathData = `M ${newPoints[0].x} ${newPoints[0].y} L ${newPoints[1].x} ${newPoints[1].y}`;
+        onComplete(pathData, strokeWidth);
+      }, 50);
+    }
   };
 
   const handleMouseDown = (e: React.MouseEvent<SVGSVGElement>) => {
@@ -84,7 +93,10 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef }: PenToolPro
     if (mode === 'draw' && isDrawing) {
       setIsDrawing(false);
       if (points.length >= 2) {
-        setTimeout(() => handleComplete(), 100);
+        handleComplete();
+      } else {
+        // Not enough points, cancel
+        onCancel();
       }
     }
   };
@@ -283,32 +295,17 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef }: PenToolPro
             <div className="flex items-center justify-between gap-2">
               <span className="text-[10px] text-muted-foreground uppercase tracking-widest flex-1">
                 {mode === 'click' 
-                  ? `Click to add points • ${points.length} point${points.length !== 1 ? 's' : ''} • ESC to cancel`
-                  : points.length > 0 
-                    ? 'Release to finish • ESC to cancel'
-                    : 'Hold & drag to draw • ESC to cancel'
+                  ? points.length === 0
+                    ? 'Click START point • Click END point to finish'
+                    : points.length === 1
+                      ? 'Click END point to finish line'
+                      : 'Drawing...'
+                  : isDrawing
+                    ? 'Release mouse to finish • ESC to cancel'
+                    : 'Hold & drag to draw • Release to finish'
                 }
               </span>
               <div className="flex gap-1">
-                {points.length > 0 && (
-                  <>
-                    <button
-                      onClick={handleUndoClick}
-                      className="p-2 bg-secondary hover:bg-secondary/80 border border-border transition-colors"
-                      title="Undo last point"
-                    >
-                      <Undo className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={handleCompleteClick}
-                      disabled={points.length < 2}
-                      className="p-2 bg-accent hover:bg-accent/90 border border-accent disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      title="Complete path (Enter)"
-                    >
-                      <Check className="w-4 h-4" />
-                    </button>
-                  </>
-                )}
                 <button
                   onClick={handleCancelClick}
                   className="p-2 bg-destructive hover:bg-destructive/90 border border-destructive transition-colors"
