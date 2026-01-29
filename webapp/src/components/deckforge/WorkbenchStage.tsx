@@ -3,6 +3,7 @@ import { useDeckForgeStore, CanvasObject } from '@/store/deckforge';
 import { ZoomControls } from './ZoomControls';
 import { PenTool } from './PenTool';
 import { TransformHandles } from './TransformHandles';
+import { SnapGuides, calculateSnapGuides } from './SnapGuides';
 import type { LucideIcon } from 'lucide-react';
 import { Skull, Flame, Zap, Sword, Ghost, Bug, Eye, Target, Radio, Disc3, Music2, Rocket, Crown, Anchor, Sun, Moon, Triangle, Hexagon, Circle, Square, Star, Heart, Sparkles, Hand, Cat, Dog, Fish, Bird, Leaf, Cloud } from 'lucide-react';
 
@@ -112,6 +113,10 @@ function CanvasObjectItem({
   onChange,
   deckX,
   deckY,
+  stageScale,
+  onDragStart,
+  onDragMove,
+  onDragEnd,
 }: {
   obj: CanvasObject;
   isSelected: boolean;
@@ -119,29 +124,51 @@ function CanvasObjectItem({
   onChange: (updates: Partial<CanvasObject>) => void;
   deckX: number;
   deckY: number;
+  stageScale: number;
+  onDragStart?: () => void;
+  onDragMove?: (obj: CanvasObject) => void;
+  onDragEnd?: () => void;
 }) {
   const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [dragStart, setDragStart] = useState({ objX: 0, objY: 0, clientX: 0, clientY: 0 });
 
   const handleMouseDown = (e: React.MouseEvent) => {
     e.stopPropagation();
     onSelect();
     setIsDragging(true);
-    setDragStart({ x: e.clientX - obj.x, y: e.clientY - obj.y });
+    setDragStart({
+      objX: obj.x,
+      objY: obj.y,
+      clientX: e.clientX,
+      clientY: e.clientY,
+    });
+    onDragStart?.();
   };
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (isDragging) {
+      // Calculate delta in screen space, then convert to deck space
+      const deltaX = (e.clientX - dragStart.clientX) / stageScale;
+      const deltaY = (e.clientY - dragStart.clientY) / stageScale;
+      
+      const newX = dragStart.objX + deltaX;
+      const newY = dragStart.objY + deltaY;
+      
       onChange({
-        x: e.clientX - dragStart.x,
-        y: e.clientY - dragStart.y,
+        x: newX,
+        y: newY,
       });
+      
+      onDragMove?.({ ...obj, x: newX, y: newY });
     }
-  }, [isDragging, dragStart, onChange]);
+  }, [isDragging, dragStart, stageScale, onChange, onDragMove, obj]);
 
   const handleMouseUp = useCallback(() => {
-    setIsDragging(false);
-  }, []);
+    if (isDragging) {
+      setIsDragging(false);
+      onDragEnd?.();
+    }
+  }, [isDragging, onDragEnd]);
 
   useEffect(() => {
     if (isDragging) {
@@ -705,6 +732,8 @@ export function WorkbenchStage() {
   const svgRef = useRef<SVGSVGElement>(null);
   const [containerSize, setContainerSize] = useState({ width: 800, height: 600 });
   const [touchDistance, setTouchDistance] = useState<number | null>(null);
+  const [snapGuides, setSnapGuides] = useState<Array<{ type: 'vertical' | 'horizontal'; position: number; label?: string }>>([]);
+  const [isDraggingObject, setIsDraggingObject] = useState(false);
 
   const {
     objects,
@@ -966,16 +995,30 @@ export function WorkbenchStage() {
                 isSelected={selectedId === obj.id}
                 onSelect={() => selectObject(obj.id)}
                 onChange={(updates) => {
-                  saveToHistory();
                   updateObject(obj.id, updates);
                 }}
                 deckX={deckX}
                 deckY={deckY}
+                stageScale={stageScale}
+                onDragStart={() => {
+                  saveToHistory();
+                  setIsDraggingObject(true);
+                }}
+                onDragMove={(draggedObj) => {
+                  // Calculate snap guides
+                  const otherObjects = objects.filter(o => o.id !== draggedObj.id);
+                  const guides = calculateSnapGuides(draggedObj, otherObjects, 5);
+                  setSnapGuides(guides);
+                }}
+                onDragEnd={() => {
+                  setIsDraggingObject(false);
+                  setSnapGuides([]);
+                }}
               />
             ))}
 
             {/* Transform handles for selected object */}
-            {selectedId && activeTool !== 'pen' && (() => {
+            {selectedId && activeTool !== 'pen' && !isDraggingObject && (() => {
               const selectedObj = objects.find(obj => obj.id === selectedId);
               if (!selectedObj) return null;
               
@@ -996,6 +1039,16 @@ export function WorkbenchStage() {
               );
             })()}
           </g>
+
+          {/* Snap guides (rendered outside clip so they extend full height/width) */}
+          {isDraggingObject && (
+            <SnapGuides
+              guides={snapGuides}
+              deckX={deckX}
+              deckY={deckY}
+              stageScale={stageScale}
+            />
+          )}
 
           {/* Texture overlays with blend modes */}
           {enabledTextures.map((texture) => (
