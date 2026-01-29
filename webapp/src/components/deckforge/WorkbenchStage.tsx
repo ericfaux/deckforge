@@ -971,8 +971,11 @@ export function WorkbenchStage() {
         strokeDashStyle: dashStyle,
         fill: 'none',
       });
+      
+      // Deselect immediately so no transform handles appear
+      selectObject(null);
     }
-  }, [addObject, setActiveTool]);
+  }, [addObject, setActiveTool, selectObject]);
 
   // Get enabled textures
   const enabledTextures = textureOverlays.filter((t) => t.enabled);
