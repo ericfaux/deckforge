@@ -47,7 +47,19 @@
 - **0 stops** - building continuously per directive
 
 ### 🎯 Latest Update (Heartbeat):
-**SVG Export (Premium Feature #28) - COMPLETE (2026-01-29 13:17 UTC)**
+**CRITICAL FIX: SVG Import Now Working (2026-01-29 14:13 UTC)**
+- **DIAGNOSED ROOT CAUSE**: Missing image rendering code in WorkbenchStage.tsx
+- SVG paths were being created as image objects but never rendered (no case for type='image')
+- Added full image rendering with proper transform, opacity, and selection
+- Fixed getBBox() issue by temporarily attaching elements to DOM for accurate dimensions
+- Blob URL generation now working correctly
+- SVG paths now visible on canvas immediately after import
+- Supports colorize effects on imported SVGs
+- **CRITICAL FEATURE NOW FUNCTIONAL** - Users can import vector graphics
+- 2 commits, fully deployed
+- Import any SVG → see it on canvas → edit & export
+
+**Previous: SVG Export (Premium Feature #28) - COMPLETE (2026-01-29 13:17 UTC)**
 - Created exportToSVG function for vector export
 - Full SVG rendering: text, shapes, paths, lines, images
 - Gradient support (linear/radial) with proper SVG gradients
