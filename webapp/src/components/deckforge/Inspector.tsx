@@ -1,4 +1,4 @@
-import { Download, Grid3X3, RotateCcw, ChevronDown, Type, Lock, Unlock } from 'lucide-react';
+import { Download, Grid3X3, RotateCcw, ChevronDown, Type, Lock, Unlock, ArrowUp, ArrowDown, ChevronsUp, ChevronsDown } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useDeckForgeStore, CanvasObject } from '@/store/deckforge';
 import { Slider } from '@/components/ui/slider';
@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/accordion';
 
 export function Inspector() {
-  const { objects, selectedId, updateObject, saveToHistory, generatePattern } = useDeckForgeStore();
+  const { objects, selectedId, updateObject, saveToHistory, generatePattern, moveLayer, bringToFront, sendToBack } = useDeckForgeStore();
   const selectedObject = objects.find((obj) => obj.id === selectedId);
 
   // Pattern generator state
@@ -101,6 +101,62 @@ export function Inspector() {
                   </>
                 )}
               </button>
+            </div>
+
+            {/* Layer Ordering */}
+            <div className="space-y-2">
+              <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                Layer Order
+              </Label>
+              <div className="grid grid-cols-4 gap-1">
+                <button
+                  onClick={() => {
+                    moveLayer(selectedId!, 'up');
+                    toast.success('Moved forward');
+                  }}
+                  className="flex items-center justify-center gap-1 px-2 py-1.5 text-xs bg-secondary hover:bg-secondary/80 border border-border transition-colors"
+                  title="Bring forward (Ctrl+])"
+                >
+                  <ArrowUp className="w-3.5 h-3.5" />
+                  <span className="text-[9px] uppercase">Forward</span>
+                </button>
+                <button
+                  onClick={() => {
+                    moveLayer(selectedId!, 'down');
+                    toast.success('Moved backward');
+                  }}
+                  className="flex items-center justify-center gap-1 px-2 py-1.5 text-xs bg-secondary hover:bg-secondary/80 border border-border transition-colors"
+                  title="Send backward (Ctrl+[)"
+                >
+                  <ArrowDown className="w-3.5 h-3.5" />
+                  <span className="text-[9px] uppercase">Back</span>
+                </button>
+                <button
+                  onClick={() => {
+                    bringToFront(selectedId!);
+                    toast.success('Brought to front');
+                  }}
+                  className="flex items-center justify-center gap-1 px-2 py-1.5 text-xs bg-secondary hover:bg-secondary/80 border border-border transition-colors"
+                  title="Bring to front (Ctrl+Shift+])"
+                >
+                  <ChevronsUp className="w-3.5 h-3.5" />
+                  <span className="text-[9px] uppercase">Front</span>
+                </button>
+                <button
+                  onClick={() => {
+                    sendToBack(selectedId!);
+                    toast.success('Sent to back');
+                  }}
+                  className="flex items-center justify-center gap-1 px-2 py-1.5 text-xs bg-secondary hover:bg-secondary/80 border border-border transition-colors"
+                  title="Send to back (Ctrl+Shift+[)"
+                >
+                  <ChevronsDown className="w-3.5 h-3.5" />
+                  <span className="text-[9px] uppercase">Back</span>
+                </button>
+              </div>
+              <p className="text-[9px] text-muted-foreground">
+                Move layer in front of or behind other objects
+              </p>
             </div>
 
             {/* Opacity */}

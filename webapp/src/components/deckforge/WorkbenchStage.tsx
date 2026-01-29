@@ -402,9 +402,67 @@ function CanvasObjectItem({
   if (obj.type === 'shape') {
     const baseStyle = { cursor, filter: filterStyle };
     
+    // Generate pattern background if pattern type exists
+    let patternBackground = null;
+    if (obj.patternType) {
+      const primary = obj.patternPrimaryColor || '#1e3a8a';
+      const secondary = obj.patternSecondaryColor || '#3b82f6';
+      const scale = obj.patternScale || 20;
+      
+      switch (obj.patternType) {
+        case 'checkerboard':
+          patternBackground = `repeating-linear-gradient(45deg, ${primary} 0px, ${primary} ${scale}px, ${secondary} ${scale}px, ${secondary} ${scale*2}px), repeating-linear-gradient(-45deg, transparent 0px, transparent ${scale}px, ${secondary} ${scale}px, ${secondary} ${scale*2}px)`;
+          break;
+        case 'speed-lines':
+          patternBackground = `repeating-linear-gradient(90deg, ${primary} 0px, ${primary} ${scale/4}px, ${secondary} ${scale/4}px, ${secondary} ${scale/2}px)`;
+          break;
+        case 'halftone':
+          patternBackground = `radial-gradient(${primary} ${scale/6}px, ${secondary} ${scale/6}px)`;
+          break;
+        case 'diagonal-stripes':
+          patternBackground = `repeating-linear-gradient(45deg, ${primary} 0px, ${primary} ${scale}px, ${secondary} ${scale}px, ${secondary} ${scale*2}px)`;
+          break;
+        case 'hexagons':
+          patternBackground = `repeating-conic-gradient(from 30deg, ${primary} 0deg 60deg, ${secondary} 60deg 120deg, ${primary} 120deg 180deg, ${secondary} 180deg 240deg, ${primary} 240deg 300deg, ${secondary} 300deg 360deg)`;
+          break;
+        case 'crosshatch':
+          patternBackground = `repeating-linear-gradient(0deg, transparent, transparent ${scale}px, ${secondary} ${scale}px, ${secondary} ${scale+2}px), repeating-linear-gradient(90deg, transparent, transparent ${scale}px, ${primary} ${scale}px, ${primary} ${scale+2}px)`;
+          break;
+        default:
+          patternBackground = `linear-gradient(${primary}, ${secondary})`;
+      }
+    }
+    
     // Generate gradient ID if gradient exists
     const gradientId = obj.gradientStops ? `gradient-${obj.id}` : null;
     const fillValue = gradientId ? `url(#${gradientId})` : (obj.fill || '#ffffff');
+    
+    // If we have a pattern, render using foreignObject with CSS background
+    if (patternBackground) {
+      const el = (
+        <foreignObject
+          x={obj.x}
+          y={obj.y}
+          width={obj.width * obj.scaleX}
+          height={obj.height * obj.scaleY}
+          style={baseStyle}
+          onMouseDown={handleMouseDown}
+        >
+          <div
+            style={{
+              width: '100%',
+              height: '100%',
+              background: patternBackground,
+              backgroundSize: obj.patternType === 'hexagons' ? `${obj.patternScale * 2}px ${obj.patternScale * 2}px` : 'auto',
+              opacity: obj.opacity,
+              filter: filterStyle,
+              border: isSelected ? '2px solid #ccff00' : 'none',
+            }}
+          />
+        </foreignObject>
+      );
+      return renderWithColorize(el);
+    }
 
     if (obj.shapeType === 'circle') {
       const el = (

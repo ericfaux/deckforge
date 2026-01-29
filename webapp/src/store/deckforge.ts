@@ -56,6 +56,11 @@ export interface CanvasObject {
   src?: string;
   // For shapes
   shapeType?: 'rect' | 'circle' | 'star';
+  // For patterns (CSS background patterns)
+  patternType?: 'checkerboard' | 'speed-lines' | 'halftone' | 'noise' | 'tie-dye' | 'diagonal-stripes' | 'hexagons' | 'crosshatch';
+  patternPrimaryColor?: string;
+  patternSecondaryColor?: string;
+  patternScale?: number;
   // For paths (pen tool / bezier curves)
   pathPoints?: PathPoint[];
   pathClosed?: boolean; // Whether path is closed (connects back to start)
@@ -187,6 +192,8 @@ interface DeckForgeState {
   setStageScale: (scale: number) => void;
   setStagePosition: (pos: { x: number; y: number }) => void;
   moveLayer: (id: string, direction: 'up' | 'down') => void;
+  bringToFront: (id: string) => void;
+  sendToBack: (id: string) => void;
   undo: () => void;
   redo: () => void;
   saveToHistory: () => void;
@@ -504,6 +511,30 @@ export const useDeckForgeStore = create<DeckForgeState>((set, get) => ({
     if (targetIndex < 0 || targetIndex >= newObjects.length) return;
 
     [newObjects[index], newObjects[targetIndex]] = [newObjects[targetIndex], newObjects[index]];
+    set({ objects: newObjects });
+  },
+
+  bringToFront: (id) => {
+    const state = get();
+    state.saveToHistory();
+    const index = state.objects.findIndex((obj) => obj.id === id);
+    if (index === -1 || index === state.objects.length - 1) return;
+
+    const newObjects = [...state.objects];
+    const [obj] = newObjects.splice(index, 1);
+    newObjects.push(obj);
+    set({ objects: newObjects });
+  },
+
+  sendToBack: (id) => {
+    const state = get();
+    state.saveToHistory();
+    const index = state.objects.findIndex((obj) => obj.id === id);
+    if (index === -1 || index === 0) return;
+
+    const newObjects = [...state.objects];
+    const [obj] = newObjects.splice(index, 1);
+    newObjects.unshift(obj);
     set({ objects: newObjects });
   },
 

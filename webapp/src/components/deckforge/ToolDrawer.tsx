@@ -206,8 +206,8 @@ function PatternsContent({ onAddObject, deckCenterX, deckCenterY }: {
   deckCenterX: number;
   deckCenterY: number;
 }) {
-  const [primaryColor, setPrimaryColor] = useState('#ccff00');
-  const [secondaryColor, setSecondaryColor] = useState('#000000');
+  const [primaryColor, setPrimaryColor] = useState('#1e3a8a'); // Dark blue
+  const [secondaryColor, setSecondaryColor] = useState('#3b82f6'); // Light blue
   const [scale, setScale] = useState(20);
 
   const generatePatternCSS = (patternId: string): string => {
@@ -234,45 +234,6 @@ function PatternsContent({ onAddObject, deckCenterX, deckCenterY }: {
   };
 
   const addPattern = (patternId: string) => {
-    // For now, create gradient backgrounds since SVG patterns are complex
-    // Simple patterns use 2-color gradients
-    let gradientStops: Array<{ offset: number; color: string }>;
-    let gradientAngle = 0;
-    
-    switch (patternId) {
-      case 'checkerboard':
-      case 'speed-lines':
-        // Horizontal stripes
-        gradientStops = [
-          { offset: 0, color: primaryColor },
-          { offset: 0.25, color: primaryColor },
-          { offset: 0.25, color: secondaryColor },
-          { offset: 0.5, color: secondaryColor },
-          { offset: 0.5, color: primaryColor },
-          { offset: 0.75, color: primaryColor },
-          { offset: 0.75, color: secondaryColor },
-          { offset: 1, color: secondaryColor },
-        ];
-        gradientAngle = patternId === 'speed-lines' ? 0 : 45;
-        break;
-      case 'diagonal-stripes':
-        gradientStops = [
-          { offset: 0, color: primaryColor },
-          { offset: 0.5, color: primaryColor },
-          { offset: 0.5, color: secondaryColor },
-          { offset: 1, color: secondaryColor },
-        ];
-        gradientAngle = 45;
-        break;
-      default:
-        // Simple 2-color gradient
-        gradientStops = [
-          { offset: 0, color: primaryColor },
-          { offset: 1, color: secondaryColor },
-        ];
-        gradientAngle = 0;
-    }
-    
     onAddObject({
       type: 'shape',
       x: 0,
@@ -284,9 +245,10 @@ function PatternsContent({ onAddObject, deckCenterX, deckCenterY }: {
       scaleX: 1,
       scaleY: 1,
       shapeType: 'rect',
-      fillType: 'linear-gradient',
-      gradientStops,
-      gradientAngle,
+      patternType: patternId as any,
+      patternPrimaryColor: primaryColor,
+      patternSecondaryColor: secondaryColor,
+      patternScale: scale,
       fill: primaryColor, // Fallback
     });
   };
