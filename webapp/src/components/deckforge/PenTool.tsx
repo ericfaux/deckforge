@@ -10,7 +10,7 @@ type DashStyle = 'solid' | 'dashed' | 'dotted';
 
 interface PenToolProps {
   isActive: boolean;
-  onComplete: (pathData: string, strokeWidth: number, strokeColor: string, opacity: number, dashStyle: DashStyle) => void;
+  onComplete: (pathData: string, strokeWidth: number, strokeColor: string, opacity: number, dashStyle: DashStyle, mode: 'click' | 'draw') => void;
   onCancel: () => void;
   stageRef: React.RefObject<SVGSVGElement>;
   deckX: number;
@@ -72,7 +72,7 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef, deckX, deckY
     if (points.length === 1) {
       const pathData = `M ${points[0].x} ${points[0].y} L ${x} ${y}`;
       setPoints([]); // Clear state immediately
-      onComplete(pathData, strokeWidth, strokeColor, opacity, dashStyle);
+      onComplete(pathData, strokeWidth, strokeColor, opacity, dashStyle, 'click');
       return;
     }
   };
@@ -155,7 +155,7 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef, deckX, deckY
       }
     }
 
-    onComplete(pathData, strokeWidth, strokeColor, opacity, dashStyle);
+    onComplete(pathData, strokeWidth, strokeColor, opacity, dashStyle, mode);
   };
 
   const handleCancelClick = (e: React.MouseEvent) => {

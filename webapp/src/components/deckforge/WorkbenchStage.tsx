@@ -928,7 +928,7 @@ export function WorkbenchStage() {
   }, [selectObject, toggleSelectObject]);
 
   // Handle pen tool path completion
-  const handlePenToolComplete = useCallback((pathData: string, strokeWidth: number, strokeColor: string, opacity: number, dashStyle: 'solid' | 'dashed' | 'dotted') => {
+  const handlePenToolComplete = useCallback((pathData: string, strokeWidth: number, strokeColor: string, opacity: number, dashStyle: 'solid' | 'dashed' | 'dotted', mode: 'click' | 'draw') => {
     // Close tool immediately to prevent further clicks
     setActiveTool(null);
     
@@ -966,12 +966,26 @@ export function WorkbenchStage() {
     });
 
     if (pathPoints.length > 0) {
-      addObject({
-        type: 'path',
-        x: 0,
-        y: 0,
-        width: 100,
-        height: 100,
+      // Calculate actual bounding box from path points
+      const xs = pathPoints.map(p => p.x);
+      const ys = pathPoints.map(p => p.y);
+      const minX = Math.min(...xs);
+      const maxX = Math.max(...xs);
+      const minY = Math.min(...ys);
+      const maxY = Math.max(...ys);
+      
+      const actualWidth = maxX - minX || strokeWidth;
+      const actualHeight = maxY - minY || strokeWidth;
+      
+      // Pad slightly for stroke width
+      const padding = strokeWidth * 2;
+      
+      const newObj = {
+        type: 'path' as const,
+        x: minX - padding,
+        y: minY - padding,
+        width: actualWidth + padding * 2,
+        height: actualHeight + padding * 2,
         rotation: 0,
         opacity: opacity,
         scaleX: 1,
@@ -982,10 +996,16 @@ export function WorkbenchStage() {
         strokeWidth: strokeWidth,
         strokeDashStyle: dashStyle,
         fill: 'none',
-      });
+      };
       
-      // Deselect immediately so no transform handles appear
-      selectObject(null);
+      addObject(newObj);
+      
+      // Only deselect for free draw mode
+      // Click mode (straight lines) keeps selection to show transform handles
+      if (mode === 'draw') {
+        selectObject(null);
+      }
+      // For 'click' mode, addObject auto-selects, so transform handles will appear
     }
   }, [addObject, setActiveTool, selectObject]);
 
