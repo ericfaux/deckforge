@@ -278,12 +278,14 @@ function CanvasObjectItem({
     const centerX = obj.x + obj.width / 2;
     const centerY = obj.y + obj.height / 2;
     
-    // Calculate dash array based on style
+    // Calculate dash array based on style - make patterns more visible
     const getDashArray = () => {
       const strokeWidth = obj.strokeWidth || 2;
       if (!obj.strokeDashStyle || obj.strokeDashStyle === 'solid') return 'none';
-      if (obj.strokeDashStyle === 'dashed') return `${strokeWidth * 3} ${strokeWidth * 1.5}`;
-      if (obj.strokeDashStyle === 'dotted') return `1 ${strokeWidth * 1.5}`;
+      // Dashed: longer dashes with visible gaps
+      if (obj.strokeDashStyle === 'dashed') return `${strokeWidth * 4} ${strokeWidth * 3}`;
+      // Dotted: small dots with spacing
+      if (obj.strokeDashStyle === 'dotted') return `${strokeWidth * 0.5} ${strokeWidth * 2}`;
       return 'none';
     };
     
@@ -523,16 +525,18 @@ function CanvasObjectItem({
     const capStyle = obj.lineCapStyle || 'round';
     const lineType = obj.lineType || 'straight';
 
-    // Calculate dash array based on strokeDashStyle
+    // Calculate dash array based on strokeDashStyle - make patterns more visible
     const getLineDashArray = () => {
       // Legacy: if lineType is 'dashed', use old behavior for backward compatibility
       if (lineType === 'dashed' && !obj.strokeDashStyle) {
         return `${strokeW * 2},${strokeW * 2}`;
       }
-      // New: use strokeDashStyle
+      // New: use strokeDashStyle with more visible patterns
       if (!obj.strokeDashStyle || obj.strokeDashStyle === 'solid') return undefined;
-      if (obj.strokeDashStyle === 'dashed') return `${strokeW * 3} ${strokeW * 1.5}`;
-      if (obj.strokeDashStyle === 'dotted') return `1 ${strokeW * 1.5}`;
+      // Dashed: longer dashes with visible gaps
+      if (obj.strokeDashStyle === 'dashed') return `${strokeW * 4} ${strokeW * 3}`;
+      // Dotted: small dots with spacing
+      if (obj.strokeDashStyle === 'dotted') return `${strokeW * 0.5} ${strokeW * 2}`;
       return undefined;
     };
 
@@ -796,6 +800,7 @@ export function WorkbenchStage() {
     showHardwareGuide,
     activeTool,
     setActiveTool,
+    backgroundColor,
   } = useDeckForgeStore();
 
   // Handle container resize
@@ -1032,7 +1037,7 @@ export function WorkbenchStage() {
           <path
             d={getDeckPath(0, 0)}
             transform={`translate(${deckX}, ${deckY}) scale(${stageScale})`}
-            fill="#1a1a1a"
+            fill={backgroundColor}
           />
 
           {/* Render all objects inside the clip mask */}

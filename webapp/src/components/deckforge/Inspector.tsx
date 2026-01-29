@@ -46,6 +46,8 @@ export function Inspector() {
     updateObject(selectedId, updates);
   };
 
+  const { backgroundColor, setBackgroundColor } = useDeckForgeStore();
+
   return (
     <div className="w-64 bg-card border-l border-border h-full flex flex-col">
       {/* Export button */}
@@ -57,6 +59,34 @@ export function Inspector() {
           <Download className="w-4 h-4" />
           Export Print
         </button>
+      </div>
+
+      {/* Background Color Picker */}
+      <div className="p-3 border-b border-border space-y-2">
+        <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
+          Deck Background
+        </Label>
+        <div className="flex items-center gap-2">
+          <input
+            type="color"
+            value={backgroundColor}
+            onChange={(e) => setBackgroundColor(e.target.value)}
+            className="w-10 h-10 border-2 border-border cursor-pointer bg-transparent"
+          />
+          <div className="flex gap-1 flex-wrap flex-1">
+            {['#ffffff', '#000000', '#1a1a1a', '#ff6600', '#ccff00', '#00ffff'].map((color) => (
+              <button
+                key={color}
+                onClick={() => setBackgroundColor(color)}
+                className={`w-7 h-7 border-2 transition-all ${
+                  backgroundColor === color ? 'border-accent scale-110' : 'border-border'
+                }`}
+                style={{ backgroundColor: color }}
+                title={color}
+              />
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* Properties panel */}

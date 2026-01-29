@@ -157,6 +157,9 @@ interface DeckForgeState {
   // Hardware guide (visual only, not exported)
   showHardwareGuide: boolean;
 
+  // Background color
+  backgroundColor: string;
+
   // Design metadata
   currentDesignId: string | null;
   designName: string;
@@ -180,6 +183,7 @@ interface DeckForgeState {
   updateTexture: (id: TextureType, updates: Partial<TextureOverlay>) => void;
   generatePattern: (sourceId: string, gap: number, randomRotation: number, deckWidth: number, deckHeight: number) => void;
   toggleHardwareGuide: () => void;
+  setBackgroundColor: (color: string) => void;
   
   // Design management
   loadDesign: (designData: any) => void;
@@ -217,6 +221,7 @@ export const useDeckForgeStore = create<DeckForgeState>((set, get) => ({
   currentVersionId: null,
   textureOverlays: defaultTextureOverlays,
   showHardwareGuide: false,
+  backgroundColor: '#ffffff',
   currentDesignId: null,
   designName: 'Untitled Design',
   isSaving: false,
@@ -426,6 +431,10 @@ export const useDeckForgeStore = create<DeckForgeState>((set, get) => ({
 
   toggleHardwareGuide: () => {
     set((state) => ({ showHardwareGuide: !state.showHardwareGuide }));
+  },
+
+  setBackgroundColor: (color) => {
+    set({ backgroundColor: color });
   },
 
   // Design management
