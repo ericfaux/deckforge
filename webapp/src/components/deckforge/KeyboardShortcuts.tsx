@@ -35,6 +35,8 @@ const shortcuts: Shortcut[] = [
   { keys: ['Ctrl', 'V'], description: 'Paste from clipboard', category: 'Editing' },
   { keys: ['Ctrl', 'A'], description: 'Select all (top object)', category: 'Editing' },
   { keys: ['Ctrl', 'L'], description: 'Lock/unlock object', category: 'Editing' },
+  { keys: ['Ctrl', 'G'], description: 'Group selected objects', category: 'Editing' },
+  { keys: ['Ctrl', 'Shift', 'G'], description: 'Ungroup selected group', category: 'Editing' },
   
   // Transform
   { keys: ['Drag'], description: 'Move object', category: 'Transform' },
@@ -64,6 +66,7 @@ const shortcuts: Shortcut[] = [
   { keys: ['Scroll'], description: 'Zoom in/out', category: 'View' },
   { keys: ['Ctrl', '0'], description: 'Reset zoom to 100%', category: 'View' },
   { keys: ['Ctrl', '1'], description: 'Zoom to fit', category: 'View' },
+  { keys: ['Ctrl', 'Shift', 'R'], description: 'Toggle rulers', category: 'View' },
   { keys: ['H'], description: 'Toggle hardware guide', category: 'View' },
   
   // Tools

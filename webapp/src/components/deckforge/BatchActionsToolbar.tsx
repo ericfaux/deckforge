@@ -1,12 +1,15 @@
-import { AlignLeft, AlignCenter, AlignRight, AlignVerticalJustifyStart, AlignVerticalJustifyCenter, AlignVerticalJustifyEnd, AlignHorizontalDistributeCenter, AlignVerticalDistributeCenter } from 'lucide-react';
+import { AlignLeft, AlignCenter, AlignRight, AlignVerticalJustifyStart, AlignVerticalJustifyCenter, AlignVerticalJustifyEnd, AlignHorizontalDistributeCenter, AlignVerticalDistributeCenter, Group, Ungroup } from 'lucide-react';
 import { useDeckForgeStore } from '@/store/deckforge';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
 export function BatchActionsToolbar() {
-  const { selectedIds, alignObjects, distributeObjects } = useDeckForgeStore();
+  const { selectedIds, objects, alignObjects, distributeObjects, groupObjects, ungroupObject } = useDeckForgeStore();
 
   if (selectedIds.length < 2) return null;
+
+  // Check if selection is a single group
+  const isSingleGroup = selectedIds.length === 1 && objects.find(o => o.id === selectedIds[0])?.type === 'group';
 
   const handleAlign = (alignment: 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom') => {
     alignObjects(alignment);
@@ -139,6 +142,38 @@ export function BatchActionsToolbar() {
               </Button>
             </div>
           </>
+        )}
+
+        {/* Group/Ungroup */}
+        <div className="w-px h-8 bg-border" />
+        {isSingleGroup ? (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              ungroupObject(selectedIds[0]);
+              toast.success('Ungrouped objects');
+            }}
+            className="gap-2"
+            title="Ungroup (Ctrl+Shift+G)"
+          >
+            <Ungroup className="w-4 h-4" />
+            <span className="hidden sm:inline text-xs">Ungroup</span>
+          </Button>
+        ) : (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              groupObjects(selectedIds);
+              toast.success(`Grouped ${selectedIds.length} objects`);
+            }}
+            className="gap-2"
+            title="Group (Ctrl+G)"
+          >
+            <Group className="w-4 h-4" />
+            <span className="hidden sm:inline text-xs">Group</span>
+          </Button>
         )}
       </div>
     </div>

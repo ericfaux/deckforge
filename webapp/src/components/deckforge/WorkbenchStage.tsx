@@ -218,6 +218,58 @@ function CanvasObjectItem({
     );
   };
 
+  // Render group objects
+  if (obj.type === 'group' && obj.children && obj.children.length > 0) {
+    return (
+      <g
+        transform={`translate(${obj.x}, ${obj.y}) rotate(${obj.rotation}) scale(${obj.scaleX}, ${obj.scaleY})`}
+        opacity={obj.opacity}
+        style={{ cursor }}
+        onMouseDown={handleMouseDown}
+      >
+        {/* Render all children */}
+        {obj.children.map((child) => (
+          <g key={child.id}>
+            {/* Recursively render child object */}
+            <CanvasObjectItem
+              obj={child}
+              isSelected={false} // Children don't show individual selection
+              onSelect={() => {}} // Group handles selection
+              onChange={(updates) => {
+                // When child is modified, update it within the group
+                const newChildren = obj.children!.map(c => 
+                  c.id === child.id ? { ...c, ...updates } : c
+                );
+                onChange({ children: newChildren });
+              }}
+              deckX={0}
+              deckY={0}
+              stageScale={1} // Scale is already applied to group
+              onDragStart={onDragStart}
+              onDragMove={onDragMove}
+              onDragEnd={onDragEnd}
+            />
+          </g>
+        ))}
+        
+        {/* Selection highlight for group */}
+        {isSelected && (
+          <rect
+            x={0}
+            y={0}
+            width={obj.width}
+            height={obj.height}
+            fill="none"
+            stroke="#ccff00"
+            strokeWidth={2 / stageScale}
+            strokeDasharray={`${8 / stageScale} ${4 / stageScale}`}
+            style={{ pointerEvents: 'none' }}
+          />
+        )}
+      </g>
+    );
+  }
+
   if (obj.type === 'text') {
     const gradientId = obj.gradientStops ? `gradient-${obj.id}` : null;
     const fillValue = gradientId ? `url(#${gradientId})` : (obj.colorize || obj.fill || '#ffffff');

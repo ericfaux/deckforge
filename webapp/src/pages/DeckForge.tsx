@@ -30,7 +30,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
 export default function DeckForge() {
-  const { selectedId, deleteObject, undo, redo, getCanvasState, currentDesignId, setDesignId, setSaving, isSaving, objects, designName, createVersion, past, future, updateObject, saveToHistory, addObject, selectObject, setActiveTool, stageScale, setStageScale, arrayDuplicate, showRulers, toggleRulers } = useDeckForgeStore();
+  const { selectedId, selectedIds, deleteObject, undo, redo, getCanvasState, currentDesignId, setDesignId, setSaving, isSaving, objects, designName, createVersion, past, future, updateObject, saveToHistory, addObject, selectObject, setActiveTool, stageScale, setStageScale, arrayDuplicate, showRulers, toggleRulers, groupObjects, ungroupObject } = useDeckForgeStore();
   const { isAuthenticated } = useAuthStore();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -314,6 +314,29 @@ export default function DeckForge() {
         if (obj) {
           updateObject(selectedId, { locked: !obj.locked });
           toast.success(obj.locked ? 'Object unlocked' : 'Object locked');
+        }
+        return;
+      }
+
+      // === GROUP/UNGROUP OBJECTS ===
+      
+      // Group objects (Ctrl+G)
+      if (ctrl && key === 'g' && !shift && selectedIds.length >= 2) {
+        e.preventDefault();
+        groupObjects(selectedIds);
+        toast.success(`Grouped ${selectedIds.length} objects`);
+        return;
+      }
+
+      // Ungroup object (Ctrl+Shift+G)
+      if (ctrl && shift && key === 'g' && selectedIds.length === 1) {
+        e.preventDefault();
+        const obj = objects.find(o => o.id === selectedIds[0]);
+        if (obj && obj.type === 'group') {
+          ungroupObject(selectedIds[0]);
+          toast.success('Ungrouped objects');
+        } else {
+          toast.error('Selected object is not a group');
         }
         return;
       }

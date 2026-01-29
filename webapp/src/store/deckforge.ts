@@ -31,7 +31,7 @@ export interface PathPoint {
 
 export interface CanvasObject {
   id: string;
-  type: 'image' | 'text' | 'shape' | 'sticker' | 'texture' | 'line' | 'path';
+  type: 'image' | 'text' | 'shape' | 'sticker' | 'texture' | 'line' | 'path' | 'group';
   x: number;
   y: number;
   width: number;
@@ -41,6 +41,8 @@ export interface CanvasObject {
   scaleX: number;
   scaleY: number;
   locked?: boolean; // Lock object to prevent moving/editing
+  // For groups
+  children?: CanvasObject[]; // Child objects in a group
   // For text
   text?: string;
   fontSize?: number;
@@ -178,6 +180,8 @@ interface DeckForgeState {
   clearSelection: () => void; // Clear all selections
   alignObjects: (alignment: 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom') => void;
   distributeObjects: (direction: 'horizontal' | 'vertical') => void;
+  groupObjects: (ids: string[]) => void;
+  ungroupObject: (groupId: string) => void;
   setActiveTool: (tool: ToolType | null) => void;
   toggleDrawer: (open?: boolean) => void;
   setStageScale: (scale: number) => void;
@@ -389,6 +393,90 @@ export const useDeckForgeStore = create<DeckForgeState>((set, get) => ({
         currentY += selectedObjects[i].height * selectedObjects[i].scaleY + gap;
       }
     }
+  },
+
+  groupObjects: (ids) => {
+    const { objects } = get();
+    if (ids.length < 2) return;
+
+    const state = get();
+    state.saveToHistory();
+
+    // Get all objects to group
+    const childObjects = objects.filter(obj => ids.includes(obj.id));
+    if (childObjects.length < 2) return;
+
+    // Calculate bounding box
+    const minX = Math.min(...childObjects.map(obj => obj.x));
+    const minY = Math.min(...childObjects.map(obj => obj.y));
+    const maxX = Math.max(...childObjects.map(obj => obj.x + obj.width * obj.scaleX));
+    const maxY = Math.max(...childObjects.map(obj => obj.y + obj.height * obj.scaleY));
+    
+    const groupWidth = maxX - minX;
+    const groupHeight = maxY - minY;
+
+    // Create child objects with relative positions
+    const children = childObjects.map(obj => ({
+      ...obj,
+      x: obj.x - minX, // Convert to relative position
+      y: obj.y - minY,
+    }));
+
+    // Create group object
+    const groupId = `group_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const groupObject: CanvasObject = {
+      id: groupId,
+      type: 'group',
+      x: minX,
+      y: minY,
+      width: groupWidth,
+      height: groupHeight,
+      rotation: 0,
+      opacity: 1,
+      scaleX: 1,
+      scaleY: 1,
+      children,
+    };
+
+    // Remove individual objects and add group
+    const remainingObjects = objects.filter(obj => !ids.includes(obj.id));
+    set({
+      objects: [...remainingObjects, groupObject],
+      selectedIds: [groupId],
+      selectedId: groupId,
+    });
+  },
+
+  ungroupObject: (groupId) => {
+    const { objects } = get();
+    const groupObj = objects.find(obj => obj.id === groupId);
+    
+    if (!groupObj || groupObj.type !== 'group' || !groupObj.children) return;
+
+    const state = get();
+    state.saveToHistory();
+
+    // Convert children back to absolute positions
+    const ungroupedChildren = groupObj.children.map(child => ({
+      ...child,
+      id: `obj_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`, // New IDs
+      x: groupObj.x + child.x * groupObj.scaleX, // Convert back to absolute
+      y: groupObj.y + child.y * groupObj.scaleY,
+      // Apply group's scale and rotation to children
+      scaleX: child.scaleX * groupObj.scaleX,
+      scaleY: child.scaleY * groupObj.scaleY,
+      rotation: child.rotation + groupObj.rotation,
+    }));
+
+    // Remove group and add children
+    const remainingObjects = objects.filter(obj => obj.id !== groupId);
+    const newChildIds = ungroupedChildren.map(c => c.id);
+    
+    set({
+      objects: [...remainingObjects, ...ungroupedChildren],
+      selectedIds: newChildIds,
+      selectedId: null,
+    });
   },
 
   setActiveTool: (tool) => set({
