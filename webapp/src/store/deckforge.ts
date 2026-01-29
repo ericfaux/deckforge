@@ -80,6 +80,16 @@ export interface CanvasObject {
   hueRotate?: number;     // 0-360 degrees
   invert?: boolean;
   pixelate?: boolean;
+  // Advanced filters (bonus)
+  blur?: number;          // 0-20px gaussian blur
+  saturate?: number;      // 0-200%, default 100
+  sepia?: number;         // 0-100%, sepia tone
+  posterize?: number;     // 2-32 color levels (lower = more posterized)
+  duotone?: {
+    enabled: boolean;
+    color1: string;       // Shadow color
+    color2: string;       // Highlight color
+  };
   // Layer effects
   dropShadow?: {
     enabled: boolean;

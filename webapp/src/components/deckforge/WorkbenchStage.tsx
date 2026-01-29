@@ -80,6 +80,16 @@ function buildFilterStyle(obj: CanvasObject): string {
   if (obj.invert) {
     filters.push('invert(100%)');
   }
+  // Advanced filters
+  if (obj.blur !== undefined && obj.blur > 0) {
+    filters.push(`blur(${obj.blur}px)`);
+  }
+  if (obj.saturate !== undefined && obj.saturate !== 100) {
+    filters.push(`saturate(${obj.saturate}%)`);
+  }
+  if (obj.sepia !== undefined && obj.sepia > 0) {
+    filters.push(`sepia(${obj.sepia}%)`);
+  }
 
   return filters.length > 0 ? filters.join(' ') : 'none';
 }
