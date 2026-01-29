@@ -8,6 +8,7 @@ import { LayerList } from './LayerList';
 import { AdvancedEffects } from './AdvancedEffects';
 import { FontUploadModal } from './FontUploadModal';
 import { GradientPicker } from './GradientPicker';
+import { ColorPicker } from './ColorPicker';
 import { DECK_WIDTH, DECK_HEIGHT } from './WorkbenchStage';
 import { preloadUserFonts, Font, loadFont } from '@/lib/fonts';
 import { toast } from 'sonner';
@@ -63,30 +64,12 @@ export function Inspector() {
 
       {/* Background Color Picker */}
       <div className="p-3 border-b border-border space-y-2">
-        <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
-          Deck Background
-        </Label>
-        <div className="flex items-center gap-2">
-          <input
-            type="color"
-            value={backgroundColor}
-            onChange={(e) => setBackgroundColor(e.target.value)}
-            className="w-10 h-10 border-2 border-border cursor-pointer bg-transparent"
-          />
-          <div className="flex gap-1 flex-wrap flex-1">
-            {['#ffffff', '#000000', '#1a1a1a', '#ff6600', '#ccff00', '#00ffff'].map((color) => (
-              <button
-                key={color}
-                onClick={() => setBackgroundColor(color)}
-                className={`w-7 h-7 border-2 transition-all ${
-                  backgroundColor === color ? 'border-accent scale-110' : 'border-border'
-                }`}
-                style={{ backgroundColor: color }}
-                title={color}
-              />
-            ))}
-          </div>
-        </div>
+        <ColorPicker
+          label="Deck Background"
+          value={backgroundColor}
+          onChange={setBackgroundColor}
+          showEyedropper={true}
+        />
       </div>
 
       {/* Properties panel */}
@@ -216,31 +199,12 @@ export function Inspector() {
                 </div>
 
                 {/* Stroke Color */}
-                <div className="space-y-2">
-                  <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                    Stroke Color
-                  </Label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="color"
-                      value={selectedObject.stroke || '#ffffff'}
-                      onChange={(e) => updateWithHistory({ stroke: e.target.value })}
-                      className="w-8 h-8 border border-border cursor-pointer bg-transparent"
-                    />
-                    <div className="flex gap-1">
-                      {['#ffffff', '#ccff00', '#ff6600', '#00ffff', '#ff00ff', '#000000'].map((color) => (
-                        <button
-                          key={color}
-                          onClick={() => updateWithHistory({ stroke: color })}
-                          className={`w-6 h-6 border ${
-                            selectedObject.stroke === color ? 'border-primary' : 'border-border'
-                          }`}
-                          style={{ backgroundColor: color }}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                </div>
+                <ColorPicker
+                  label="Stroke Color"
+                  value={selectedObject.stroke || '#ffffff'}
+                  onChange={(color) => updateWithHistory({ stroke: color })}
+                  showEyedropper={true}
+                />
 
                 {/* Stroke Width */}
                 <div className="space-y-2">
@@ -375,31 +339,12 @@ export function Inspector() {
                 </div>
 
                 {/* Stroke Color */}
-                <div className="space-y-2">
-                  <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                    Stroke Color
-                  </Label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="color"
-                      value={selectedObject.stroke || '#ffffff'}
-                      onChange={(e) => updateWithHistory({ stroke: e.target.value })}
-                      className="w-8 h-8 border border-border cursor-pointer bg-transparent"
-                    />
-                    <div className="flex gap-1">
-                      {['#ffffff', '#ccff00', '#ff6600', '#00ffff', '#ff00ff', '#000000'].map((color) => (
-                        <button
-                          key={color}
-                          onClick={() => updateWithHistory({ stroke: color })}
-                          className={`w-6 h-6 border ${
-                            selectedObject.stroke === color ? 'border-primary' : 'border-border'
-                          }`}
-                          style={{ backgroundColor: color }}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                </div>
+                <ColorPicker
+                  label="Stroke Color"
+                  value={selectedObject.stroke || '#ffffff'}
+                  onChange={(color) => updateWithHistory({ stroke: color })}
+                  showEyedropper={true}
+                />
 
                 {/* Stroke Width */}
                 <div className="space-y-2">
