@@ -5,6 +5,8 @@ import { CanvasObject } from '@/store/deckforge';
 interface TransformHandlesProps {
   object: CanvasObject;
   stageScale: number;
+  deckX: number;
+  deckY: number;
   onUpdate: (updates: Partial<CanvasObject>) => void;
   onStartTransform: () => void;
   onEndTransform: () => void;
@@ -15,6 +17,8 @@ type HandleType = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w' | 'rotate';
 export function TransformHandles({
   object,
   stageScale,
+  deckX,
+  deckY,
   onUpdate,
   onStartTransform,
   onEndTransform,
@@ -33,8 +37,8 @@ export function TransformHandles({
   const rotation = object.rotation || 0;
 
   // Handle size scaled to screen (so they're always visible)
-  const handleSize = 8 / stageScale;
-  const rotateHandleDistance = 30 / stageScale;
+  const handleSize = 10 / stageScale;
+  const rotateHandleDistance = 35 / stageScale;
 
   // Handle positions (before rotation)
   const handles = {
@@ -66,16 +70,29 @@ export function TransformHandles({
     const dy = (e.clientY - dragStart.y) / stageScale;
 
     if (dragHandle === 'rotate') {
-      // Calculate rotation angle
+      // Calculate rotation angle from center of object
       const centerX = initialBounds.x + initialBounds.width / 2;
       const centerY = initialBounds.y + initialBounds.height / 2;
       
-      const angle = Math.atan2(
-        e.clientY / stageScale - centerY,
-        e.clientX / stageScale - centerX
-      );
+      // Convert client coordinates to deck coordinates
+      // Account for stage offset and scale
+      const rect = document.querySelector('svg')?.getBoundingClientRect();
+      if (!rect) return;
       
-      const degrees = (angle * 180) / Math.PI + 90;
+      const mouseInStageX = (e.clientX - rect.left - deckX) / stageScale;
+      const mouseInStageY = (e.clientY - rect.top - deckY) / stageScale;
+      
+      // Calculate angle from center to mouse
+      const deltaX = mouseInStageX - centerX;
+      const deltaY = mouseInStageY - centerY;
+      const angle = Math.atan2(deltaY, deltaX);
+      let degrees = (angle * 180) / Math.PI + 90;
+      
+      // Snap to 15° increments when Shift is held
+      if (e.shiftKey) {
+        degrees = Math.round(degrees / 15) * 15;
+      }
+      
       onUpdate({ rotation: Math.round(degrees) });
     } else {
       // Resize logic

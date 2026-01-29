@@ -265,34 +265,53 @@ function CanvasObjectItem({
       pathData += ' Z';
     }
 
-    const el = (
-      <path
-        d={pathData}
-        fill={obj.pathClosed ? (obj.fill || 'none') : 'none'}
-        stroke={obj.stroke || '#000000'}
-        strokeWidth={obj.strokeWidth || 2}
-        opacity={obj.opacity}
-        style={{ cursor, filter: filterStyle }}
-        onMouseDown={handleMouseDown}
-        transform={`rotate(${obj.rotation} ${obj.x + obj.width / 2} ${obj.y + obj.height / 2})`}
-      />
-    );
+    // Wrap in group with transform applied to the group (not individual paths)
+    // This ensures rotation works properly with transform handles
+    const centerX = obj.x + obj.width / 2;
+    const centerY = obj.y + obj.height / 2;
     
-    if (isSelected) {
-      return (
-        <g>
-          {el}
+    return (
+      <g transform={`rotate(${obj.rotation} ${centerX} ${centerY})`}>
+        {/* Invisible thick stroke for easier clicking/dragging */}
+        <path
+          d={pathData}
+          fill="none"
+          stroke="transparent"
+          strokeWidth={Math.max(obj.strokeWidth || 2, 12)}
+          style={{ cursor }}
+          onMouseDown={handleMouseDown}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        
+        {/* Visible stroke */}
+        <path
+          d={pathData}
+          fill={obj.pathClosed ? (obj.fill || 'none') : 'none'}
+          stroke={obj.stroke || '#000000'}
+          strokeWidth={obj.strokeWidth || 2}
+          opacity={obj.opacity}
+          style={{ filter: filterStyle, pointerEvents: 'none' }}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        
+        {/* Selection highlight */}
+        {isSelected && (
           <path
             d={pathData}
             fill="none"
             stroke="#ccff00"
-            strokeWidth={2}
-            strokeDasharray="4 4"
+            strokeWidth={(obj.strokeWidth || 2) + 2}
+            strokeDasharray="6 4"
+            opacity={0.6}
+            style={{ pointerEvents: 'none' }}
+            strokeLinecap="round"
+            strokeLinejoin="round"
           />
-        </g>
-      );
-    }
-    return el;
+        )}
+      </g>
+    );
   }
 
   if (obj.type === 'shape') {
@@ -1026,6 +1045,8 @@ export function WorkbenchStage() {
                 <TransformHandles
                   object={selectedObj}
                   stageScale={stageScale}
+                  deckX={deckX}
+                  deckY={deckY}
                   onUpdate={(updates) => {
                     updateObject(selectedId, updates);
                   }}
