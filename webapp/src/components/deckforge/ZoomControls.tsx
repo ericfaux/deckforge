@@ -5,23 +5,52 @@ import { cn } from '@/lib/utils';
 export function ZoomControls() {
   const { stageScale, setStageScale, undo, redo, past, future, showHardwareGuide, toggleHardwareGuide } = useDeckForgeStore();
 
-  const zoomIn = () => setStageScale(stageScale * 1.2);
-  const zoomOut = () => setStageScale(stageScale / 1.2);
+  // Haptic feedback helper for mobile
+  const vibrate = (pattern: number | number[] = 10) => {
+    if ('vibrate' in navigator) {
+      navigator.vibrate(pattern);
+    }
+  };
+
+  const zoomIn = () => {
+    vibrate(10);
+    setStageScale(stageScale * 1.2);
+  };
+  
+  const zoomOut = () => {
+    vibrate(10);
+    setStageScale(stageScale / 1.2);
+  };
+
+  const handleUndo = () => {
+    vibrate(10);
+    undo();
+  };
+
+  const handleRedo = () => {
+    vibrate(10);
+    redo();
+  };
+
+  const handleToggleGuide = () => {
+    vibrate(10);
+    toggleHardwareGuide();
+  };
 
   return (
-    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1 bg-card border border-border p-1 md:p-1">
+    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1 bg-card border border-border p-1 md:p-1 shadow-lg">
       <button
-        onClick={undo}
+        onClick={handleUndo}
         disabled={past.length === 0}
-        className="w-10 h-10 md:w-8 md:h-8 flex items-center justify-center hover:bg-secondary active:bg-secondary/80 disabled:opacity-30 disabled:cursor-not-allowed transition-colors touch-manipulation"
+        className="w-10 h-10 md:w-8 md:h-8 flex items-center justify-center hover:bg-secondary active:bg-secondary/80 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed transition-all touch-manipulation"
         title="Undo (Ctrl+Z)"
       >
         <Undo className="w-5 h-5 md:w-4 md:h-4" />
       </button>
       <button
-        onClick={redo}
+        onClick={handleRedo}
         disabled={future.length === 0}
-        className="w-10 h-10 md:w-8 md:h-8 flex items-center justify-center hover:bg-secondary active:bg-secondary/80 disabled:opacity-30 disabled:cursor-not-allowed transition-colors touch-manipulation"
+        className="w-10 h-10 md:w-8 md:h-8 flex items-center justify-center hover:bg-secondary active:bg-secondary/80 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed transition-all touch-manipulation"
         title="Redo (Ctrl+Shift+Z)"
       >
         <Redo className="w-5 h-5 md:w-4 md:h-4" />
@@ -31,7 +60,7 @@ export function ZoomControls() {
 
       <button
         onClick={zoomOut}
-        className="w-10 h-10 md:w-8 md:h-8 flex items-center justify-center hover:bg-secondary active:bg-secondary/80 transition-colors touch-manipulation"
+        className="w-10 h-10 md:w-8 md:h-8 flex items-center justify-center hover:bg-secondary active:bg-secondary/80 active:scale-95 transition-all touch-manipulation"
         title="Zoom Out"
       >
         <ZoomOut className="w-5 h-5 md:w-4 md:h-4" />
@@ -41,7 +70,7 @@ export function ZoomControls() {
       </span>
       <button
         onClick={zoomIn}
-        className="w-10 h-10 md:w-8 md:h-8 flex items-center justify-center hover:bg-secondary active:bg-secondary/80 transition-colors touch-manipulation"
+        className="w-10 h-10 md:w-8 md:h-8 flex items-center justify-center hover:bg-secondary active:bg-secondary/80 active:scale-95 transition-all touch-manipulation"
         title="Zoom In"
       >
         <ZoomIn className="w-5 h-5 md:w-4 md:h-4" />
@@ -50,9 +79,9 @@ export function ZoomControls() {
       <div className="w-px h-8 md:h-6 bg-border mx-1" />
 
       <button
-        onClick={toggleHardwareGuide}
+        onClick={handleToggleGuide}
         className={cn(
-          "w-10 h-10 md:w-8 md:h-8 flex items-center justify-center transition-colors touch-manipulation",
+          "w-10 h-10 md:w-8 md:h-8 flex items-center justify-center transition-all active:scale-95 touch-manipulation",
           showHardwareGuide
             ? "bg-accent text-accent-foreground"
             : "hover:bg-secondary active:bg-secondary/80"
