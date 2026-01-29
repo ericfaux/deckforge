@@ -744,6 +744,9 @@ export function WorkbenchStage() {
 
   // Handle pen tool path completion
   const handlePenToolComplete = useCallback((pathData: string, strokeWidth: number) => {
+    // Close tool immediately to prevent further clicks
+    setActiveTool(null);
+    
     // Parse SVG path data into PathPoints
     const pathPoints: Array<{ x: number; y: number; cp1x?: number; cp1y?: number; cp2x?: number; cp2y?: number }> = [];
     
@@ -795,8 +798,6 @@ export function WorkbenchStage() {
         fill: 'none',
       });
     }
-    
-    setActiveTool(null);
   }, [addObject, setActiveTool]);
 
   // Get enabled textures

@@ -53,13 +53,18 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef }: PenToolPro
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
-    const newPoints = [...points, { x, y }];
-    setPoints(newPoints);
+    // First click - add point
+    if (points.length === 0) {
+      setPoints([{ x, y }]);
+      return;
+    }
 
-    // Auto-complete on second click
-    if (newPoints.length === 2) {
-      const pathData = `M ${newPoints[0].x} ${newPoints[0].y} L ${newPoints[1].x} ${newPoints[1].y}`;
+    // Second click - complete the line immediately
+    if (points.length === 1) {
+      const pathData = `M ${points[0].x} ${points[0].y} L ${x} ${y}`;
+      setPoints([]); // Clear state immediately
       onComplete(pathData, strokeWidth);
+      return;
     }
   };
 
