@@ -27,7 +27,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
 export default function DeckForge() {
-  const { selectedId, deleteObject, undo, redo, getCanvasState, currentDesignId, setDesignId, setSaving, isSaving, objects, designName, createVersion, past, future, updateObject, saveToHistory, addObject, selectObject, setActiveTool } = useDeckForgeStore();
+  const { selectedId, deleteObject, undo, redo, getCanvasState, currentDesignId, setDesignId, setSaving, isSaving, objects, designName, createVersion, past, future, updateObject, saveToHistory, addObject, selectObject, setActiveTool, stageScale, setStageScale } = useDeckForgeStore();
   const { isAuthenticated } = useAuthStore();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -282,6 +282,111 @@ export default function DeckForge() {
         return;
       }
 
+      // === NUDGING WITH ARROW KEYS ===
+      
+      if (selectedId && ['arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(key)) {
+        e.preventDefault();
+        const obj = objects.find(o => o.id === selectedId);
+        if (!obj) return;
+
+        const nudgeAmount = shift ? 10 : 1; // Shift = 10px, normal = 1px
+        const updates: Partial<CanvasObject> = {};
+
+        if (key === 'arrowup') updates.y = obj.y - nudgeAmount;
+        if (key === 'arrowdown') updates.y = obj.y + nudgeAmount;
+        if (key === 'arrowleft') updates.x = obj.x - nudgeAmount;
+        if (key === 'arrowright') updates.x = obj.x + nudgeAmount;
+
+        updateObject(selectedId, updates);
+        return;
+      }
+
+      // === COPY/PASTE ===
+      
+      // Copy (Ctrl+C)
+      if (ctrl && key === 'c' && selectedId) {
+        e.preventDefault();
+        const obj = objects.find(o => o.id === selectedId);
+        if (obj) {
+          // Store in sessionStorage (simple clipboard)
+          sessionStorage.setItem('deckforge_clipboard', JSON.stringify(obj));
+          toast.success('Copied to clipboard');
+        }
+        return;
+      }
+
+      // Paste (Ctrl+V)
+      if (ctrl && key === 'v') {
+        e.preventDefault();
+        const clipboardData = sessionStorage.getItem('deckforge_clipboard');
+        if (clipboardData) {
+          try {
+            const obj = JSON.parse(clipboardData);
+            const { id, ...objWithoutId } = obj;
+            addObject({
+              ...objWithoutId,
+              x: obj.x + 20,
+              y: obj.y + 20,
+            });
+            toast.success('Pasted from clipboard');
+          } catch (err) {
+            toast.error('Failed to paste');
+          }
+        } else {
+          toast.error('Nothing to paste');
+        }
+        return;
+      }
+
+      // === SELECT ALL ===
+      
+      // Select all (Ctrl+A) - select the last object as proxy for "all"
+      if (ctrl && key === 'a') {
+        e.preventDefault();
+        if (objects.length > 0) {
+          selectObject(objects[objects.length - 1].id);
+          toast.success(`Selected top object (${objects.length} total)`);
+        }
+        return;
+      }
+
+      // === ZOOM CONTROLS ===
+      
+      // Reset zoom (Ctrl+0)
+      if (ctrl && key === '0') {
+        e.preventDefault();
+        setStageScale(1);
+        toast.success('Zoom reset to 100%');
+        return;
+      }
+
+      // Zoom to fit (Ctrl+1)
+      if (ctrl && key === '1') {
+        e.preventDefault();
+        // Simple zoom to fit - set to 0.8 to show full deck
+        setStageScale(0.8);
+        toast.success('Zoom to fit');
+        return;
+      }
+
+      // Zoom in (Ctrl+=)
+      if (ctrl && (key === '=' || key === '+')) {
+        e.preventDefault();
+        const newScale = Math.min(3, stageScale * 1.2);
+        setStageScale(newScale);
+        toast.success(`Zoom: ${Math.round(newScale * 100)}%`);
+        return;
+      }
+
+      // Zoom out (Ctrl+-)
+      if (ctrl && (key === '-' || key === '_')) {
+        e.preventDefault();
+        const newScale = Math.max(0.25, stageScale / 1.2);
+        setStageScale(newScale);
+        toast.success(`Zoom: ${Math.round(newScale * 100)}%`);
+        return;
+      }
+
       // === LAYER ORDERING ===
       
       if (selectedId) {
@@ -394,7 +499,7 @@ export default function DeckForge() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedId, deleteObject, undo, redo, objects, handleSave, handleExport, addObject, selectObject, setActiveTool, updateObject]);
+  }, [selectedId, deleteObject, undo, redo, objects, handleSave, handleExport, addObject, selectObject, setActiveTool, updateObject, stageScale, setStageScale]);
 
   return (
     <div className="h-screen w-screen flex flex-col bg-background overflow-hidden">
