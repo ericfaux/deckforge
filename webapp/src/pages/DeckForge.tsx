@@ -282,6 +282,19 @@ export default function DeckForge() {
         return;
       }
 
+      // === LOCK/UNLOCK OBJECT ===
+      
+      // Lock/unlock selected object (Ctrl+L)
+      if (ctrl && key === 'l' && selectedId) {
+        e.preventDefault();
+        const obj = objects.find(o => o.id === selectedId);
+        if (obj) {
+          updateObject(selectedId, { locked: !obj.locked });
+          toast.success(obj.locked ? 'Object unlocked' : 'Object locked');
+        }
+        return;
+      }
+
       // === NUDGING WITH ARROW KEYS ===
       
       if (selectedId && ['arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(key)) {
