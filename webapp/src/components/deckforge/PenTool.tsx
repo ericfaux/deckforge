@@ -182,25 +182,28 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef }: PenToolPro
     }
   }
 
+  // Get viewport dimensions from stageRef
+  const viewportWidth = stageRef.current?.clientWidth || 3000;
+  const viewportHeight = stageRef.current?.clientHeight || 3000;
+
   return (
-    <>
-      {/* Overlay to capture interactions */}
-      <g
+    <g style={{ pointerEvents: 'all' }}>
+      {/* Massive overlay to capture ALL interactions */}
+      <rect
+        x={0}
+        y={0}
+        width={viewportWidth}
+        height={viewportHeight}
+        fill="rgba(0,0,0,0.01)"
+        style={{ 
+          cursor: mode === 'draw' ? 'crosshair' : 'pointer',
+          pointerEvents: 'all'
+        }}
         onClick={handleStageClick}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
-        style={{ cursor: mode === 'draw' ? 'crosshair' : 'pointer', pointerEvents: 'all' }}
-      >
-        <rect
-          x={0}
-          y={0}
-          width="100%"
-          height="100%"
-          fill="transparent"
-          style={{ pointerEvents: 'all' }}
-        />
-      </g>
+      />
 
       {/* Draw preview path */}
       {previewPath && (
@@ -324,6 +327,6 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef }: PenToolPro
           </div>
         </div>
       </foreignObject>
-    </>
+    </g>
   );
 }

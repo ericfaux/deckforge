@@ -772,10 +772,14 @@ export function WorkbenchStage() {
   }, []);
 
   const handleStageClick = useCallback((e: React.MouseEvent) => {
+    // Don't interfere with pen tool
+    if (activeTool === 'pen') {
+      return;
+    }
     if (e.target === e.currentTarget) {
       selectObject(null);
     }
-  }, [selectObject]);
+  }, [selectObject, activeTool]);
 
   // Handle pen tool path completion
   const handlePenToolComplete = useCallback((pathData: string, strokeWidth: number) => {
@@ -944,10 +948,11 @@ export function WorkbenchStage() {
           stroke="#ccff00"
           strokeWidth={2}
           fill="none"
+          pointerEvents="none"
         />
 
         {/* Hardware Guide Overlay - Visual only, not exported */}
-        {showHardwareGuide && (
+        {showHardwareGuide && activeTool !== 'pen' && (
           <g transform={`translate(${deckX}, ${deckY}) scale(${stageScale})`} pointerEvents="none">
             {/* Front Truck Baseplate */}
             <rect
@@ -1016,12 +1021,13 @@ export function WorkbenchStage() {
             fontSize={10}
             fontFamily="JetBrains Mono, monospace"
             fill="#666666"
+            pointerEvents="none"
           >
             Click tools on left to add elements
           </text>
         )}
 
-        {/* Pen Tool */}
+        {/* Pen Tool - Must be LAST to be on top */}
         <PenTool
           isActive={activeTool === 'pen'}
           onComplete={handlePenToolComplete}
