@@ -59,7 +59,7 @@ app.post('/signup', async (c) => {
     });
   } catch (err) {
     if (err instanceof z.ZodError) {
-      return c.json({ error: 'Validation failed', details: err.errors }, 400);
+      return c.json({ error: 'Validation failed', details: err.issues }, 400);
     }
     return c.json({ error: 'Internal server error' }, 500);
   }
@@ -86,7 +86,7 @@ app.post('/login', async (c) => {
     });
   } catch (err) {
     if (err instanceof z.ZodError) {
-      return c.json({ error: 'Validation failed', details: err.errors }, 400);
+      return c.json({ error: 'Validation failed', details: err.issues }, 400);
     }
     return c.json({ error: 'Internal server error' }, 500);
   }

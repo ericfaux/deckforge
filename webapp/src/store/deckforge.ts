@@ -36,6 +36,10 @@ export interface CanvasObject {
   fontSize?: number;
   fontFamily?: string;
   fill?: string;
+  // Gradient support
+  fillType?: 'solid' | 'linear-gradient' | 'radial-gradient';
+  gradientStops?: Array<{ offset: number; color: string }>; // e.g., [{offset: 0, color: '#ff0000'}, {offset: 1, color: '#0000ff'}]
+  gradientAngle?: number; // 0-360 degrees for linear gradient
   // For images
   src?: string;
   // For shapes
@@ -64,6 +68,28 @@ export interface CanvasObject {
   hueRotate?: number;     // 0-360 degrees
   invert?: boolean;
   pixelate?: boolean;
+  // Layer effects
+  dropShadow?: {
+    enabled: boolean;
+    offsetX: number;
+    offsetY: number;
+    blur: number;
+    color: string;
+    opacity: number;
+  };
+  glow?: {
+    enabled: boolean;
+    radius: number;
+    color: string;
+    intensity: number;
+  };
+  innerShadow?: {
+    enabled: boolean;
+    offsetX: number;
+    offsetY: number;
+    blur: number;
+    color: string;
+  };
 }
 
 interface HistoryState {
