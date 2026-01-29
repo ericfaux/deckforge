@@ -8,7 +8,7 @@ interface Point {
 
 interface PenToolProps {
   isActive: boolean;
-  onComplete: (pathData: string, strokeWidth: number) => void;
+  onComplete: (pathData: string, strokeWidth: number, strokeColor: string) => void;
   onCancel: () => void;
   stageRef: React.RefObject<SVGSVGElement>;
   deckX: number;
@@ -22,6 +22,7 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef, deckX, deckY
   const [mode, setMode] = useState<'click' | 'draw'>('click');
   const [isDrawing, setIsDrawing] = useState(false);
   const [strokeWidth, setStrokeWidth] = useState(2);
+  const [strokeColor, setStrokeColor] = useState('#ffffff');
 
   useEffect(() => {
     if (!isActive) {
@@ -67,7 +68,7 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef, deckX, deckY
     if (points.length === 1) {
       const pathData = `M ${points[0].x} ${points[0].y} L ${x} ${y}`;
       setPoints([]); // Clear state immediately
-      onComplete(pathData, strokeWidth);
+      onComplete(pathData, strokeWidth, strokeColor);
       return;
     }
   };
@@ -150,7 +151,7 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef, deckX, deckY
       }
     }
 
-    onComplete(pathData, strokeWidth);
+    onComplete(pathData, strokeWidth, strokeColor);
   };
 
   const handleCancelClick = (e: React.MouseEvent) => {
@@ -219,7 +220,7 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef, deckX, deckY
         >
           <path
             d={previewPath}
-            stroke="#ccff00"
+            stroke={strokeColor}
             strokeWidth={strokeWidth / stageScale}
             fill="none"
             strokeDasharray={mode === 'click' ? "4 4" : "none"}
@@ -254,7 +255,7 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef, deckX, deckY
       )}
 
       {/* Toolbar */}
-      <foreignObject x={10} y={10} width={500} height={140}>
+      <foreignObject x={10} y={10} width={500} height={200}>
         <div 
           className="bg-card border-2 border-accent p-4 shadow-xl"
           onMouseDown={(e) => e.stopPropagation()}
@@ -307,6 +308,37 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef, deckX, deckY
               <span className="text-sm font-mono text-foreground w-8 text-right">
                 {strokeWidth}px
               </span>
+            </div>
+
+            {/* Line Color */}
+            <div className="flex items-center gap-3">
+              <span className="text-[10px] text-muted-foreground uppercase tracking-widest whitespace-nowrap">
+                Line Color
+              </span>
+              <input
+                type="color"
+                value={strokeColor}
+                onChange={(e) => setStrokeColor(e.target.value)}
+                onMouseDown={(e) => e.stopPropagation()}
+                onClick={(e) => e.stopPropagation()}
+                className="w-10 h-10 border-2 border-border cursor-pointer bg-transparent"
+              />
+              <div className="flex gap-1 flex-1">
+                {['#ffffff', '#000000', '#ccff00', '#ff6600', '#00ffff', '#ff00ff'].map((color) => (
+                  <button
+                    key={color}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setStrokeColor(color);
+                    }}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    className={`w-6 h-6 border-2 transition-all ${
+                      strokeColor === color ? 'border-accent scale-110' : 'border-border'
+                    }`}
+                    style={{ backgroundColor: color }}
+                  />
+                ))}
+              </div>
             </div>
 
             {/* Instructions & controls */}

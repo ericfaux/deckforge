@@ -863,7 +863,7 @@ export function WorkbenchStage() {
   }, [selectObject, activeTool]);
 
   // Handle pen tool path completion
-  const handlePenToolComplete = useCallback((pathData: string, strokeWidth: number) => {
+  const handlePenToolComplete = useCallback((pathData: string, strokeWidth: number, strokeColor: string) => {
     // Close tool immediately to prevent further clicks
     setActiveTool(null);
     
@@ -913,7 +913,7 @@ export function WorkbenchStage() {
         scaleY: 1,
         pathPoints,
         pathClosed: false,
-        stroke: '#000000',
+        stroke: strokeColor,
         strokeWidth: strokeWidth,
         fill: 'none',
       });
