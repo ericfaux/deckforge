@@ -209,18 +209,31 @@ function Scene({ params, textureUrl }: { params: DeckParams; textureUrl: string 
         dampingFactor={0.05}
         minDistance={50}
         maxDistance={300}
+        autoRotate
+        autoRotateSpeed={0.5}
       />
       
-      <ambientLight intensity={0.5} />
-      <directionalLight position={[50, 50, 50]} intensity={1} castShadow />
-      <directionalLight position={[-50, 30, -50]} intensity={0.5} />
+      {/* Better lighting setup */}
+      <ambientLight intensity={0.6} />
+      <directionalLight 
+        position={[50, 50, 50]} 
+        intensity={1.2} 
+        castShadow
+        shadow-mapSize-width={2048}
+        shadow-mapSize-height={2048}
+      />
+      <directionalLight position={[-50, 30, -50]} intensity={0.4} />
+      <pointLight position={[0, 50, 0]} intensity={0.3} color="#ffffff" />
       
       <FingerboardDeck params={params} textureUrl={textureUrl} />
       
-      {/* Ground plane for reference */}
+      {/* Grid floor */}
+      <gridHelper args={[300, 30, '#444444', '#2a2a2a']} position={[0, -10, 0]} />
+      
+      {/* Shadow catcher plane */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -10, 0]} receiveShadow>
         <planeGeometry args={[300, 300]} />
-        <meshStandardMaterial color="#2a2a2a" />
+        <shadowMaterial opacity={0.3} />
       </mesh>
     </>
   );
@@ -231,32 +244,94 @@ export default function DeckGenerator3D({ objects, onClose }: DeckGenerator3DPro
   const [textureUrl, setTextureUrl] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
 
-  // Generate texture from objects array (create SVG and convert to data URL)
+  // Generate high-quality texture from objects using canvas
   React.useEffect(() => {
-    if (objects.length > 0) {
-      // Create SVG from objects
-      const svgContent = `
-        <svg xmlns="http://www.w3.org/2000/svg" width="${DECK_WIDTH}" height="${DECK_HEIGHT}" viewBox="0 0 ${DECK_WIDTH} ${DECK_HEIGHT}">
-          <rect width="${DECK_WIDTH}" height="${DECK_HEIGHT}" fill="#f5e6d3"/>
-          ${objects.map(obj => {
-            if (obj.type === 'rect') {
-              return `<rect x="${obj.x}" y="${obj.y}" width="${obj.width}" height="${obj.height}" fill="${obj.fill || '#000'}" stroke="${obj.stroke || 'none'}" stroke-width="${obj.strokeWidth || 0}" opacity="${obj.opacity || 1}" transform="rotate(${obj.rotation || 0} ${obj.x + obj.width / 2} ${obj.y + obj.height / 2})"/>`;
-            } else if (obj.type === 'circle') {
-              return `<circle cx="${obj.x + obj.radius}" cy="${obj.y + obj.radius}" r="${obj.radius}" fill="${obj.fill || '#000'}" stroke="${obj.stroke || 'none'}" stroke-width="${obj.strokeWidth || 0}" opacity="${obj.opacity || 1}"/>`;
-            } else if (obj.type === 'text') {
-              return `<text x="${obj.x}" y="${obj.y}" font-size="${obj.fontSize || 16}" fill="${obj.fill || '#000'}" font-family="${obj.fontFamily || 'Arial'}" opacity="${obj.opacity || 1}">${obj.text || ''}</text>`;
+    const canvas = document.createElement('canvas');
+    const scale = 4; // Higher resolution for better quality
+    canvas.width = DECK_WIDTH * scale;
+    canvas.height = DECK_HEIGHT * scale;
+    const ctx = canvas.getContext('2d');
+    
+    if (!ctx) return;
+    
+    // Scale context for high-res rendering
+    ctx.scale(scale, scale);
+    
+    // Background (wood texture color)
+    ctx.fillStyle = '#f5e6d3';
+    ctx.fillRect(0, 0, DECK_WIDTH, DECK_HEIGHT);
+    
+    // Render each object
+    objects.forEach(obj => {
+      ctx.save();
+      
+      // Apply opacity
+      ctx.globalAlpha = obj.opacity || 1;
+      
+      // Apply rotation
+      if (obj.rotation) {
+        const centerX = obj.x + (obj.width || obj.radius || 0);
+        const centerY = obj.y + (obj.height || obj.radius || 0);
+        ctx.translate(centerX, centerY);
+        ctx.rotate((obj.rotation * Math.PI) / 180);
+        ctx.translate(-centerX, -centerY);
+      }
+      
+      // Render based on type
+      switch (obj.type) {
+        case 'rect':
+          if (obj.fill && obj.fill !== 'none') {
+            ctx.fillStyle = obj.fill;
+            ctx.fillRect(obj.x, obj.y, obj.width || 0, obj.height || 0);
+          }
+          if (obj.stroke) {
+            ctx.strokeStyle = obj.stroke;
+            ctx.lineWidth = obj.strokeWidth || 1;
+            ctx.strokeRect(obj.x, obj.y, obj.width || 0, obj.height || 0);
+          }
+          break;
+          
+        case 'circle':
+          ctx.beginPath();
+          ctx.arc(obj.x + (obj.radius || 0), obj.y + (obj.radius || 0), obj.radius || 0, 0, Math.PI * 2);
+          if (obj.fill && obj.fill !== 'none') {
+            ctx.fillStyle = obj.fill;
+            ctx.fill();
+          }
+          if (obj.stroke) {
+            ctx.strokeStyle = obj.stroke;
+            ctx.lineWidth = obj.strokeWidth || 1;
+            ctx.stroke();
+          }
+          break;
+          
+        case 'text':
+          ctx.font = `${obj.fontSize || 16}px ${obj.fontFamily || 'Arial'}`;
+          ctx.fillStyle = obj.fill || '#000';
+          ctx.textAlign = obj.align as CanvasTextAlign || 'left';
+          ctx.fillText(obj.text || '', obj.x, obj.y);
+          break;
+          
+        case 'line':
+          if (obj.points && obj.points.length >= 4) {
+            ctx.beginPath();
+            ctx.moveTo(obj.points[0], obj.points[1]);
+            for (let i = 2; i < obj.points.length; i += 2) {
+              ctx.lineTo(obj.points[i], obj.points[i + 1]);
             }
-            return '';
-          }).join('\n')}
-        </svg>
-      `;
+            ctx.strokeStyle = obj.stroke || '#000';
+            ctx.lineWidth = obj.strokeWidth || 2;
+            ctx.stroke();
+          }
+          break;
+      }
       
-      const blob = new Blob([svgContent], { type: 'image/svg+xml' });
-      const url = URL.createObjectURL(blob);
-      setTextureUrl(url);
-      
-      return () => URL.revokeObjectURL(url);
-    }
+      ctx.restore();
+    });
+    
+    // Convert canvas to data URL
+    const dataUrl = canvas.toDataURL('image/png');
+    setTextureUrl(dataUrl);
   }, [objects]);
 
   const handleParamChange = useCallback((key: keyof DeckParams, value: number) => {
@@ -370,6 +445,15 @@ export default function DeckGenerator3D({ objects, onClose }: DeckGenerator3DPro
         {/* Controls Panel */}
         <div className="w-80 bg-gray-900 border-r border-gray-700 p-6 overflow-y-auto">
           <div className="space-y-6">
+            {/* Info Banner */}
+            <div className="bg-gradient-to-r from-blue-900/50 to-purple-900/50 border border-blue-700/50 rounded-lg p-4">
+              <h3 className="text-sm font-bold text-white mb-1">🖨️ 3D Print Your Design</h3>
+              <p className="text-xs text-gray-300">
+                Turn your 2D deck art into a physical fingerboard. Adjust the shape, export as STL, 
+                and send to any 3D printing service.
+              </p>
+            </div>
+
             {/* Preset Shapes */}
             <div>
               <h3 className="text-lg font-semibold text-white mb-3">Deck Shape Presets</h3>
@@ -482,16 +566,38 @@ export default function DeckGenerator3D({ objects, onClose }: DeckGenerator3DPro
               </div>
             </div>
 
+            {/* Deck Stats */}
+            <div className="pt-4 border-t border-gray-700">
+              <h3 className="text-sm font-semibold text-white mb-2">Deck Info</h3>
+              <div className="space-y-1 text-xs text-gray-400">
+                <div className="flex justify-between">
+                  <span>Volume:</span>
+                  <span>{(params.length * params.width * params.thickness / 1000).toFixed(2)} cm³</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Est. Weight (PLA):</span>
+                  <span>{(params.length * params.width * params.thickness / 1000 * 1.24).toFixed(1)}g</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Print Time (~):</span>
+                  <span>{Math.ceil(params.length * params.width * params.thickness / 10000)}h</span>
+                </div>
+              </div>
+            </div>
+
             <div className="pt-4 border-t border-gray-700">
               <button
                 onClick={exportSTL}
                 disabled={exporting}
-                className="w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 text-white font-semibold rounded-lg transition-colors"
+                className="w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:bg-gray-700 text-white font-semibold rounded-lg transition-all shadow-lg hover:shadow-xl"
               >
-                {exporting ? 'Exporting...' : 'Export STL for 3D Printing'}
+                {exporting ? 'Exporting...' : '📥 Export STL for 3D Printing'}
               </button>
               <p className="text-xs text-gray-500 mt-2 text-center">
                 Compatible with Shapeways, Sculpteo, and local 3D printers
+              </p>
+              <p className="text-xs text-gray-600 mt-1 text-center">
+                Recommended: PLA or ABS filament, 0.2mm layer height
               </p>
             </div>
           </div>
