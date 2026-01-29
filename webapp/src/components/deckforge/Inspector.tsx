@@ -245,6 +245,72 @@ export function Inspector() {
               </div>
             )}
 
+            {/* Pattern Controls (for shapes with patterns) */}
+            {selectedObject.type === 'shape' && selectedObject.patternType && (
+              <div className="pt-4 border-t border-border space-y-4">
+                <div className="py-2">
+                  <span className="font-display text-[10px] uppercase tracking-widest text-muted-foreground">
+                    Pattern Settings
+                  </span>
+                </div>
+
+                {/* Pattern Type Selector */}
+                <div className="space-y-2">
+                  <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                    Pattern Type
+                  </Label>
+                  <select
+                    value={selectedObject.patternType}
+                    onChange={(e) => updateWithHistory({ patternType: e.target.value as any })}
+                    className="w-full h-8 text-xs bg-secondary border-border rounded px-2"
+                  >
+                    <option value="checkerboard">Checkerboard</option>
+                    <option value="speed-lines">Speed Lines</option>
+                    <option value="halftone">Halftone</option>
+                    <option value="diagonal-stripes">Diagonal Stripes</option>
+                    <option value="hexagons">Hexagons</option>
+                    <option value="crosshatch">Crosshatch</option>
+                  </select>
+                </div>
+
+                {/* Primary Color */}
+                <ColorPicker
+                  label="Primary Color"
+                  value={selectedObject.patternPrimaryColor || '#1e3a8a'}
+                  onChange={(color) => updateWithHistory({ patternPrimaryColor: color })}
+                  showEyedropper={true}
+                />
+
+                {/* Secondary Color */}
+                <ColorPicker
+                  label="Secondary Color"
+                  value={selectedObject.patternSecondaryColor || '#3b82f6'}
+                  onChange={(color) => updateWithHistory({ patternSecondaryColor: color })}
+                  showEyedropper={true}
+                />
+
+                {/* Pattern Scale */}
+                <div className="space-y-2">
+                  <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                    Pattern Scale
+                  </Label>
+                  <div className="flex items-center gap-3">
+                    <Slider
+                      value={[selectedObject.patternScale || 20]}
+                      onValueChange={([value]) => updateWithHistory({ patternScale: value })}
+                      max={100}
+                      min={5}
+                      step={5}
+                      className="flex-1"
+                    />
+                    <span className="text-[11px] font-mono w-10 text-right">
+                      {selectedObject.patternScale || 20}px
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Color Tint (for images/paths) */}
             {(selectedObject.type === 'image' || selectedObject.type === 'path') && (
               <div className="space-y-2">
