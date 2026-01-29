@@ -45,7 +45,8 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef }: PenToolPro
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isActive, points, onCancel]);
 
-  const handleStageClick = (e: React.MouseEvent<SVGSVGElement>) => {
+  const handleStageClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent event from bubbling
     if (!isActive || !stageRef.current || mode === 'draw') return;
 
     const rect = stageRef.current.getBoundingClientRect();
@@ -57,14 +58,13 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef }: PenToolPro
 
     // Auto-complete on second click
     if (newPoints.length === 2) {
-      setTimeout(() => {
-        const pathData = `M ${newPoints[0].x} ${newPoints[0].y} L ${newPoints[1].x} ${newPoints[1].y}`;
-        onComplete(pathData, strokeWidth);
-      }, 50);
+      const pathData = `M ${newPoints[0].x} ${newPoints[0].y} L ${newPoints[1].x} ${newPoints[1].y}`;
+      onComplete(pathData, strokeWidth);
     }
   };
 
-  const handleMouseDown = (e: React.MouseEvent<SVGSVGElement>) => {
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent event from bubbling
     if (!isActive || !stageRef.current || mode !== 'draw') return;
 
     const rect = stageRef.current.getBoundingClientRect();
@@ -75,7 +75,7 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef }: PenToolPro
     setPoints([{ x, y }]);
   };
 
-  const handleMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
+  const handleMouseMove = (e: React.MouseEvent) => {
     if (!isActive || !stageRef.current) return;
 
     const rect = stageRef.current.getBoundingClientRect();
