@@ -617,6 +617,7 @@ export function WorkbenchStage() {
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const [containerSize, setContainerSize] = useState({ width: 800, height: 600 });
+  const [touchDistance, setTouchDistance] = useState<number | null>(null);
 
   const {
     objects,
@@ -661,6 +662,41 @@ export function WorkbenchStage() {
     const newScale = e.deltaY < 0 ? oldScale * scaleBy : oldScale / scaleBy;
     setStageScale(Math.max(0.5, Math.min(3, newScale)));
   }, [stageScale, setStageScale]);
+
+  // Mobile: Pinch to zoom
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    if (e.touches.length === 2) {
+      e.preventDefault();
+      const touch1 = e.touches[0];
+      const touch2 = e.touches[1];
+      const distance = Math.hypot(
+        touch2.clientX - touch1.clientX,
+        touch2.clientY - touch1.clientY
+      );
+      setTouchDistance(distance);
+    }
+  }, []);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (e.touches.length === 2 && touchDistance) {
+      e.preventDefault();
+      const touch1 = e.touches[0];
+      const touch2 = e.touches[1];
+      const distance = Math.hypot(
+        touch2.clientX - touch1.clientX,
+        touch2.clientY - touch1.clientY
+      );
+      
+      const scale = distance / touchDistance;
+      const newScale = stageScale * scale;
+      setStageScale(Math.max(0.5, Math.min(3, newScale)));
+      setTouchDistance(distance);
+    }
+  }, [touchDistance, stageScale, setStageScale]);
+
+  const handleTouchEnd = useCallback(() => {
+    setTouchDistance(null);
+  }, []);
 
   // Handle drop from drawer
   const handleDrop = useCallback((e: React.DragEvent) => {
@@ -774,6 +810,9 @@ export function WorkbenchStage() {
       onDragOver={handleDragOver}
       onClick={handleStageClick}
       onWheel={handleWheel}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
     >
       {/* Dot grid background */}
       <div className="absolute inset-0 dot-grid bg-background" />

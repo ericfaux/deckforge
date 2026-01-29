@@ -69,8 +69,8 @@ export function ToolRail() {
                   key={tool.id}
                   onClick={() => setActiveTool(isActive ? null : tool.id)}
                   className={cn(
-                    'min-w-[56px] h-14 flex flex-col items-center justify-center gap-1 border border-transparent shrink-0',
-                    'active:bg-secondary transition-colors duration-75',
+                    'min-w-[64px] h-16 flex flex-col items-center justify-center gap-1 border border-transparent shrink-0',
+                    'active:bg-secondary/80 active:scale-95 transition-all duration-75 touch-manipulation',
                     isActive && 'tool-active border-primary bg-primary/10'
                   )}
                 >
