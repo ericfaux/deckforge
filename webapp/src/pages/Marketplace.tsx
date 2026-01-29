@@ -75,10 +75,20 @@ export default function Marketplace() {
                 Discover and download custom fingerboard graphics
               </p>
             </div>
-            <Button onClick={() => navigate('/marketplace/upload')} className="gap-2">
-              <Sparkles className="w-4 h-4" />
-              Upload Design
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                onClick={() => navigate('/marketplace/dashboard')}
+                variant="outline"
+                className="gap-2"
+              >
+                <TrendingUp className="w-4 h-4" />
+                Dashboard
+              </Button>
+              <Button onClick={() => navigate('/marketplace/upload')} className="gap-2">
+                <Sparkles className="w-4 h-4" />
+                Upload Design
+              </Button>
+            </div>
           </div>
 
           {/* Search */}
