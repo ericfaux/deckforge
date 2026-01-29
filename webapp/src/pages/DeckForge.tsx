@@ -10,7 +10,7 @@ import { BrandKitModal } from '@/components/deckforge/BrandKitModal';
 import { MobileToolbar } from '@/components/deckforge/MobileToolbar';
 import { MobileDrawer } from '@/components/deckforge/MobileDrawer';
 import { LayerList } from '@/components/deckforge/LayerList';
-import { useDeckForgeStore } from '@/store/deckforge';
+import { useDeckForgeStore, CanvasObject } from '@/store/deckforge';
 import { useAuthStore } from '@/store/auth';
 import { designsAPI } from '@/lib/api';
 import { exportToPNG, exportToSVG, downloadBlob } from '@/lib/export';
@@ -22,7 +22,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 
 export default function DeckForge() {
-  const { selectedId, deleteObject, undo, redo, getCanvasState, currentDesignId, setDesignId, setSaving, isSaving, objects, designName, createVersion, past, future } = useDeckForgeStore();
+  const { selectedId, deleteObject, undo, redo, getCanvasState, currentDesignId, setDesignId, setSaving, isSaving, objects, designName, createVersion, past, future, updateObject, saveToHistory } = useDeckForgeStore();
   const { isAuthenticated } = useAuthStore();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -480,8 +480,58 @@ export default function DeckForge() {
           return Array.from(colors);
         })()}
         onApplyKit={(kit) => {
-          // TODO: Apply brand kit colors to canvas (replace existing colors)
-          console.log('Applying brand kit:', kit);
+          // Extract current unique colors
+          const currentColors = new Set<string>();
+          objects.forEach(obj => {
+            if (obj.fill && obj.fill !== 'none') currentColors.add(obj.fill);
+            if (obj.stroke) currentColors.add(obj.stroke);
+            if (obj.colorize) currentColors.add(obj.colorize);
+          });
+          
+          const currentColorsArray = Array.from(currentColors);
+          const newColors = kit.colors;
+          
+          // Create color mapping (old → new)
+          const colorMap = new Map<string, string>();
+          currentColorsArray.forEach((oldColor, index) => {
+            // Map to new color at same index, or cycle through if more old colors than new
+            const newColor = newColors[index % newColors.length];
+            colorMap.set(oldColor, newColor);
+          });
+          
+          // Save to history before making changes
+          saveToHistory();
+          
+          // Update all objects with new colors
+          let changedCount = 0;
+          objects.forEach(obj => {
+            const updates: Partial<CanvasObject> = {};
+            
+            if (obj.fill && colorMap.has(obj.fill)) {
+              updates.fill = colorMap.get(obj.fill);
+              changedCount++;
+            }
+            if (obj.stroke && colorMap.has(obj.stroke)) {
+              updates.stroke = colorMap.get(obj.stroke);
+              changedCount++;
+            }
+            if (obj.colorize && colorMap.has(obj.colorize)) {
+              updates.colorize = colorMap.get(obj.colorize);
+              changedCount++;
+            }
+            
+            if (Object.keys(updates).length > 0) {
+              updateObject(obj.id, updates);
+            }
+          });
+          
+          // Show success message
+          const message = changedCount > 0 
+            ? `Applied "${kit.name}" - ${changedCount} color${changedCount !== 1 ? 's' : ''} changed`
+            : `Applied "${kit.name}" - No matching colors found`;
+          
+          setSaveStatus(message);
+          setTimeout(() => setSaveStatus(''), 3000);
         }}
       />
     </div>
