@@ -91,8 +91,13 @@ function parseElement(element: SVGElement, svgWidth: number, svgHeight: number):
     case 'line':
       return parseLine(element as SVGLineElement, stroke || fill, strokeWidth, opacity);
     
+    case 'path':
+    case 'polygon':
+    case 'polyline':
+      // For complex shapes, convert to embedded SVG image
+      return parseComplexShape(element, svgWidth, svgHeight, opacity);
+    
     default:
-      // For complex shapes (path, polygon, polyline), convert to image
       return null;
   }
 }
@@ -210,6 +215,43 @@ function parseLine(
     stroke: stroke || '#000000',
     strokeWidth: strokeWidth || 2,
     lineCapStyle: 'round',
+  };
+}
+
+function parseComplexShape(
+  element: SVGElement,
+  svgWidth: number,
+  svgHeight: number,
+  opacity: number
+): Omit<CanvasObject, 'id'> {
+  // Get bounding box to determine dimensions
+  const bbox = element.getBBox ? element.getBBox() : { x: 0, y: 0, width: 100, height: 100 };
+  
+  // Clone the element and wrap in a standalone SVG
+  const clone = element.cloneNode(true) as SVGElement;
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+  svg.setAttribute('viewBox', `${bbox.x} ${bbox.y} ${bbox.width} ${bbox.height}`);
+  svg.setAttribute('width', String(bbox.width));
+  svg.setAttribute('height', String(bbox.height));
+  svg.appendChild(clone);
+
+  // Convert to blob URL
+  const svgString = new XMLSerializer().serializeToString(svg);
+  const blob = new Blob([svgString], { type: 'image/svg+xml' });
+  const url = URL.createObjectURL(blob);
+
+  return {
+    type: 'image',
+    x: bbox.x,
+    y: bbox.y,
+    width: bbox.width,
+    height: bbox.height,
+    rotation: 0,
+    opacity,
+    scaleX: 1,
+    scaleY: 1,
+    src: url,
   };
 }
 
