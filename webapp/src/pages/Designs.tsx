@@ -3,12 +3,17 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/store/auth';
 import { useDeckForgeStore } from '@/store/deckforge';
 import { designsAPI } from '@/lib/api';
+import { batchExportDesigns, downloadBlob } from '@/lib/batch-export';
 import { Button } from '@/components/ui/button';
-import { Plus, Trash2, Download, Eye, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Download, Eye, Loader2, CheckSquare, Square } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
 
 export default function Designs() {
   const [designs, setDesigns] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportProgress, setExportProgress] = useState({ current: 0, total: 0 });
   const { isAuthenticated, logout } = useAuthStore();
   const { loadDesign, resetCanvas } = useDeckForgeStore();
   const navigate = useNavigate();
@@ -48,10 +53,82 @@ export default function Designs() {
 
     try {
       await designsAPI.delete(id);
+      // Remove from selected if it was selected
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
       await loadDesigns();
     } catch (err) {
       console.error('Delete failed:', err);
       alert('Failed to delete design');
+    }
+  };
+
+  const toggleSelect = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const selectAll = () => {
+    if (selectedIds.size === designs.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(designs.map((d) => d.id)));
+    }
+  };
+
+  const handleBatchExport = async () => {
+    const selectedDesigns = designs.filter((d) => selectedIds.has(d.id));
+    
+    if (selectedDesigns.length === 0) {
+      toast({
+        title: 'No designs selected',
+        description: 'Please select at least one design to export.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsExporting(true);
+    setExportProgress({ current: 0, total: selectedDesigns.length });
+
+    try {
+      const zipBlob = await batchExportDesigns(selectedDesigns, (current, total) => {
+        setExportProgress({ current, total });
+      });
+
+      // Download the ZIP
+      const timestamp = Date.now();
+      const filename = `deckforge_designs_${timestamp}.zip`;
+      downloadBlob(zipBlob, filename);
+
+      toast({
+        title: '✓ Batch export complete',
+        description: `${selectedDesigns.length} design${selectedDesigns.length !== 1 ? 's' : ''} exported successfully.`,
+      });
+
+      // Clear selection
+      setSelectedIds(new Set());
+    } catch (error) {
+      console.error('Batch export failed:', error);
+      toast({
+        title: 'Export failed',
+        description: 'Failed to export designs. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsExporting(false);
+      setExportProgress({ current: 0, total: 0 });
     }
   };
 
@@ -69,6 +146,8 @@ export default function Designs() {
     return null;
   }
 
+  const hasSelection = selectedIds.size > 0;
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -77,6 +156,32 @@ export default function Designs() {
           My <span className="text-primary">Designs</span>
         </h1>
         <div className="ml-auto flex items-center gap-4">
+          {hasSelection && (
+            <>
+              <span className="text-sm text-muted-foreground">
+                {selectedIds.size} selected
+              </span>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleBatchExport}
+                disabled={isExporting}
+                className="gap-2"
+              >
+                {isExporting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Exporting {exportProgress.current}/{exportProgress.total}
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-4 h-4" />
+                    Export Selected
+                  </>
+                )}
+              </Button>
+            </>
+          )}
           <Button size="sm" variant="outline" onClick={createNew} className="gap-2">
             <Plus className="w-4 h-4" />
             New Design
@@ -109,70 +214,120 @@ export default function Designs() {
             </Button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {designs.map((design) => (
-              <div
-                key={design.id}
-                className="group border border-border hover:border-primary transition-colors bg-card overflow-hidden cursor-pointer"
-                onClick={() => openDesign(design)}
+          <>
+            {/* Select all toolbar */}
+            <div className="mb-4 flex items-center gap-3">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={selectAll}
+                className="gap-2"
               >
-                {/* Thumbnail */}
-                <div className="aspect-[32/98] bg-muted flex items-center justify-center overflow-hidden">
-                  {design.thumbnail_url ? (
-                    <img
-                      src={design.thumbnail_url}
-                      alt={design.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="text-muted-foreground text-sm uppercase tracking-widest">
-                      {design.name}
+                {selectedIds.size === designs.length ? (
+                  <>
+                    <CheckSquare className="w-4 h-4" />
+                    Deselect All
+                  </>
+                ) : (
+                  <>
+                    <Square className="w-4 h-4" />
+                    Select All
+                  </>
+                )}
+              </Button>
+              <span className="text-sm text-muted-foreground">
+                {designs.length} design{designs.length !== 1 ? 's' : ''}
+              </span>
+            </div>
+
+            {/* Design grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {designs.map((design) => {
+                const isSelected = selectedIds.has(design.id);
+                
+                return (
+                  <div
+                    key={design.id}
+                    className={`group border transition-colors bg-card overflow-hidden cursor-pointer relative ${
+                      isSelected ? 'border-primary ring-2 ring-primary/20' : 'border-border hover:border-primary'
+                    }`}
+                    onClick={() => openDesign(design)}
+                  >
+                    {/* Selection checkbox */}
+                    <div
+                      className="absolute top-2 left-2 z-10"
+                      onClick={(e) => toggleSelect(design.id, e)}
+                    >
+                      <div
+                        className={`w-6 h-6 border-2 flex items-center justify-center transition-colors cursor-pointer ${
+                          isSelected
+                            ? 'bg-primary border-primary'
+                            : 'bg-background border-border hover:border-primary'
+                        }`}
+                      >
+                        {isSelected && <CheckSquare className="w-5 h-5 text-primary-foreground" />}
+                      </div>
                     </div>
-                  )}
-                </div>
 
-                {/* Info */}
-                <div className="p-4 space-y-3">
-                  <div>
-                    <h3 className="font-display text-sm uppercase tracking-widest truncate">
-                      {design.name}
-                    </h3>
-                    {design.description && (
-                      <p className="text-xs text-muted-foreground truncate mt-1">
-                        {design.description}
-                      </p>
-                    )}
-                    <p className="text-[10px] text-muted-foreground mt-1 uppercase tracking-widest">
-                      {new Date(design.updated_at).toLocaleDateString()}
-                    </p>
-                  </div>
+                    {/* Thumbnail */}
+                    <div className="aspect-[32/98] bg-muted flex items-center justify-center overflow-hidden">
+                      {design.thumbnail_url ? (
+                        <img
+                          src={design.thumbnail_url}
+                          alt={design.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="text-muted-foreground text-sm uppercase tracking-widest">
+                          {design.name}
+                        </div>
+                      )}
+                    </div>
 
-                  {/* Actions */}
-                  <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="flex-1 gap-1"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openDesign(design);
-                      }}
-                    >
-                      <Eye className="w-3 h-3" />
-                      Open
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={(e) => deleteDesign(design.id, e)}
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </Button>
+                    {/* Info */}
+                    <div className="p-4 space-y-3">
+                      <div>
+                        <h3 className="font-display text-sm uppercase tracking-widest truncate">
+                          {design.name}
+                        </h3>
+                        {design.description && (
+                          <p className="text-xs text-muted-foreground truncate mt-1">
+                            {design.description}
+                          </p>
+                        )}
+                        <p className="text-[10px] text-muted-foreground mt-1 uppercase tracking-widest">
+                          {new Date(design.updated_at).toLocaleDateString()}
+                        </p>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="flex-1 gap-1"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openDesign(design);
+                          }}
+                        >
+                          <Eye className="w-3 h-3" />
+                          Open
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={(e) => deleteDesign(design.id, e)}
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-            ))}
-          </div>
+                );
+              })}
+            </div>
+          </>
         )}
       </div>
     </div>
