@@ -5,6 +5,7 @@ import { Slider } from '@/components/ui/slider';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { LayerList } from './LayerList';
+import { LayerSearch } from './LayerSearch';
 import { AdvancedEffects } from './AdvancedEffects';
 import { FontUploadModal } from './FontUploadModal';
 import { GradientPicker } from './GradientPicker';
@@ -883,8 +884,8 @@ export function Inspector() {
         )}
       </div>
 
-      {/* Layer list */}
-      <LayerList />
+      {/* Layer search and management */}
+      <LayerSearch />
 
       {/* Font Upload Modal */}
       <FontUploadModal
