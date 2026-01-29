@@ -749,6 +749,28 @@ export default function DeckForge() {
 
               <Button
                 size="sm"
+                variant="outline"
+                onClick={() => navigate('/marketplace')}
+                className="gap-2"
+              >
+                <Sparkles className="w-4 h-4" />
+                Marketplace
+                <span className="ml-1 text-[9px] text-primary">NEW</span>
+              </Button>
+
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => navigate('/fingerpark')}
+                className="gap-2"
+              >
+                <Sparkles className="w-4 h-4" />
+                Park Builder
+                <span className="ml-1 text-[9px] text-primary">NEW</span>
+              </Button>
+
+              <Button
+                size="sm"
                 variant="ghost"
                 onClick={() => navigate('/gallery')}
                 className="gap-2"
@@ -867,6 +889,28 @@ export default function DeckForge() {
           >
             <Sparkles className="w-4 h-4" />
             Templates
+          </button>
+          <button
+            onClick={() => {
+              navigate('/marketplace');
+              setMobileMenuOpen(false);
+            }}
+            className="w-full btn-brutal text-left py-3 flex items-center gap-2"
+          >
+            <Sparkles className="w-4 h-4" />
+            Marketplace
+            <span className="ml-auto text-[9px] text-primary">NEW</span>
+          </button>
+          <button
+            onClick={() => {
+              navigate('/fingerpark');
+              setMobileMenuOpen(false);
+            }}
+            className="w-full btn-brutal text-left py-3 flex items-center gap-2"
+          >
+            <Sparkles className="w-4 h-4" />
+            Park Builder
+            <span className="ml-auto text-[9px] text-primary">NEW</span>
           </button>
           <button
             onClick={() => {
