@@ -10,6 +10,7 @@ import { exportToPNG, downloadBlob } from '@/lib/export';
 import { Button } from '@/components/ui/button';
 import { Save, Download, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { KeyboardShortcuts } from '@/components/deckforge/KeyboardShortcuts';
 
 export default function DeckForge() {
   const { selectedId, deleteObject, undo, redo, getCanvasState, currentDesignId, setDesignId, setSaving, isSaving, objects, designName } = useDeckForgeStore();
@@ -165,6 +166,8 @@ export default function DeckForge() {
             <User className="w-4 h-4" />
             {isAuthenticated ? 'My Designs' : 'Login'}
           </Button>
+
+          <KeyboardShortcuts />
         </div>
       </header>
 
