@@ -230,11 +230,11 @@ export default function DeckForge() {
               <Button
                 size="sm"
                 variant="ghost"
-                onClick={() => navigate('/templates')}
+                onClick={() => navigate('/gallery')}
                 className="gap-2"
               >
                 <Sparkles className="w-4 h-4" />
-                Templates
+                Gallery
               </Button>
 
               <Button

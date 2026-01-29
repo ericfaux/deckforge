@@ -7,6 +7,7 @@ import DeckForge from "./pages/DeckForge";
 import Auth from "./pages/Auth";
 import Designs from "./pages/Designs";
 import Templates from "./pages/Templates";
+import Gallery from "./pages/Gallery";
 import ShareView from "./pages/ShareView";
 import NotFound from "./pages/NotFound";
 
@@ -23,6 +24,7 @@ const App = () => (
           <Route path="/auth" element={<Auth />} />
           <Route path="/designs" element={<Designs />} />
           <Route path="/templates" element={<Templates />} />
+          <Route path="/gallery" element={<Gallery />} />
           <Route path="/share/:token" element={<ShareView />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

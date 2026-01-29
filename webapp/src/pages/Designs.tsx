@@ -5,8 +5,9 @@ import { useDeckForgeStore } from '@/store/deckforge';
 import { designsAPI } from '@/lib/api';
 import { batchExportDesigns, downloadBlob } from '@/lib/batch-export';
 import { Button } from '@/components/ui/button';
-import { Plus, Trash2, Download, Eye, Loader2, CheckSquare, Square } from 'lucide-react';
+import { Plus, Trash2, Download, Eye, Loader2, CheckSquare, Square, Globe, Lock } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import axios from 'axios';
 
 export default function Designs() {
   const [designs, setDesigns] = useState<any[]>([]);
@@ -84,6 +85,42 @@ export default function Designs() {
       setSelectedIds(new Set());
     } else {
       setSelectedIds(new Set(designs.map((d) => d.id)));
+    }
+  };
+
+  const togglePublic = async (designId: string, currentStatus: boolean, e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+    const token = localStorage.getItem('token');
+
+    try {
+      await axios.patch(
+        `${API_BASE}/gallery/${designId}/visibility`,
+        { is_public: !currentStatus },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      // Update local state
+      setDesigns((prev) =>
+        prev.map((d) =>
+          d.id === designId ? { ...d, is_public: !currentStatus } : d
+        )
+      );
+
+      toast({
+        title: !currentStatus ? '✓ Design published' : '✓ Design unpublished',
+        description: !currentStatus
+          ? 'Your design is now visible in the public gallery'
+          : 'Your design has been removed from the gallery',
+      });
+    } catch (error) {
+      console.error('Toggle public failed:', error);
+      toast({
+        title: 'Failed to update visibility',
+        description: 'Please try again',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -284,6 +321,16 @@ export default function Designs() {
                       )}
                     </div>
 
+                    {/* Public badge */}
+                    {design.is_public && (
+                      <div className="absolute top-2 right-2 z-10">
+                        <div className="bg-primary text-primary-foreground px-2 py-1 rounded text-[10px] uppercase tracking-wider flex items-center gap-1">
+                          <Globe className="w-3 h-3" />
+                          Public
+                        </div>
+                      </div>
+                    )}
+
                     {/* Info */}
                     <div className="p-4 space-y-3">
                       <div>
@@ -301,26 +348,36 @@ export default function Designs() {
                       </div>
 
                       {/* Actions */}
-                      <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="flex-1 gap-1"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            openDesign(design);
-                          }}
-                        >
-                          <Eye className="w-3 h-3" />
-                          Open
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={(e) => deleteDesign(design.id, e)}
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </Button>
+                      <div className="space-y-2">
+                        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="flex-1 gap-1"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openDesign(design);
+                            }}
+                          >
+                            <Eye className="w-3 h-3" />
+                            Open
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant={design.is_public ? 'default' : 'outline'}
+                            onClick={(e) => togglePublic(design.id, design.is_public, e)}
+                            title={design.is_public ? 'Make Private' : 'Publish to Gallery'}
+                          >
+                            {design.is_public ? <Globe className="w-3 h-3" /> : <Lock className="w-3 h-3" />}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={(e) => deleteDesign(design.id, e)}
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </div>
