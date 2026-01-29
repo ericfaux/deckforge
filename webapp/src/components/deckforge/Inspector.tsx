@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { LayerList } from './LayerList';
 import { AdvancedEffects } from './AdvancedEffects';
 import { FontUploadModal } from './FontUploadModal';
+import { GradientPicker } from './GradientPicker';
 import { DECK_WIDTH, DECK_HEIGHT } from './WorkbenchStage';
 import { preloadUserFonts, Font } from '@/lib/fonts';
 import {
@@ -138,20 +139,18 @@ export function Inspector() {
                 <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
                   Color
                 </Label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="color"
-                    value={selectedObject.fill || '#ffffff'}
-                    onChange={(e) => updateWithHistory({ fill: e.target.value })}
-                    className="w-8 h-8 border border-border cursor-pointer bg-transparent"
-                  />
-                  <Input
-                    type="text"
-                    value={selectedObject.fill || '#ffffff'}
-                    onChange={(e) => updateWithHistory({ fill: e.target.value })}
-                    className="h-8 text-xs font-mono bg-secondary border-border flex-1"
-                  />
-                </div>
+                <GradientPicker
+                  currentFill={selectedObject.fill}
+                  onApplySolid={(color) => updateWithHistory({ fill: color })}
+                  onApplyGradient={(stops, angle) => {
+                    updateWithHistory({
+                      gradientType: 'linear',
+                      gradientStops: stops,
+                      gradientAngle: angle,
+                      fill: stops[0].color, // Fallback color
+                    });
+                  }}
+                />
               </div>
             )}
 

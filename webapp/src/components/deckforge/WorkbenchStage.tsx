@@ -183,18 +183,32 @@ function CanvasObjectItem({
   };
 
   if (obj.type === 'text') {
+    const gradientId = obj.gradientStops ? `gradient-${obj.id}` : null;
+    const fillValue = gradientId ? `url(#${gradientId})` : (obj.colorize || obj.fill || '#ffffff');
+    
     const textEl = (
-      <text
-        transform={transform}
-        fill={obj.colorize || obj.fill || '#ffffff'}
-        fontSize={obj.fontSize || 24}
-        fontFamily={obj.fontFamily || 'Oswald, sans-serif'}
-        opacity={obj.opacity}
-        style={{ cursor, filter: filterStyle }}
-        onMouseDown={handleMouseDown}
-      >
-        {obj.text || 'Text'}
-      </text>
+      <>
+        {obj.gradientStops && (
+          <defs>
+            <linearGradient id={gradientId!} x1="0%" y1="0%" x2="100%" y2="0%" gradientTransform={`rotate(${obj.gradientAngle || 0})`}>
+              {obj.gradientStops.map((stop, i) => (
+                <stop key={i} offset={`${stop.offset * 100}%`} stopColor={stop.color} />
+              ))}
+            </linearGradient>
+          </defs>
+        )}
+        <text
+          transform={transform}
+          fill={fillValue}
+          fontSize={obj.fontSize || 24}
+          fontFamily={obj.fontFamily || 'Oswald, sans-serif'}
+          opacity={obj.opacity}
+          style={{ cursor, filter: filterStyle }}
+          onMouseDown={handleMouseDown}
+        >
+          {obj.text || 'Text'}
+        </text>
+      </>
     );
     return textEl;
   }
@@ -256,20 +270,35 @@ function CanvasObjectItem({
 
   if (obj.type === 'shape') {
     const baseStyle = { cursor, filter: filterStyle };
+    
+    // Generate gradient ID if gradient exists
+    const gradientId = obj.gradientStops ? `gradient-${obj.id}` : null;
+    const fillValue = gradientId ? `url(#${gradientId})` : (obj.fill || '#ffffff');
 
     if (obj.shapeType === 'circle') {
       const el = (
-        <circle
-          cx={obj.x + obj.width / 2}
-          cy={obj.y + obj.height / 2}
-          r={obj.width / 2 * obj.scaleX}
-          fill={obj.fill || '#ffffff'}
-          opacity={obj.opacity}
-          style={baseStyle}
-          onMouseDown={handleMouseDown}
-          stroke={isSelected ? '#ccff00' : 'none'}
-          strokeWidth={isSelected ? 2 : 0}
-        />
+        <>
+          {obj.gradientStops && (
+            <defs>
+              <linearGradient id={gradientId!} x1="0%" y1="0%" x2="100%" y2="0%" gradientTransform={`rotate(${obj.gradientAngle || 0})`}>
+                {obj.gradientStops.map((stop, i) => (
+                  <stop key={i} offset={`${stop.offset * 100}%`} stopColor={stop.color} />
+                ))}
+              </linearGradient>
+            </defs>
+          )}
+          <circle
+            cx={obj.x + obj.width / 2}
+            cy={obj.y + obj.height / 2}
+            r={obj.width / 2 * obj.scaleX}
+            fill={fillValue}
+            opacity={obj.opacity}
+            style={baseStyle}
+            onMouseDown={handleMouseDown}
+            stroke={isSelected ? '#ccff00' : 'none'}
+            strokeWidth={isSelected ? 2 : 0}
+          />
+        </>
       );
       return renderWithColorize(el);
     }
@@ -285,32 +314,54 @@ function CanvasObjectItem({
         points.push(`${cx + r * Math.cos(angle)},${cy + r * Math.sin(angle)}`);
       }
       const el = (
-        <polygon
-          points={points.join(' ')}
-          fill={obj.fill || '#ffffff'}
+        <>
+          {obj.gradientStops && (
+            <defs>
+              <linearGradient id={gradientId!} x1="0%" y1="0%" x2="100%" y2="0%" gradientTransform={`rotate(${obj.gradientAngle || 0})`}>
+                {obj.gradientStops.map((stop, i) => (
+                  <stop key={i} offset={`${stop.offset * 100}%`} stopColor={stop.color} />
+                ))}
+              </linearGradient>
+            </defs>
+          )}
+          <polygon
+            points={points.join(' ')}
+            fill={fillValue}
+            opacity={obj.opacity}
+            style={baseStyle}
+            onMouseDown={handleMouseDown}
+            stroke={isSelected ? '#ccff00' : 'none'}
+            strokeWidth={isSelected ? 2 : 0}
+          />
+        </>
+      );
+      return renderWithColorize(el);
+    }
+    // Default rect
+    const el = (
+      <>
+        {obj.gradientStops && (
+          <defs>
+            <linearGradient id={gradientId!} x1="0%" y1="0%" x2="100%" y2="0%" gradientTransform={`rotate(${obj.gradientAngle || 0})`}>
+              {obj.gradientStops.map((stop, i) => (
+                <stop key={i} offset={`${stop.offset * 100}%`} stopColor={stop.color} />
+              ))}
+            </linearGradient>
+          </defs>
+        )}
+        <rect
+          x={obj.x}
+          y={obj.y}
+          width={obj.width * obj.scaleX}
+          height={obj.height * obj.scaleY}
+          fill={fillValue}
           opacity={obj.opacity}
           style={baseStyle}
           onMouseDown={handleMouseDown}
           stroke={isSelected ? '#ccff00' : 'none'}
           strokeWidth={isSelected ? 2 : 0}
         />
-      );
-      return renderWithColorize(el);
-    }
-    // Default rect
-    const el = (
-      <rect
-        x={obj.x}
-        y={obj.y}
-        width={obj.width * obj.scaleX}
-        height={obj.height * obj.scaleY}
-        fill={obj.fill || '#ffffff'}
-        opacity={obj.opacity}
-        style={baseStyle}
-        onMouseDown={handleMouseDown}
-        stroke={isSelected ? '#ccff00' : 'none'}
-        strokeWidth={isSelected ? 2 : 0}
-      />
+      </>
     );
     return renderWithColorize(el);
   }
