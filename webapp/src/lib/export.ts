@@ -1,0 +1,296 @@
+import { CanvasObject } from '@/store/deckforge';
+import { DECK_WIDTH, DECK_HEIGHT } from '@/components/deckforge/WorkbenchStage';
+
+/**
+ * Export canvas to high-resolution PNG
+ * Uses HTML5 Canvas API to render all objects at high DPI
+ */
+export async function exportToPNG(
+  objects: CanvasObject[],
+  options: {
+    scale?: number; // DPI scale (2 = 2x, 3 = 3x)
+    format?: 'png' | 'jpeg';
+    quality?: number; // 0-1 for JPEG quality
+    includeBackground?: boolean;
+  } = {}
+): Promise<Blob> {
+  const {
+    scale = 3, // 3x for print quality
+    format = 'png',
+    quality = 0.95,
+    includeBackground = true,
+  } = options;
+
+  // Create offscreen canvas at high resolution
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  
+  if (!ctx) {
+    throw new Error('Could not get canvas context');
+  }
+
+  // Set canvas size (deck dimensions * scale for high DPI)
+  canvas.width = DECK_WIDTH * scale;
+  canvas.height = DECK_HEIGHT * scale;
+
+  // Scale context for high DPI
+  ctx.scale(scale, scale);
+
+  // White background (print-ready)
+  if (includeBackground) {
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, DECK_WIDTH, DECK_HEIGHT);
+  }
+
+  // Render each object in order (bottom to top)
+  for (const obj of objects) {
+    ctx.save();
+
+    // Apply transformations
+    const centerX = obj.x + (obj.width * obj.scaleX) / 2;
+    const centerY = obj.y + (obj.height * obj.scaleY) / 2;
+
+    ctx.translate(centerX, centerY);
+    ctx.rotate((obj.rotation * Math.PI) / 180);
+    ctx.globalAlpha = obj.opacity;
+
+    // Apply blend mode
+    if (obj.blendMode && obj.blendMode !== 'normal') {
+      ctx.globalCompositeOperation = obj.blendMode;
+    }
+
+    const x = -(obj.width * obj.scaleX) / 2;
+    const y = -(obj.height * obj.scaleY) / 2;
+    const width = obj.width * obj.scaleX;
+    const height = obj.height * obj.scaleY;
+
+    // Render based on object type
+    if (obj.type === 'image' && obj.src) {
+      await renderImage(ctx, obj.src, x, y, width, height, obj);
+    } else if (obj.type === 'text' && obj.text) {
+      renderText(ctx, obj.text, x, y, width, height, obj);
+    } else if (obj.type === 'shape') {
+      renderShape(ctx, x, y, width, height, obj);
+    } else if (obj.type === 'line') {
+      renderLine(ctx, obj);
+    }
+
+    ctx.restore();
+  }
+
+  // Convert to blob
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => {
+        if (blob) {
+          resolve(blob);
+        } else {
+          reject(new Error('Failed to create blob'));
+        }
+      },
+      format === 'jpeg' ? 'image/jpeg' : 'image/png',
+      quality
+    );
+  });
+}
+
+async function renderImage(
+  ctx: CanvasRenderingContext2D,
+  src: string,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  obj: CanvasObject
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    
+    img.onload = () => {
+      // Apply filters if any
+      if (obj.contrast || obj.brightness || obj.grayscale || obj.threshold || obj.hueRotate || obj.invert) {
+        ctx.filter = buildFilterString(obj);
+      }
+
+      ctx.drawImage(img, x, y, width, height);
+      ctx.filter = 'none';
+      resolve();
+    };
+
+    img.onerror = () => {
+      console.error('Failed to load image:', src);
+      // Draw placeholder
+      ctx.fillStyle = '#cccccc';
+      ctx.fillRect(x, y, width, height);
+      resolve();
+    };
+
+    img.src = src;
+  });
+}
+
+function renderText(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  obj: CanvasObject
+) {
+  const fontSize = obj.fontSize || 20;
+  const fontFamily = obj.fontFamily || 'Arial';
+  const fill = obj.fill || '#000000';
+
+  ctx.font = `${fontSize}px ${fontFamily}`;
+  ctx.fillStyle = fill;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+  // Apply filters
+  if (obj.contrast || obj.brightness || obj.grayscale || obj.threshold) {
+    ctx.filter = buildFilterString(obj);
+  }
+
+  ctx.fillText(text, x + width / 2, y + height / 2);
+  ctx.filter = 'none';
+}
+
+function renderShape(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  obj: CanvasObject
+) {
+  const fill = obj.fill || '#000000';
+  const stroke = obj.stroke || '';
+  const strokeWidth = obj.strokeWidth || 0;
+
+  ctx.fillStyle = fill;
+  if (stroke) {
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = strokeWidth;
+  }
+
+  // Apply filters
+  if (obj.contrast || obj.brightness || obj.grayscale || obj.threshold) {
+    ctx.filter = buildFilterString(obj);
+  }
+
+  switch (obj.shapeType) {
+    case 'rect':
+      ctx.fillRect(x, y, width, height);
+      if (stroke) ctx.strokeRect(x, y, width, height);
+      break;
+
+    case 'circle':
+      ctx.beginPath();
+      ctx.arc(x + width / 2, y + height / 2, Math.min(width, height) / 2, 0, Math.PI * 2);
+      ctx.fill();
+      if (stroke) ctx.stroke();
+      break;
+
+    case 'star':
+      drawStar(ctx, x + width / 2, y + height / 2, Math.min(width, height) / 2);
+      ctx.fill();
+      if (stroke) ctx.stroke();
+      break;
+  }
+
+  ctx.filter = 'none';
+}
+
+function renderLine(
+  ctx: CanvasRenderingContext2D,
+  obj: CanvasObject
+) {
+  const stroke = obj.stroke || '#000000';
+  const strokeWidth = obj.strokeWidth || 2;
+
+  ctx.strokeStyle = stroke;
+  ctx.lineWidth = strokeWidth;
+  ctx.lineCap = obj.lineCapStyle || 'round';
+
+  const startX = 0;
+  const startY = 0;
+  const endX = obj.lineEndX || 100;
+  const endY = obj.lineEndY || 0;
+
+  ctx.beginPath();
+
+  if (obj.lineType === 'curved' && obj.lineCurve) {
+    // Bezier curve
+    const controlX = (startX + endX) / 2;
+    const controlY = (startY + endY) / 2 + obj.lineCurve;
+    ctx.moveTo(startX, startY);
+    ctx.quadraticCurveTo(controlX, controlY, endX, endY);
+  } else {
+    // Straight line
+    ctx.moveTo(startX, startY);
+    ctx.lineTo(endX, endY);
+  }
+
+  ctx.stroke();
+}
+
+function drawStar(ctx: CanvasRenderingContext2D, x: number, y: number, radius: number) {
+  const points = 5;
+  const innerRadius = radius * 0.4;
+
+  ctx.beginPath();
+  for (let i = 0; i < points * 2; i++) {
+    const r = i % 2 === 0 ? radius : innerRadius;
+    const angle = (i * Math.PI) / points - Math.PI / 2;
+    const px = x + r * Math.cos(angle);
+    const py = y + r * Math.sin(angle);
+
+    if (i === 0) {
+      ctx.moveTo(px, py);
+    } else {
+      ctx.lineTo(px, py);
+    }
+  }
+  ctx.closePath();
+}
+
+function buildFilterString(obj: CanvasObject): string {
+  const filters: string[] = [];
+
+  if (obj.contrast !== undefined && obj.contrast !== 100) {
+    filters.push(`contrast(${obj.contrast}%)`);
+  }
+  if (obj.brightness !== undefined && obj.brightness !== 100) {
+    filters.push(`brightness(${obj.brightness}%)`);
+  }
+  if (obj.grayscale !== undefined && obj.grayscale > 0) {
+    filters.push(`grayscale(${obj.grayscale}%)`);
+  }
+  if (obj.threshold) {
+    filters.push('contrast(300%)', 'grayscale(100%)');
+  }
+  if (obj.hueRotate !== undefined && obj.hueRotate > 0) {
+    filters.push(`hue-rotate(${obj.hueRotate}deg)`);
+  }
+  if (obj.invert) {
+    filters.push('invert(100%)');
+  }
+
+  return filters.length > 0 ? filters.join(' ') : 'none';
+}
+
+/**
+ * Download blob as file
+ */
+export function downloadBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}

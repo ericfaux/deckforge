@@ -6,15 +6,17 @@ import { Inspector } from '@/components/deckforge/Inspector';
 import { useDeckForgeStore } from '@/store/deckforge';
 import { useAuthStore } from '@/store/auth';
 import { designsAPI } from '@/lib/api';
+import { exportToPNG, downloadBlob } from '@/lib/export';
 import { Button } from '@/components/ui/button';
 import { Save, Download, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export default function DeckForge() {
-  const { selectedId, deleteObject, undo, redo, getCanvasState, currentDesignId, setDesignId, setSaving, isSaving } = useDeckForgeStore();
+  const { selectedId, deleteObject, undo, redo, getCanvasState, currentDesignId, setDesignId, setSaving, isSaving, objects, designName } = useDeckForgeStore();
   const { isAuthenticated } = useAuthStore();
   const navigate = useNavigate();
   const [saveStatus, setSaveStatus] = useState<string>('');
+  const [isExporting, setIsExporting] = useState(false);
 
   const handleSave = async () => {
     if (!isAuthenticated) {
@@ -55,9 +57,31 @@ export default function DeckForge() {
     }
   };
 
-  const handleExport = () => {
-    // TODO: Implement export to PNG/PDF
-    alert('Export feature coming soon!');
+  const handleExport = async () => {
+    setIsExporting(true);
+    setSaveStatus('Exporting...');
+
+    try {
+      // Export at 3x resolution for print quality
+      const blob = await exportToPNG(objects, {
+        scale: 3,
+        format: 'png',
+        includeBackground: true,
+      });
+
+      // Generate filename from design name
+      const filename = `${designName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_${Date.now()}.png`;
+      downloadBlob(blob, filename);
+
+      setSaveStatus('Exported!');
+      setTimeout(() => setSaveStatus(''), 2000);
+    } catch (err) {
+      console.error('Export failed:', err);
+      setSaveStatus('Export failed');
+      setTimeout(() => setSaveStatus(''), 2000);
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   // Keyboard shortcuts
@@ -125,10 +149,11 @@ export default function DeckForge() {
             size="sm"
             variant="outline"
             onClick={handleExport}
+            disabled={isExporting}
             className="gap-2"
           >
             <Download className="w-4 h-4" />
-            Export
+            {isExporting ? 'Exporting...' : 'Export PNG'}
           </Button>
 
           <Button

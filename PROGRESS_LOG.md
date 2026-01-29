@@ -36,10 +36,28 @@
    - Need fresh token from vercel.com/account/tokens
    - OR need VERCEL_PROJECT_ID to deploy
 
+### ✅ ALSO Completed (30-min checkpoint):
+- **Built complete auth system:**
+  - Backend auth routes (signup, login, logout, /me, refresh)
+  - Zod validation schemas
+  - JWT token handling
+- **Frontend integration:**
+  - API client library (auth + designs)
+  - Auth store with Zustand
+  - Login/Signup page with beautiful UI
+  - Save/Load functionality integrated into editor
+  - Save/Export/Login buttons in header
+- **Design management:**
+  - Extended DeckForge store with save state
+  - Create new design or update existing
+  - Track current design ID
+- **Committed 2 feature sets** (22 files changed!)
+
 ### 🔨 Currently Working On:
-- Need to deploy schema.sql to Supabase (requires manual paste in SQL Editor)
-- Need to get SUPABASE_ANON_KEY from dashboard
-- Testing backend API endpoints
+- Need SUPABASE_ANON_KEY from Eric (for frontend auth)
+- Need to deploy schema.sql to Supabase
+- Need GitHub PAT to push code
+- Building export to PNG feature next
 
 ### 🎯 Next Hour Goals:
 1. Get GitHub credentials sorted → push code
