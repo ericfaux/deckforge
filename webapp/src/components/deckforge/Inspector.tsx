@@ -189,6 +189,40 @@ export function Inspector() {
               </div>
             )}
 
+            {/* Color Tint (for images/paths) */}
+            {(selectedObject.type === 'image' || selectedObject.type === 'path') && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                    Color Tint
+                  </Label>
+                  <button
+                    onClick={() => updateWithHistory({
+                      colorize: selectedObject.colorize ? null : '#ccff00'
+                    })}
+                    className={`px-2 py-1 text-[9px] uppercase tracking-wider border transition-colors rounded ${
+                      selectedObject.colorize
+                        ? 'bg-primary text-primary-foreground border-primary'
+                        : 'bg-secondary text-muted-foreground border-border hover:border-primary'
+                    }`}
+                  >
+                    {selectedObject.colorize ? 'On' : 'Off'}
+                  </button>
+                </div>
+                {selectedObject.colorize && (
+                  <ColorPicker
+                    label=""
+                    value={selectedObject.colorize}
+                    onChange={(color) => updateWithHistory({ colorize: color })}
+                    showEyedropper={true}
+                  />
+                )}
+                <p className="text-[9px] text-muted-foreground">
+                  Apply a color overlay to the {selectedObject.type}
+                </p>
+              </div>
+            )}
+
             {/* Sticker-specific controls */}
             {selectedObject.type === 'sticker' && (
               <div className="pt-4 border-t border-border space-y-4">
@@ -196,6 +230,38 @@ export function Inspector() {
                   <span className="font-display text-[10px] uppercase tracking-widest text-muted-foreground">
                     Sticker Options
                   </span>
+                </div>
+
+                {/* Fill Color / Tint */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                      Fill Color
+                    </Label>
+                    <button
+                      onClick={() => updateWithHistory({
+                        colorize: selectedObject.colorize ? null : '#ccff00'
+                      })}
+                      className={`px-2 py-1 text-[9px] uppercase tracking-wider border transition-colors rounded ${
+                        selectedObject.colorize
+                          ? 'bg-primary text-primary-foreground border-primary'
+                          : 'bg-secondary text-muted-foreground border-border hover:border-primary'
+                      }`}
+                    >
+                      {selectedObject.colorize ? 'On' : 'Off'}
+                    </button>
+                  </div>
+                  {selectedObject.colorize && (
+                    <ColorPicker
+                      label=""
+                      value={selectedObject.colorize}
+                      onChange={(color) => updateWithHistory({ colorize: color })}
+                      showEyedropper={true}
+                    />
+                  )}
+                  <p className="text-[9px] text-muted-foreground">
+                    Tint the sticker with a solid color
+                  </p>
                 </div>
 
                 {/* Stroke Color */}
