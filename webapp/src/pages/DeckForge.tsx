@@ -12,6 +12,7 @@ const ShareModal = lazy(() => import('@/components/deckforge/ShareModal').then(m
 const AnimationPreview = lazy(() => import('@/components/deckforge/AnimationPreview').then(m => ({ default: m.AnimationPreview })));
 const BrandKitModal = lazy(() => import('@/components/deckforge/BrandKitModal').then(m => ({ default: m.BrandKitModal })));
 const FontUploadModal = lazy(() => import('@/components/deckforge/FontUploadModal').then(m => ({ default: m.FontUploadModal })));
+const ColorExtractorModal = lazy(() => import('@/components/deckforge/ColorExtractorModal').then(m => ({ default: m.ColorExtractorModal })));
 const ArrayDuplicateModal = lazy(() => import('@/components/deckforge/ArrayDuplicateModal').then(m => ({ default: m.ArrayDuplicateModal })));
 const ExportPreview = lazy(() => import('@/components/deckforge/ExportPreview').then(m => ({ default: m.ExportPreview })));
 const ExportPresetsModal = lazy(() => import('@/components/deckforge/ExportPresetsModal').then(m => ({ default: m.ExportPresetsModal })));
@@ -51,6 +52,7 @@ export default function DeckForge() {
   const [isExportPresetsOpen, setIsExportPresetsOpen] = useState(false);
   const [isTemplateGalleryOpen, setIsTemplateGalleryOpen] = useState(false);
   const [is3DGeneratorOpen, setIs3DGeneratorOpen] = useState(false);
+  const [isColorExtractorOpen, setIsColorExtractorOpen] = useState(false);
   const [mobileInspectorOpen, setMobileInspectorOpen] = useState(false);
   const [mobileLayersOpen, setMobileLayersOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -699,6 +701,16 @@ export default function DeckForge() {
               <Button
                 size="sm"
                 variant="outline"
+                onClick={() => setIsColorExtractorOpen(true)}
+                className="gap-2"
+              >
+                <Palette className="w-4 h-4" />
+                Extract Colors
+              </Button>
+
+              <Button
+                size="sm"
+                variant="outline"
                 onClick={() => setIsFontUploadModalOpen(true)}
                 className="gap-2"
               >
@@ -1076,6 +1088,12 @@ export default function DeckForge() {
             onClose={() => setIs3DGeneratorOpen(false)}
           />
         )}
+
+        {/* Color Palette Extractor */}
+        <ColorExtractorModal
+          isOpen={isColorExtractorOpen}
+          onClose={() => setIsColorExtractorOpen(false)}
+        />
       </Suspense>
 
       {/* Batch Actions Toolbar (appears when multiple objects selected) */}
