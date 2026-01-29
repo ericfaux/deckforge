@@ -185,7 +185,7 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef }: PenToolPro
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
-        style={{ cursor: mode === 'draw' ? 'crosshair' : 'pointer' }}
+        style={{ cursor: mode === 'draw' ? 'crosshair' : 'pointer', pointerEvents: 'all' }}
       >
         <rect
           x={0}
@@ -193,12 +193,13 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef }: PenToolPro
           width="100%"
           height="100%"
           fill="transparent"
+          style={{ pointerEvents: 'all' }}
         />
       </g>
 
       {/* Draw preview path */}
       {previewPath && (
-        <g>
+        <g style={{ pointerEvents: 'none' }}>
           <path
             d={previewPath}
             stroke="#ccff00"
