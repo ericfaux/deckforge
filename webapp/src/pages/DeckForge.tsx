@@ -12,9 +12,9 @@ import { LayerList } from '@/components/deckforge/LayerList';
 import { useDeckForgeStore } from '@/store/deckforge';
 import { useAuthStore } from '@/store/auth';
 import { designsAPI } from '@/lib/api';
-import { exportToPNG, downloadBlob } from '@/lib/export';
+import { exportToPNG, exportToSVG, downloadBlob } from '@/lib/export';
 import { Button } from '@/components/ui/button';
-import { Save, Download, User, Sparkles, Clock, Menu, Share2, Play } from 'lucide-react';
+import { Save, Download, User, Sparkles, Clock, Menu, Share2, Play, ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { KeyboardShortcuts } from '@/components/deckforge/KeyboardShortcuts';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -27,6 +27,7 @@ export default function DeckForge() {
   const isMobile = useIsMobile();
   const [saveStatus, setSaveStatus] = useState<string>('');
   const [isExporting, setIsExporting] = useState(false);
+  const [showExportMenu, setShowExportMenu] = useState(false);
   const [isVersionHistoryOpen, setIsVersionHistoryOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isAnimationPreviewOpen, setIsAnimationPreviewOpen] = useState(false);
@@ -75,7 +76,8 @@ export default function DeckForge() {
 
   const handleExport = async () => {
     setIsExporting(true);
-    setSaveStatus('Exporting...');
+    setSaveStatus('Exporting PNG...');
+    setShowExportMenu(false);
 
     try {
       // Export at 3x resolution for print quality
@@ -89,10 +91,36 @@ export default function DeckForge() {
       const filename = `${designName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_${Date.now()}.png`;
       downloadBlob(blob, filename);
 
-      setSaveStatus('Exported!');
+      setSaveStatus('Exported PNG!');
       setTimeout(() => setSaveStatus(''), 2000);
     } catch (err) {
       console.error('Export failed:', err);
+      setSaveStatus('Export failed');
+      setTimeout(() => setSaveStatus(''), 2000);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleExportSVG = async () => {
+    setIsExporting(true);
+    setSaveStatus('Exporting SVG...');
+    setShowExportMenu(false);
+
+    try {
+      // Export as scalable vector
+      const blob = await exportToSVG(objects, {
+        includeBackground: true,
+      });
+
+      // Generate filename from design name
+      const filename = `${designName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_${Date.now()}.svg`;
+      downloadBlob(blob, filename);
+
+      setSaveStatus('Exported SVG!');
+      setTimeout(() => setSaveStatus(''), 2000);
+    } catch (err) {
+      console.error('SVG export failed:', err);
       setSaveStatus('Export failed');
       setTimeout(() => setSaveStatus(''), 2000);
     } finally {
@@ -184,16 +212,37 @@ export default function DeckForge() {
                 {isSaving ? 'Saving...' : 'Save'}
               </Button>
 
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={handleExport}
-                disabled={isExporting}
-                className="gap-2"
-              >
-                <Download className="w-4 h-4" />
-                {isExporting ? 'Exporting...' : 'Export PNG'}
-              </Button>
+              <div className="relative">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setShowExportMenu(!showExportMenu)}
+                  disabled={isExporting}
+                  className="gap-2"
+                >
+                  <Download className="w-4 h-4" />
+                  {isExporting ? 'Exporting...' : 'Export'}
+                  <ChevronDown className="w-3 h-3" />
+                </Button>
+
+                {showExportMenu && !isExporting && (
+                  <div className="absolute top-full mt-1 right-0 z-50 bg-card border border-border shadow-lg min-w-[120px]">
+                    <button
+                      onClick={handleExport}
+                      className="w-full px-4 py-2 text-left text-sm hover:bg-secondary transition-colors"
+                    >
+                      PNG (High-Res)
+                    </button>
+                    <button
+                      onClick={handleExportSVG}
+                      className="w-full px-4 py-2 text-left text-sm hover:bg-secondary transition-colors border-t border-border"
+                    >
+                      SVG (Vector)
+                      <span className="ml-2 text-[10px] text-accent">PRO</span>
+                    </button>
+                  </div>
+                )}
+              </div>
 
               {currentDesignId && (
                 <Button
