@@ -1,4 +1,4 @@
-import { X, Skull, Flame, Zap, Sword, Radio, Disc3, Music2, Triangle, Hexagon, Circle, Square, Star, Heart, Crown, Anchor, Target, Eye, Hand, Rocket, Ghost, Bug, Cat, Dog, Fish, Bird, Leaf, Sun, Moon, Cloud, Sparkles, Upload, Trash2, Loader2 } from 'lucide-react';
+import { X, Skull, Flame, Zap, Sword, Radio, Disc3, Music2, Triangle, Hexagon, Circle, Square, Star, Heart, Crown, Anchor, Target, Eye, Hand, Rocket, Ghost, Bug, Cat, Dog, Fish, Bird, Leaf, Sun, Moon, Cloud, Sparkles, Upload, Trash2, Loader2, FileImage } from 'lucide-react';
 import { useState, useRef } from 'react';
 import { useDeckForgeStore, ToolType, CanvasObject, TextureType } from '@/store/deckforge';
 import { cn } from '@/lib/utils';
@@ -8,6 +8,7 @@ import { Slider } from '@/components/ui/slider';
 import { assetsAPI } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 import { Button } from '@/components/ui/button';
+import { importSVG, validateSVGFile } from '@/lib/svg-import';
 
 // ============ STICKER SYSTEM ============
 const stickerCategories = {
@@ -482,10 +483,17 @@ function UploadsContent({ onAddObject, deckCenterX, deckCenterY }: {
     setIsUploading(true);
     try {
       for (const file of Array.from(files)) {
-        const { url, width, height } = await assetsAPI.upload(file);
-        
-        // Add to assets list
-        await loadAssets();
+        // Check if it's an SVG file
+        if (validateSVGFile(file)) {
+          // Import SVG and add objects directly to canvas
+          const objects = await importSVG(file);
+          objects.forEach(obj => onAddObject(obj));
+        } else {
+          // Regular image upload
+          const { url, width, height } = await assetsAPI.upload(file);
+          // Add to assets list
+          await loadAssets();
+        }
       }
     } catch (err) {
       console.error('Upload failed:', err);
@@ -547,7 +555,7 @@ function UploadsContent({ onAddObject, deckCenterX, deckCenterY }: {
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/*"
+        accept="image/*,.svg"
         multiple
         className="hidden"
         onChange={handleFileSelect}
