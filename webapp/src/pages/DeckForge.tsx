@@ -10,6 +10,7 @@ import { BrandKitModal } from '@/components/deckforge/BrandKitModal';
 import { FontUploadModal } from '@/components/deckforge/FontUploadModal';
 import { ArrayDuplicateModal } from '@/components/deckforge/ArrayDuplicateModal';
 import { ExportPreview } from '@/components/deckforge/ExportPreview';
+import { ExportPresetsModal } from '@/components/deckforge/ExportPresetsModal';
 import { MobileToolbar } from '@/components/deckforge/MobileToolbar';
 import { MobileDrawer } from '@/components/deckforge/MobileDrawer';
 import { LayerList } from '@/components/deckforge/LayerList';
@@ -42,6 +43,7 @@ export default function DeckForge() {
   const [isFontUploadModalOpen, setIsFontUploadModalOpen] = useState(false);
   const [isArrayDuplicateOpen, setIsArrayDuplicateOpen] = useState(false);
   const [isExportPreviewOpen, setIsExportPreviewOpen] = useState(false);
+  const [isExportPresetsOpen, setIsExportPresetsOpen] = useState(false);
   const [mobileInspectorOpen, setMobileInspectorOpen] = useState(false);
   const [mobileLayersOpen, setMobileLayersOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -609,13 +611,24 @@ export default function DeckForge() {
                 </Button>
 
                 {showExportMenu && !isExporting && (
-                  <div className="absolute top-full mt-1 right-0 z-50 bg-card border border-border shadow-lg min-w-[120px]">
+                  <div className="absolute top-full mt-1 right-0 z-50 bg-card border border-border shadow-lg min-w-[180px] rounded-lg overflow-hidden">
+                    <button
+                      onClick={() => {
+                        setShowExportMenu(false);
+                        setIsExportPresetsOpen(true);
+                      }}
+                      className="w-full px-4 py-2.5 text-left text-sm hover:bg-secondary transition-colors font-medium flex items-center gap-2"
+                    >
+                      <Sparkles className="w-4 h-4 text-primary" />
+                      Quick Export
+                      <span className="ml-auto text-[9px] text-primary">NEW</span>
+                    </button>
                     <button
                       onClick={() => {
                         setShowExportMenu(false);
                         setIsExportPreviewOpen(true);
                       }}
-                      className="w-full px-4 py-2 text-left text-sm hover:bg-secondary transition-colors"
+                      className="w-full px-4 py-2 text-left text-sm hover:bg-secondary transition-colors border-t border-border"
                     >
                       PNG (High-Res)
                       <span className="ml-2 text-[9px] text-muted-foreground">Preview first</span>
@@ -932,6 +945,12 @@ export default function DeckForge() {
         onConfirmExport={() => {
           toast.success('Design exported successfully');
         }}
+      />
+
+      {/* Export Presets Modal */}
+      <ExportPresetsModal
+        open={isExportPresetsOpen}
+        onClose={() => setIsExportPresetsOpen(false)}
       />
     </div>
   );
