@@ -16,6 +16,7 @@ const ArrayDuplicateModal = lazy(() => import('@/components/deckforge/ArrayDupli
 const ExportPreview = lazy(() => import('@/components/deckforge/ExportPreview').then(m => ({ default: m.ExportPreview })));
 const ExportPresetsModal = lazy(() => import('@/components/deckforge/ExportPresetsModal').then(m => ({ default: m.ExportPresetsModal })));
 const TemplateGalleryModal = lazy(() => import('@/components/deckforge/TemplateGalleryModal').then(m => ({ default: m.TemplateGalleryModal })));
+const DeckGenerator3D = lazy(() => import('@/components/deckforge/DeckGenerator3D').then(m => ({ default: m.default })));
 import { MobileDrawer } from '@/components/deckforge/MobileDrawer';
 import { LayerList } from '@/components/deckforge/LayerList';
 import { DECK_WIDTH, DECK_HEIGHT } from '@/components/deckforge/WorkbenchStage';
@@ -49,6 +50,7 @@ export default function DeckForge() {
   const [isExportPreviewOpen, setIsExportPreviewOpen] = useState(false);
   const [isExportPresetsOpen, setIsExportPresetsOpen] = useState(false);
   const [isTemplateGalleryOpen, setIsTemplateGalleryOpen] = useState(false);
+  const [is3DGeneratorOpen, setIs3DGeneratorOpen] = useState(false);
   const [mobileInspectorOpen, setMobileInspectorOpen] = useState(false);
   const [mobileLayersOpen, setMobileLayersOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -739,6 +741,16 @@ export default function DeckForge() {
               <Button
                 size="sm"
                 variant="outline"
+                onClick={() => setIs3DGeneratorOpen(true)}
+                className="gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0"
+              >
+                <span className="text-sm font-bold">🖨️ 3D Print</span>
+                <span className="ml-1 text-[9px] bg-white/20 px-1 rounded">NEW</span>
+              </Button>
+
+              <Button
+                size="sm"
+                variant="outline"
                 onClick={() => setIsTemplateGalleryOpen(true)}
                 className="gap-2"
               >
@@ -1067,6 +1079,14 @@ export default function DeckForge() {
           isOpen={isTemplateGalleryOpen}
           onClose={() => setIsTemplateGalleryOpen(false)}
         />
+
+        {/* 3D Deck Generator */}
+        {is3DGeneratorOpen && (
+          <DeckGenerator3D
+            objects={objects}
+            onClose={() => setIs3DGeneratorOpen(false)}
+          />
+        )}
       </Suspense>
 
       {/* Batch Actions Toolbar (appears when multiple objects selected) */}

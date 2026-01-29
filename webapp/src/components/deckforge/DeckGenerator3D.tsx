@@ -1,0 +1,469 @@
+import React, { useRef, useState, useCallback } from 'react';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import { OrbitControls, PerspectiveCamera } from '@react-three/drei';
+import * as THREE from 'three';
+import { STLExporter } from 'three/examples/jsm/exporters/STLExporter.js';
+import { CanvasObject } from '@/store/deckforge';
+import { DECK_WIDTH, DECK_HEIGHT } from './WorkbenchStage';
+
+interface DeckGenerator3DProps {
+  objects: CanvasObject[];
+  onClose: () => void;
+}
+
+interface DeckParams {
+  length: number;        // mm
+  width: number;         // mm
+  concaveDepth: number;  // mm
+  noseKick: number;      // degrees
+  tailKick: number;      // degrees
+  thickness: number;     // mm
+}
+
+const DEFAULT_PARAMS: DeckParams = {
+  length: 96,
+  width: 26,
+  concaveDepth: 2,
+  noseKick: 15,
+  tailKick: 18,
+  thickness: 5,
+};
+
+function FingerboardDeck({ 
+  params, 
+  textureUrl 
+}: { 
+  params: DeckParams; 
+  textureUrl: string | null;
+}) {
+  const meshRef = useRef<THREE.Mesh>(null);
+  const [texture, setTexture] = useState<THREE.Texture | null>(null);
+
+  // Load texture from data URL
+  React.useEffect(() => {
+    if (textureUrl) {
+      const loader = new THREE.TextureLoader();
+      loader.load(textureUrl, (loadedTexture) => {
+        loadedTexture.wrapS = THREE.RepeatWrapping;
+        loadedTexture.wrapT = THREE.RepeatWrapping;
+        setTexture(loadedTexture);
+      });
+    }
+  }, [textureUrl]);
+
+  // Create deck geometry with concave and kicks
+  const geometry = React.useMemo(() => {
+    const geo = new THREE.BufferGeometry();
+    
+    const widthSegments = 40;
+    const lengthSegments = 80;
+    const vertices: number[] = [];
+    const indices: number[] = [];
+    const uvs: number[] = [];
+    
+    const { length, width, concaveDepth, noseKick, tailKick, thickness } = params;
+    
+    // Convert degrees to radians
+    const noseKickRad = (noseKick * Math.PI) / 180;
+    const tailKickRad = (tailKick * Math.PI) / 180;
+    
+    // Generate top surface with concave and kicks
+    for (let i = 0; i <= lengthSegments; i++) {
+      for (let j = 0; j <= widthSegments; j++) {
+        const x = (i / lengthSegments) * length - length / 2;
+        const z = (j / widthSegments) * width - width / 2;
+        
+        // Concave curve (parabolic)
+        const concave = -concaveDepth * (1 - Math.pow(2 * j / widthSegments - 1, 2));
+        
+        // Nose and tail kicks
+        let kickY = 0;
+        const normalizedX = i / lengthSegments;
+        
+        if (normalizedX < 0.15) {
+          // Tail kick (smooth curve)
+          const t = normalizedX / 0.15;
+          kickY = (length / 2) * Math.sin(tailKickRad) * (1 - Math.cos(t * Math.PI / 2));
+        } else if (normalizedX > 0.85) {
+          // Nose kick (smooth curve)
+          const t = (normalizedX - 0.85) / 0.15;
+          kickY = (length / 2) * Math.sin(noseKickRad) * Math.sin(t * Math.PI / 2);
+        }
+        
+        const y = concave + kickY;
+        
+        vertices.push(x, y, z);
+        uvs.push(i / lengthSegments, j / widthSegments);
+      }
+    }
+    
+    // Generate indices for triangles
+    for (let i = 0; i < lengthSegments; i++) {
+      for (let j = 0; j < widthSegments; j++) {
+        const a = i * (widthSegments + 1) + j;
+        const b = a + widthSegments + 1;
+        
+        indices.push(a, b, a + 1);
+        indices.push(b, b + 1, a + 1);
+      }
+    }
+    
+    // Add bottom surface (flat, offset by thickness)
+    const topVertexCount = vertices.length / 3;
+    for (let i = 0; i <= lengthSegments; i++) {
+      for (let j = 0; j <= widthSegments; j++) {
+        const x = (i / lengthSegments) * length - length / 2;
+        const z = (j / widthSegments) * width - width / 2;
+        const y = -thickness;
+        
+        vertices.push(x, y, z);
+        uvs.push(i / lengthSegments, j / widthSegments);
+      }
+    }
+    
+    // Bottom surface indices (reversed winding)
+    for (let i = 0; i < lengthSegments; i++) {
+      for (let j = 0; j < widthSegments; j++) {
+        const a = topVertexCount + i * (widthSegments + 1) + j;
+        const b = a + widthSegments + 1;
+        
+        indices.push(a, a + 1, b);
+        indices.push(b, a + 1, b + 1);
+      }
+    }
+    
+    // Add side edges to connect top and bottom
+    // Left edge
+    for (let i = 0; i < lengthSegments; i++) {
+      const topA = i * (widthSegments + 1);
+      const topB = (i + 1) * (widthSegments + 1);
+      const botA = topVertexCount + topA;
+      const botB = topVertexCount + topB;
+      
+      indices.push(topA, botA, topB);
+      indices.push(botA, botB, topB);
+    }
+    
+    // Right edge
+    for (let i = 0; i < lengthSegments; i++) {
+      const topA = i * (widthSegments + 1) + widthSegments;
+      const topB = (i + 1) * (widthSegments + 1) + widthSegments;
+      const botA = topVertexCount + topA;
+      const botB = topVertexCount + topB;
+      
+      indices.push(topA, topB, botA);
+      indices.push(botA, topB, botB);
+    }
+    
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+    geo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+    geo.setIndex(indices);
+    geo.computeVertexNormals();
+    
+    return geo;
+  }, [params]);
+
+  return (
+    <mesh ref={meshRef} geometry={geometry} castShadow receiveShadow>
+      <meshStandardMaterial 
+        map={texture}
+        side={THREE.DoubleSide}
+        color={texture ? '#ffffff' : '#8b7355'}
+        roughness={0.8}
+        metalness={0.1}
+      />
+    </mesh>
+  );
+}
+
+function Scene({ params, textureUrl }: { params: DeckParams; textureUrl: string | null }) {
+  return (
+    <>
+      <PerspectiveCamera makeDefault position={[120, 80, 120]} fov={35} />
+      <OrbitControls 
+        enableDamping
+        dampingFactor={0.05}
+        minDistance={50}
+        maxDistance={300}
+      />
+      
+      <ambientLight intensity={0.5} />
+      <directionalLight position={[50, 50, 50]} intensity={1} castShadow />
+      <directionalLight position={[-50, 30, -50]} intensity={0.5} />
+      
+      <FingerboardDeck params={params} textureUrl={textureUrl} />
+      
+      {/* Ground plane for reference */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -10, 0]} receiveShadow>
+        <planeGeometry args={[300, 300]} />
+        <meshStandardMaterial color="#2a2a2a" />
+      </mesh>
+    </>
+  );
+}
+
+export default function DeckGenerator3D({ objects, onClose }: DeckGenerator3DProps) {
+  const [params, setParams] = useState<DeckParams>(DEFAULT_PARAMS);
+  const [textureUrl, setTextureUrl] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
+
+  // Generate texture from objects array (create SVG and convert to data URL)
+  React.useEffect(() => {
+    if (objects.length > 0) {
+      // Create SVG from objects
+      const svgContent = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="${DECK_WIDTH}" height="${DECK_HEIGHT}" viewBox="0 0 ${DECK_WIDTH} ${DECK_HEIGHT}">
+          <rect width="${DECK_WIDTH}" height="${DECK_HEIGHT}" fill="#f5e6d3"/>
+          ${objects.map(obj => {
+            if (obj.type === 'rect') {
+              return `<rect x="${obj.x}" y="${obj.y}" width="${obj.width}" height="${obj.height}" fill="${obj.fill || '#000'}" stroke="${obj.stroke || 'none'}" stroke-width="${obj.strokeWidth || 0}" opacity="${obj.opacity || 1}" transform="rotate(${obj.rotation || 0} ${obj.x + obj.width / 2} ${obj.y + obj.height / 2})"/>`;
+            } else if (obj.type === 'circle') {
+              return `<circle cx="${obj.x + obj.radius}" cy="${obj.y + obj.radius}" r="${obj.radius}" fill="${obj.fill || '#000'}" stroke="${obj.stroke || 'none'}" stroke-width="${obj.strokeWidth || 0}" opacity="${obj.opacity || 1}"/>`;
+            } else if (obj.type === 'text') {
+              return `<text x="${obj.x}" y="${obj.y}" font-size="${obj.fontSize || 16}" fill="${obj.fill || '#000'}" font-family="${obj.fontFamily || 'Arial'}" opacity="${obj.opacity || 1}">${obj.text || ''}</text>`;
+            }
+            return '';
+          }).join('\n')}
+        </svg>
+      `;
+      
+      const blob = new Blob([svgContent], { type: 'image/svg+xml' });
+      const url = URL.createObjectURL(blob);
+      setTextureUrl(url);
+      
+      return () => URL.revokeObjectURL(url);
+    }
+  }, [objects]);
+
+  const handleParamChange = useCallback((key: keyof DeckParams, value: number) => {
+    setParams(prev => ({ ...prev, [key]: value }));
+  }, []);
+
+  const exportSTL = useCallback(() => {
+    setExporting(true);
+    
+    // Create a temporary scene with the deck
+    const scene = new THREE.Scene();
+    const geometry = new THREE.BufferGeometry();
+    
+    // Recreate geometry (same as in component)
+    const widthSegments = 40;
+    const lengthSegments = 80;
+    const vertices: number[] = [];
+    const indices: number[] = [];
+    
+    const { length, width, concaveDepth, noseKick, tailKick, thickness } = params;
+    
+    const noseKickRad = (noseKick * Math.PI) / 180;
+    const tailKickRad = (tailKick * Math.PI) / 180;
+    
+    // Top surface
+    for (let i = 0; i <= lengthSegments; i++) {
+      for (let j = 0; j <= widthSegments; j++) {
+        const x = (i / lengthSegments) * length - length / 2;
+        const z = (j / widthSegments) * width - width / 2;
+        const concave = -concaveDepth * (1 - Math.pow(2 * j / widthSegments - 1, 2));
+        
+        let kickY = 0;
+        const normalizedX = i / lengthSegments;
+        if (normalizedX < 0.15) {
+          const t = normalizedX / 0.15;
+          kickY = (length / 2) * Math.sin(tailKickRad) * (1 - Math.cos(t * Math.PI / 2));
+        } else if (normalizedX > 0.85) {
+          const t = (normalizedX - 0.85) / 0.15;
+          kickY = (length / 2) * Math.sin(noseKickRad) * Math.sin(t * Math.PI / 2);
+        }
+        
+        vertices.push(x, concave + kickY, z);
+      }
+    }
+    
+    // Indices
+    for (let i = 0; i < lengthSegments; i++) {
+      for (let j = 0; j < widthSegments; j++) {
+        const a = i * (widthSegments + 1) + j;
+        const b = a + widthSegments + 1;
+        indices.push(a, b, a + 1);
+        indices.push(b, b + 1, a + 1);
+      }
+    }
+    
+    // Bottom surface
+    const topVertexCount = vertices.length / 3;
+    for (let i = 0; i <= lengthSegments; i++) {
+      for (let j = 0; j <= widthSegments; j++) {
+        const x = (i / lengthSegments) * length - length / 2;
+        const z = (j / widthSegments) * width - width / 2;
+        vertices.push(x, -thickness, z);
+      }
+    }
+    
+    for (let i = 0; i < lengthSegments; i++) {
+      for (let j = 0; j < widthSegments; j++) {
+        const a = topVertexCount + i * (widthSegments + 1) + j;
+        const b = a + widthSegments + 1;
+        indices.push(a, a + 1, b);
+        indices.push(b, a + 1, b + 1);
+      }
+    }
+    
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+    geometry.setIndex(indices);
+    geometry.computeVertexNormals();
+    
+    const mesh = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial());
+    scene.add(mesh);
+    
+    // Export to STL
+    const exporter = new STLExporter();
+    const stlString = exporter.parse(scene);
+    const blob = new Blob([stlString], { type: 'text/plain' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `fingerboard-deck-${Date.now()}.stl`;
+    link.click();
+    
+    setExporting(false);
+  }, [params]);
+
+  return (
+    <div className="fixed inset-0 bg-black/90 z-50 flex flex-col">
+      {/* Header */}
+      <div className="bg-gray-900 border-b border-gray-700 p-4 flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-bold text-white">3D Deck Generator</h2>
+          <p className="text-sm text-gray-400">Convert your design to a 3D-printable model</p>
+        </div>
+        <button
+          onClick={onClose}
+          className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors"
+        >
+          Close
+        </button>
+      </div>
+
+      <div className="flex-1 flex">
+        {/* Controls Panel */}
+        <div className="w-80 bg-gray-900 border-r border-gray-700 p-6 overflow-y-auto">
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-lg font-semibold text-white mb-4">Deck Parameters</h3>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm text-gray-400 block mb-2">
+                    Length: {params.length}mm
+                  </label>
+                  <input
+                    type="range"
+                    min="80"
+                    max="110"
+                    step="1"
+                    value={params.length}
+                    onChange={(e) => handleParamChange('length', Number(e.target.value))}
+                    className="w-full"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm text-gray-400 block mb-2">
+                    Width: {params.width}mm
+                  </label>
+                  <input
+                    type="range"
+                    min="22"
+                    max="32"
+                    step="0.5"
+                    value={params.width}
+                    onChange={(e) => handleParamChange('width', Number(e.target.value))}
+                    className="w-full"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm text-gray-400 block mb-2">
+                    Concave Depth: {params.concaveDepth}mm
+                  </label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="4"
+                    step="0.1"
+                    value={params.concaveDepth}
+                    onChange={(e) => handleParamChange('concaveDepth', Number(e.target.value))}
+                    className="w-full"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm text-gray-400 block mb-2">
+                    Nose Kick: {params.noseKick}°
+                  </label>
+                  <input
+                    type="range"
+                    min="5"
+                    max="30"
+                    step="1"
+                    value={params.noseKick}
+                    onChange={(e) => handleParamChange('noseKick', Number(e.target.value))}
+                    className="w-full"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm text-gray-400 block mb-2">
+                    Tail Kick: {params.tailKick}°
+                  </label>
+                  <input
+                    type="range"
+                    min="5"
+                    max="30"
+                    step="1"
+                    value={params.tailKick}
+                    onChange={(e) => handleParamChange('tailKick', Number(e.target.value))}
+                    className="w-full"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm text-gray-400 block mb-2">
+                    Thickness: {params.thickness}mm
+                  </label>
+                  <input
+                    type="range"
+                    min="3"
+                    max="8"
+                    step="0.5"
+                    value={params.thickness}
+                    onChange={(e) => handleParamChange('thickness', Number(e.target.value))}
+                    className="w-full"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-gray-700">
+              <button
+                onClick={exportSTL}
+                disabled={exporting}
+                className="w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 text-white font-semibold rounded-lg transition-colors"
+              >
+                {exporting ? 'Exporting...' : 'Export STL for 3D Printing'}
+              </button>
+              <p className="text-xs text-gray-500 mt-2 text-center">
+                Compatible with Shapeways, Sculpteo, and local 3D printers
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* 3D Viewport */}
+        <div className="flex-1 bg-black">
+          <Canvas shadows>
+            <Scene params={params} textureUrl={textureUrl} />
+          </Canvas>
+        </div>
+      </div>
+    </div>
+  );
+}
