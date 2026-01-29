@@ -9,6 +9,7 @@ import { assetsAPI } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 import { Button } from '@/components/ui/button';
 import { importSVG, validateSVGFile } from '@/lib/svg-import';
+import { toast } from 'sonner';
 
 // ============ STICKER SYSTEM ============
 const stickerCategories = {
@@ -733,6 +734,10 @@ function DrawerContent({ tool, onAddObject, deckCenterX, deckCenterY }: DrawerCo
       fontFamily: 'Oswald',
       fill: '#ffffff',
     });
+    toast.success('Text added to center of deck', {
+      description: 'Double-click text to edit, or use Inspector panel to customize',
+      duration: 3000,
+    });
   };
 
   const addShape = (shapeType: 'rect' | 'circle' | 'star') => {
@@ -886,32 +891,52 @@ function DrawerContent({ tool, onAddObject, deckCenterX, deckCenterY }: DrawerCo
 
   if (tool === 'text') {
     return (
-      <div className="space-y-3">
+      <div className="space-y-4">
+        <p className="text-[10px] text-muted-foreground">
+          Add custom text to your deck. Text appears in the center and is immediately selected for editing.
+        </p>
+
         <button
           onClick={addText}
-          className="w-full btn-brutal text-left"
+          className="w-full btn-brutal text-left flex items-center justify-between group"
         >
-          + Add Text
+          <span>+ Add Text</span>
+          <span className="text-[9px] text-muted-foreground group-hover:text-foreground transition-colors">
+            Click to add
+          </span>
         </button>
+
+        <div className="p-3 border border-accent/30 bg-accent/10 space-y-2">
+          <div className="flex items-start gap-2">
+            <span className="text-accent text-lg">💡</span>
+            <div className="text-[10px] text-muted-foreground space-y-1">
+              <p><strong>After adding:</strong></p>
+              <p>• Edit text in Inspector panel</p>
+              <p>• Change font, size, color</p>
+              <p>• Drag to reposition</p>
+              <p>• Use transform handles to resize/rotate</p>
+            </div>
+          </div>
+        </div>
+
         <div className="space-y-2">
           <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
-            Font Styles
+            Popular Styles
           </span>
-          {['BOLD', 'ITALIC', 'REGULAR'].map((style) => (
-            <button
-              key={style}
-              onClick={addText}
-              className="w-full border border-border bg-secondary px-3 py-2 text-left hover:border-primary transition-colors"
-            >
-              <span className={cn(
-                'font-display text-lg',
-                style === 'BOLD' && 'font-bold',
-                style === 'ITALIC' && 'italic'
-              )}>
-                {style}
-              </span>
-            </button>
-          ))}
+          <div className="space-y-1">
+            <div className="p-2 border border-border bg-secondary">
+              <span className="font-display text-base font-bold">BOLD IMPACT</span>
+              <p className="text-[9px] text-muted-foreground mt-1">High visibility branding</p>
+            </div>
+            <div className="p-2 border border-border bg-secondary">
+              <span className="font-display text-base italic">Stylish Script</span>
+              <p className="text-[9px] text-muted-foreground mt-1">Elegant cursive look</p>
+            </div>
+            <div className="p-2 border border-border bg-secondary">
+              <span className="font-mono text-sm">TECHNICAL MONO</span>
+              <p className="text-[9px] text-muted-foreground mt-1">Clean modern aesthetic</p>
+            </div>
+          </div>
         </div>
       </div>
     );
