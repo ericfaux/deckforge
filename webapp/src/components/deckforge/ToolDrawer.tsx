@@ -482,23 +482,76 @@ function UploadsContent({ onAddObject, deckCenterX, deckCenterY }: {
     if (!files || files.length === 0) return;
 
     setIsUploading(true);
+    let svgCount = 0;
+    let imageCount = 0;
+    let totalSvgObjects = 0;
+    
     try {
       for (const file of Array.from(files)) {
         // Check if it's an SVG file
         if (validateSVGFile(file)) {
-          // Import SVG and add objects directly to canvas
-          const objects = await importSVG(file);
-          objects.forEach(obj => onAddObject(obj));
+          try {
+            // Import SVG and add objects directly to canvas
+            const objects = await importSVG(file);
+            objects.forEach(obj => onAddObject(obj));
+            svgCount++;
+            totalSvgObjects += objects.length;
+            
+            // Show detailed feedback
+            if (objects.length > 0) {
+              toast.success(`Imported ${file.name}`, {
+                description: `${objects.length} shape${objects.length !== 1 ? 's' : ''} added to canvas`,
+                duration: 3000,
+              });
+            } else {
+              toast.warning(`${file.name} imported but no shapes found`, {
+                description: 'The SVG may be empty or use unsupported features',
+                duration: 3000,
+              });
+            }
+          } catch (svgErr) {
+            console.error('SVG import failed:', svgErr);
+            toast.error(`Failed to import ${file.name}`, {
+              description: 'Invalid SVG file or unsupported format',
+              duration: 4000,
+            });
+          }
         } else {
           // Regular image upload
-          const { url, width, height } = await assetsAPI.upload(file);
-          // Add to assets list
-          await loadAssets();
+          try {
+            const { url, width, height } = await assetsAPI.upload(file);
+            imageCount++;
+            toast.success(`Uploaded ${file.name}`, {
+              description: 'Image added to your library',
+            });
+            // Add to assets list
+            await loadAssets();
+          } catch (uploadErr) {
+            console.error('Image upload failed:', uploadErr);
+            toast.error(`Failed to upload ${file.name}`, {
+              description: 'Please try again or check file format',
+            });
+          }
+        }
+      }
+      
+      // Summary toast for multiple files
+      if (files.length > 1) {
+        const summary = [];
+        if (svgCount > 0) summary.push(`${svgCount} SVG${svgCount !== 1 ? 's' : ''} (${totalSvgObjects} shapes)`);
+        if (imageCount > 0) summary.push(`${imageCount} image${imageCount !== 1 ? 's' : ''}`);
+        
+        if (summary.length > 0) {
+          toast.success('Batch upload complete', {
+            description: summary.join(' + '),
+          });
         }
       }
     } catch (err) {
       console.error('Upload failed:', err);
-      alert('Upload failed. Please try again.');
+      toast.error('Upload failed', {
+        description: 'Please try again or check your files',
+      });
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) {
