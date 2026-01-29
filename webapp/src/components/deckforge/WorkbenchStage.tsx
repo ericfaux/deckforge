@@ -120,7 +120,7 @@ function CanvasObjectItem({
 }: {
   obj: CanvasObject;
   isSelected: boolean;
-  onSelect: () => void;
+  onSelect: (e?: React.MouseEvent) => void;
   onChange: (updates: Partial<CanvasObject>) => void;
   deckX: number;
   deckY: number;
@@ -136,7 +136,7 @@ function CanvasObjectItem({
     e.stopPropagation();
     
     // Locked objects can be selected but not moved
-    onSelect();
+    onSelect(e);
     
     if (obj.locked) {
       // Show toast that object is locked
@@ -790,7 +790,9 @@ export function WorkbenchStage() {
   const {
     objects,
     selectedId,
+    selectedIds,
     selectObject,
+    toggleSelectObject,
     updateObject,
     addObject,
     stageScale,
@@ -914,6 +916,16 @@ export function WorkbenchStage() {
       selectObject(null);
     }
   }, [selectObject, activeTool]);
+
+  const handleObjectSelect = useCallback((objId: string, e?: React.MouseEvent) => {
+    if (e?.shiftKey) {
+      // Shift+click: toggle this object in multi-select
+      toggleSelectObject(objId);
+    } else {
+      // Normal click: select only this object
+      selectObject(objId);
+    }
+  }, [selectObject, toggleSelectObject]);
 
   // Handle pen tool path completion
   const handlePenToolComplete = useCallback((pathData: string, strokeWidth: number, strokeColor: string, opacity: number, dashStyle: 'solid' | 'dashed' | 'dotted') => {
@@ -1049,8 +1061,8 @@ export function WorkbenchStage() {
               <CanvasObjectItem
                 key={obj.id}
                 obj={obj}
-                isSelected={selectedId === obj.id}
-                onSelect={() => selectObject(obj.id)}
+                isSelected={selectedIds.includes(obj.id)}
+                onSelect={(e) => handleObjectSelect(obj.id, e)}
                 onChange={(updates) => {
                   updateObject(obj.id, updates);
                 }}

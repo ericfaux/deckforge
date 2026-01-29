@@ -11,6 +11,7 @@ import { FontUploadModal } from '@/components/deckforge/FontUploadModal';
 import { ArrayDuplicateModal } from '@/components/deckforge/ArrayDuplicateModal';
 import { ExportPreview } from '@/components/deckforge/ExportPreview';
 import { ExportPresetsModal } from '@/components/deckforge/ExportPresetsModal';
+import { BatchActionsToolbar } from '@/components/deckforge/BatchActionsToolbar';
 import { MobileToolbar } from '@/components/deckforge/MobileToolbar';
 import { MobileDrawer } from '@/components/deckforge/MobileDrawer';
 import { LayerList } from '@/components/deckforge/LayerList';
@@ -952,6 +953,9 @@ export default function DeckForge() {
         open={isExportPresetsOpen}
         onClose={() => setIsExportPresetsOpen(false)}
       />
+
+      {/* Batch Actions Toolbar (appears when multiple objects selected) */}
+      <BatchActionsToolbar />
     </div>
   );
 }

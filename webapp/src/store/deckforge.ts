@@ -134,6 +134,7 @@ interface DeckForgeState {
   // Canvas objects
   objects: CanvasObject[];
   selectedId: string | null;
+  selectedIds: string[]; // Multi-select support
 
   // Tool state
   activeTool: ToolType | null;
@@ -171,6 +172,11 @@ interface DeckForgeState {
   updateObject: (id: string, updates: Partial<CanvasObject>) => void;
   deleteObject: (id: string) => void;
   selectObject: (id: string | null) => void;
+  toggleSelectObject: (id: string) => void; // Multi-select toggle
+  setSelectedIds: (ids: string[]) => void; // Set multiple selections
+  clearSelection: () => void; // Clear all selections
+  alignObjects: (alignment: 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom') => void;
+  distributeObjects: (direction: 'horizontal' | 'vertical') => void;
   setActiveTool: (tool: ToolType | null) => void;
   toggleDrawer: (open?: boolean) => void;
   setStageScale: (scale: number) => void;
@@ -212,6 +218,7 @@ const defaultTextureOverlays: TextureOverlay[] = [
 export const useDeckForgeStore = create<DeckForgeState>((set, get) => ({
   objects: [],
   selectedId: null,
+  selectedIds: [],
   activeTool: null,
   drawerOpen: false,
   stageScale: 1,
@@ -278,7 +285,108 @@ export const useDeckForgeStore = create<DeckForgeState>((set, get) => ({
     });
   },
 
-  selectObject: (id) => set({ selectedId: id }),
+  selectObject: (id) => set({ selectedId: id, selectedIds: id ? [id] : [] }),
+
+  toggleSelectObject: (id) => {
+    const { selectedIds } = get();
+    const isSelected = selectedIds.includes(id);
+    const newSelectedIds = isSelected
+      ? selectedIds.filter(selectedId => selectedId !== id)
+      : [...selectedIds, id];
+    set({ 
+      selectedIds: newSelectedIds,
+      selectedId: newSelectedIds.length === 1 ? newSelectedIds[0] : null
+    });
+  },
+
+  setSelectedIds: (ids) => set({ 
+    selectedIds: ids,
+    selectedId: ids.length === 1 ? ids[0] : null
+  }),
+
+  clearSelection: () => set({ selectedId: null, selectedIds: [] }),
+
+  alignObjects: (alignment) => {
+    const { selectedIds, objects } = get();
+    if (selectedIds.length < 2) return;
+
+    const state = get();
+    state.saveToHistory();
+
+    const selectedObjects = objects.filter(obj => selectedIds.includes(obj.id));
+    
+    if (alignment === 'left') {
+      const minX = Math.min(...selectedObjects.map(obj => obj.x));
+      selectedObjects.forEach(obj => {
+        state.updateObject(obj.id, { x: minX });
+      });
+    } else if (alignment === 'center') {
+      const centerX = selectedObjects.reduce((sum, obj) => sum + obj.x + (obj.width * obj.scaleX) / 2, 0) / selectedObjects.length;
+      selectedObjects.forEach(obj => {
+        state.updateObject(obj.id, { x: centerX - (obj.width * obj.scaleX) / 2 });
+      });
+    } else if (alignment === 'right') {
+      const maxX = Math.max(...selectedObjects.map(obj => obj.x + obj.width * obj.scaleX));
+      selectedObjects.forEach(obj => {
+        state.updateObject(obj.id, { x: maxX - obj.width * obj.scaleX });
+      });
+    } else if (alignment === 'top') {
+      const minY = Math.min(...selectedObjects.map(obj => obj.y));
+      selectedObjects.forEach(obj => {
+        state.updateObject(obj.id, { y: minY });
+      });
+    } else if (alignment === 'middle') {
+      const centerY = selectedObjects.reduce((sum, obj) => sum + obj.y + (obj.height * obj.scaleY) / 2, 0) / selectedObjects.length;
+      selectedObjects.forEach(obj => {
+        state.updateObject(obj.id, { y: centerY - (obj.height * obj.scaleY) / 2 });
+      });
+    } else if (alignment === 'bottom') {
+      const maxY = Math.max(...selectedObjects.map(obj => obj.y + obj.height * obj.scaleY));
+      selectedObjects.forEach(obj => {
+        state.updateObject(obj.id, { y: maxY - obj.height * obj.scaleY });
+      });
+    }
+  },
+
+  distributeObjects: (direction) => {
+    const { selectedIds, objects } = get();
+    if (selectedIds.length < 3) return; // Need at least 3 objects to distribute
+
+    const state = get();
+    state.saveToHistory();
+
+    const selectedObjects = objects
+      .filter(obj => selectedIds.includes(obj.id))
+      .sort((a, b) => direction === 'horizontal' ? a.x - b.x : a.y - b.y);
+
+    if (direction === 'horizontal') {
+      const first = selectedObjects[0];
+      const last = selectedObjects[selectedObjects.length - 1];
+      const totalWidth = (last.x + last.width * last.scaleX) - first.x;
+      const objectsWidth = selectedObjects.reduce((sum, obj) => sum + obj.width * obj.scaleX, 0);
+      const totalGap = totalWidth - objectsWidth;
+      const gap = totalGap / (selectedObjects.length - 1);
+
+      let currentX = first.x + first.width * first.scaleX + gap;
+      for (let i = 1; i < selectedObjects.length - 1; i++) {
+        state.updateObject(selectedObjects[i].id, { x: currentX });
+        currentX += selectedObjects[i].width * selectedObjects[i].scaleX + gap;
+      }
+    } else {
+      const first = selectedObjects[0];
+      const last = selectedObjects[selectedObjects.length - 1];
+      const totalHeight = (last.y + last.height * last.scaleY) - first.y;
+      const objectsHeight = selectedObjects.reduce((sum, obj) => sum + obj.height * obj.scaleY, 0);
+      const totalGap = totalHeight - objectsHeight;
+      const gap = totalGap / (selectedObjects.length - 1);
+
+      let currentY = first.y + first.height * first.scaleY + gap;
+      for (let i = 1; i < selectedObjects.length - 1; i++) {
+        state.updateObject(selectedObjects[i].id, { y: currentY });
+        currentY += selectedObjects[i].height * selectedObjects[i].scaleY + gap;
+      }
+    }
+  },
 
   setActiveTool: (tool) => set({
     activeTool: tool,
