@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import DeckForge from "./pages/DeckForge";
 import Auth from "./pages/Auth";
 import Designs from "./pages/Designs";
+import Templates from "./pages/Templates";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -20,6 +21,7 @@ const App = () => (
           <Route path="/" element={<DeckForge />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/designs" element={<Designs />} />
+          <Route path="/templates" element={<Templates />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

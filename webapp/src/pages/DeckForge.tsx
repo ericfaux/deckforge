@@ -8,7 +8,7 @@ import { useAuthStore } from '@/store/auth';
 import { designsAPI } from '@/lib/api';
 import { exportToPNG, downloadBlob } from '@/lib/export';
 import { Button } from '@/components/ui/button';
-import { Save, Download, User } from 'lucide-react';
+import { Save, Download, User, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { KeyboardShortcuts } from '@/components/deckforge/KeyboardShortcuts';
 
@@ -155,6 +155,16 @@ export default function DeckForge() {
           >
             <Download className="w-4 h-4" />
             {isExporting ? 'Exporting...' : 'Export PNG'}
+          </Button>
+
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => navigate('/templates')}
+            className="gap-2"
+          >
+            <Sparkles className="w-4 h-4" />
+            Templates
           </Button>
 
           <Button
