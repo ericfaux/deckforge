@@ -7,6 +7,7 @@ import { VersionHistory } from '@/components/deckforge/VersionHistory';
 import { ShareModal } from '@/components/deckforge/ShareModal';
 import { AnimationPreview } from '@/components/deckforge/AnimationPreview';
 import { BrandKitModal } from '@/components/deckforge/BrandKitModal';
+import { FontUploadModal } from '@/components/deckforge/FontUploadModal';
 import { ExportPreview } from '@/components/deckforge/ExportPreview';
 import { MobileToolbar } from '@/components/deckforge/MobileToolbar';
 import { MobileDrawer } from '@/components/deckforge/MobileDrawer';
@@ -15,8 +16,9 @@ import { useDeckForgeStore, CanvasObject } from '@/store/deckforge';
 import { useAuthStore } from '@/store/auth';
 import { designsAPI } from '@/lib/api';
 import { exportToPNG, exportToSVG, downloadBlob } from '@/lib/export';
+import { preloadUserFonts } from '@/lib/fonts';
 import { Button } from '@/components/ui/button';
-import { Save, Download, User, Sparkles, Clock, Menu, Share2, Play, ChevronDown, Palette, Undo, Redo } from 'lucide-react';
+import { Save, Download, User, Sparkles, Clock, Menu, Share2, Play, ChevronDown, Palette, Undo, Redo, Type } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { KeyboardShortcuts } from '@/components/deckforge/KeyboardShortcuts';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -35,6 +37,7 @@ export default function DeckForge() {
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isAnimationPreviewOpen, setIsAnimationPreviewOpen] = useState(false);
   const [isBrandKitModalOpen, setIsBrandKitModalOpen] = useState(false);
+  const [isFontUploadModalOpen, setIsFontUploadModalOpen] = useState(false);
   const [isExportPreviewOpen, setIsExportPreviewOpen] = useState(false);
   const [mobileInspectorOpen, setMobileInspectorOpen] = useState(false);
   const [mobileLayersOpen, setMobileLayersOpen] = useState(false);
@@ -139,6 +142,13 @@ export default function DeckForge() {
       setIsExporting(false);
     }
   };
+
+  // Preload user's custom fonts on mount
+  useEffect(() => {
+    if (isAuthenticated) {
+      preloadUserFonts().catch(console.error);
+    }
+  }, [isAuthenticated]);
 
   // Auto-save versions every 5 minutes
   useEffect(() => {
@@ -299,6 +309,16 @@ export default function DeckForge() {
                 <Palette className="w-4 h-4" />
                 Brand Kits
                 <span className="ml-1 text-[9px] text-accent">PRO</span>
+              </Button>
+
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setIsFontUploadModalOpen(true)}
+                className="gap-2"
+              >
+                <Type className="w-4 h-4" />
+                Custom Fonts
               </Button>
 
               {currentDesignId && (
@@ -477,6 +497,17 @@ export default function DeckForge() {
       <AnimationPreview
         isOpen={isAnimationPreviewOpen}
         onClose={() => setIsAnimationPreviewOpen(false)}
+      />
+
+      {/* Font Upload Modal */}
+      <FontUploadModal
+        isOpen={isFontUploadModalOpen}
+        onClose={() => setIsFontUploadModalOpen(false)}
+        onFontUploaded={(font) => {
+          toast.success(`${font.name} is now available!`, {
+            description: 'You can now use this font in your text objects.',
+          });
+        }}
       />
 
       {/* Brand Kit Modal */}
