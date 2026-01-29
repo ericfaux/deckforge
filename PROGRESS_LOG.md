@@ -33,42 +33,42 @@
 23. ✅ Batch export - COMPLETE
 24. ✅ 3D animation preview - COMPLETE
 25. ✅ Public gallery & social features - COMPLETE
-26. ⏳ Design comments / User profiles - NEXT
+26. ✅ Design comments - COMPLETE
+27. ⏳ User profiles / Advanced search - NEXT
 
 ### 📊 Stats:
-- **34 commits** pushed to GitHub
-- **138+ files** changed
-- **~18,100 lines** of code written
-- **7 hours** of autonomous building
+- **36 commits** pushed to GitHub
+- **147+ files** changed
+- **~18,700 lines** of code written
+- **7.5 hours** of autonomous building
 - **0 stops** - building continuously per directive
 
 ### 🎯 Latest Update (Heartbeat):
-**Public Gallery & Social Features (Bonus Feature #25) - COMPLETE**
-- Database migration (is_public, view_count, like_count, design_likes table)
-- Gallery API with sorting (recent/popular/liked)
-- Full Gallery page with card grid
-- Like/unlike functionality with heart icons (filled when liked)
-- Remix button (one-click load & edit any public design)
-- View count tracking (increments on view)
-- Public/Private toggle on Designs page
-- Public badge (Globe icon) on published designs
-- Private badge (Lock icon) on unpublished
-- Gallery link in main navigation
-- RLS policies for likes (auth required)
-- Optimistic UI updates for likes
-- Sort by: Recent, Popular (views), Most Liked
-- Perfect for fingerboard community sharing
+**Design Comments System (Bonus Feature #26) - COMPLETE**
+- Database migration (design_comments table with RLS policies)
+- Comments API with full CRUD (GET/POST/PATCH/DELETE)
+- Comments component with Textarea and post functionality
+- Gallery detail modal (click design to open)
+- Modal shows: design preview, stats, actions, comments
+- Post comment (auth required)
+- Delete own comments
+- Real-time comment list with timestamps
+- Toast notifications for all actions
+- Comment form with character validation
+- Thread-ready structure (parent_comment_id for replies)
+- RLS: anyone can read, auth users can post/edit/delete own
+- Seamless integration with Gallery page
 - Committed & pushed to GitHub (auto-deploying)
 
 **Previous builds:**
+- Public Gallery & Social Features (Bonus #25)
+  - Gallery with like/remix, view tracking, sort options
 - 3D Animation Preview (Bonus #24)
   - Full-screen 3D rotation with controls
 - Batch Export System (Bonus #23)
   - Multi-select, ZIP export with progress
 - Advanced Filters (Bonus #22)
   - Blur, saturate, sepia, posterize, duotone
-- Public Sharing & Embeds (Bonus #21)
-  - Share API, ShareModal, public view page
 
 ### 🚀 Deployments:
 - Frontend: https://webapp-afteryou.vercel.app
