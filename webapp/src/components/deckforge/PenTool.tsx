@@ -8,7 +8,7 @@ interface Point {
 
 interface PenToolProps {
   isActive: boolean;
-  onComplete: (pathData: string) => void;
+  onComplete: (pathData: string, strokeWidth: number) => void;
   onCancel: () => void;
   stageRef: React.RefObject<SVGSVGElement>;
 }
@@ -18,6 +18,7 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef }: PenToolPro
   const [currentPoint, setCurrentPoint] = useState<Point | null>(null);
   const [mode, setMode] = useState<'click' | 'draw'>('click');
   const [isDrawing, setIsDrawing] = useState(false);
+  const [strokeWidth, setStrokeWidth] = useState(2);
 
   useEffect(() => {
     if (!isActive) {
@@ -126,7 +127,28 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef }: PenToolPro
       }
     }
 
-    onComplete(pathData);
+    onComplete(pathData, strokeWidth);
+  };
+
+  const handleCancelClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onCancel();
+  };
+
+  const handleCompleteClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    handleComplete();
+  };
+
+  const handleUndoClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    handleUndo();
+  };
+
+  const handleModeSwitch = (newMode: 'click' | 'draw', e: React.MouseEvent) => {
+    e.stopPropagation();
+    setMode(newMode);
+    setPoints([]);
   };
 
   if (!isActive) return null;
@@ -168,7 +190,7 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef }: PenToolPro
           <path
             d={previewPath}
             stroke="#ccff00"
-            strokeWidth={mode === 'draw' ? 3 : 2}
+            strokeWidth={strokeWidth}
             fill="none"
             strokeDasharray={mode === 'click' ? "4 4" : "none"}
             strokeLinecap="round"
@@ -202,13 +224,17 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef }: PenToolPro
       )}
 
       {/* Toolbar */}
-      <foreignObject x={10} y={10} width={450} height={100}>
-        <div className="bg-card border-2 border-accent p-4 shadow-xl">
+      <foreignObject x={10} y={10} width={500} height={140}>
+        <div 
+          className="bg-card border-2 border-accent p-4 shadow-xl"
+          onMouseDown={(e) => e.stopPropagation()}
+          onClick={(e) => e.stopPropagation()}
+        >
           <div className="flex flex-col gap-3">
             {/* Mode selector */}
             <div className="flex gap-2">
               <button
-                onClick={() => { setMode('click'); setPoints([]); }}
+                onClick={(e) => handleModeSwitch('click', e)}
                 className={`flex-1 px-3 py-2 text-xs font-display uppercase tracking-wider transition-colors ${
                   mode === 'click'
                     ? 'bg-accent text-accent-foreground border-2 border-accent'
@@ -219,7 +245,7 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef }: PenToolPro
                 Click Points
               </button>
               <button
-                onClick={() => { setMode('draw'); setPoints([]); }}
+                onClick={(e) => handleModeSwitch('draw', e)}
                 className={`flex-1 px-3 py-2 text-xs font-display uppercase tracking-wider transition-colors ${
                   mode === 'draw'
                     ? 'bg-accent text-accent-foreground border-2 border-accent'
@@ -230,11 +256,34 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef }: PenToolPro
               </button>
             </div>
 
+            {/* Stroke Width */}
+            <div className="flex items-center gap-3">
+              <span className="text-[10px] text-muted-foreground uppercase tracking-widest whitespace-nowrap">
+                Line Width
+              </span>
+              <input
+                type="range"
+                min="1"
+                max="20"
+                value={strokeWidth}
+                onChange={(e) => setStrokeWidth(Number(e.target.value))}
+                onMouseDown={(e) => e.stopPropagation()}
+                onClick={(e) => e.stopPropagation()}
+                className="flex-1 h-2 bg-secondary border border-border appearance-none cursor-pointer"
+                style={{
+                  accentColor: 'hsl(var(--accent))',
+                }}
+              />
+              <span className="text-sm font-mono text-foreground w-8 text-right">
+                {strokeWidth}px
+              </span>
+            </div>
+
             {/* Instructions & controls */}
             <div className="flex items-center justify-between gap-2">
-              <span className="text-[10px] text-muted-foreground uppercase tracking-widest">
+              <span className="text-[10px] text-muted-foreground uppercase tracking-widest flex-1">
                 {mode === 'click' 
-                  ? `Click to add points • ${points.length} point${points.length !== 1 ? 's' : ''} • Press ESC to cancel`
+                  ? `Click to add points • ${points.length} point${points.length !== 1 ? 's' : ''} • ESC to cancel`
                   : points.length > 0 
                     ? 'Release to finish • ESC to cancel'
                     : 'Hold & drag to draw • ESC to cancel'
@@ -244,14 +293,14 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef }: PenToolPro
                 {points.length > 0 && (
                   <>
                     <button
-                      onClick={handleUndo}
+                      onClick={handleUndoClick}
                       className="p-2 bg-secondary hover:bg-secondary/80 border border-border transition-colors"
                       title="Undo last point"
                     >
                       <Undo className="w-4 h-4" />
                     </button>
                     <button
-                      onClick={handleComplete}
+                      onClick={handleCompleteClick}
                       disabled={points.length < 2}
                       className="p-2 bg-accent hover:bg-accent/90 border border-accent disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                       title="Complete path (Enter)"
@@ -261,7 +310,7 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef }: PenToolPro
                   </>
                 )}
                 <button
-                  onClick={onCancel}
+                  onClick={handleCancelClick}
                   className="p-2 bg-destructive hover:bg-destructive/90 border border-destructive transition-colors"
                   title="Cancel (ESC)"
                 >

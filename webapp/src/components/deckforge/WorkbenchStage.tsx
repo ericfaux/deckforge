@@ -743,7 +743,7 @@ export function WorkbenchStage() {
   }, [selectObject]);
 
   // Handle pen tool path completion
-  const handlePenToolComplete = useCallback((pathData: string) => {
+  const handlePenToolComplete = useCallback((pathData: string, strokeWidth: number) => {
     // Parse SVG path data into PathPoints
     const pathPoints: Array<{ x: number; y: number; cp1x?: number; cp1y?: number; cp2x?: number; cp2y?: number }> = [];
     
@@ -791,7 +791,7 @@ export function WorkbenchStage() {
         pathPoints,
         pathClosed: false,
         stroke: '#000000',
-        strokeWidth: 2,
+        strokeWidth: strokeWidth,
         fill: 'none',
       });
     }
