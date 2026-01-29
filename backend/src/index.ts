@@ -10,6 +10,8 @@ import fontsRouter from "./routes/fonts";
 import shareRouter from "./routes/share";
 import galleryRouter from "./routes/gallery";
 import commentsRouter from "./routes/comments";
+import foldersRouter from "./routes/folders";
+import tagsRouter from "./routes/tags";
 import { logger } from "hono/logger";
 
 const app = new Hono();
@@ -47,6 +49,8 @@ app.route("/api/fonts", fontsRouter);
 app.route("/api/share", shareRouter);
 app.route("/api/gallery", galleryRouter);
 app.route("/api/comments", commentsRouter);
+app.route("/api/folders", foldersRouter);
+app.route("/api/tags", tagsRouter);
 
 const port = Number(process.env.PORT) || 3000;
 
