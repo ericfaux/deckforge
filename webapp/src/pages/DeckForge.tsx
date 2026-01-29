@@ -1,18 +1,20 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, lazy, Suspense } from 'react';
 import { ToolRail } from '@/components/deckforge/ToolRail';
 import { ToolDrawer } from '@/components/deckforge/ToolDrawer';
 import { WorkbenchStage } from '@/components/deckforge/WorkbenchStage';
 import { Inspector } from '@/components/deckforge/Inspector';
-import { VersionHistory } from '@/components/deckforge/VersionHistory';
-import { ShareModal } from '@/components/deckforge/ShareModal';
-import { AnimationPreview } from '@/components/deckforge/AnimationPreview';
-import { BrandKitModal } from '@/components/deckforge/BrandKitModal';
-import { FontUploadModal } from '@/components/deckforge/FontUploadModal';
-import { ArrayDuplicateModal } from '@/components/deckforge/ArrayDuplicateModal';
-import { ExportPreview } from '@/components/deckforge/ExportPreview';
-import { ExportPresetsModal } from '@/components/deckforge/ExportPresetsModal';
 import { BatchActionsToolbar } from '@/components/deckforge/BatchActionsToolbar';
 import { MobileToolbar } from '@/components/deckforge/MobileToolbar';
+
+// Lazy load modals for better performance
+const VersionHistory = lazy(() => import('@/components/deckforge/VersionHistory').then(m => ({ default: m.VersionHistory })));
+const ShareModal = lazy(() => import('@/components/deckforge/ShareModal').then(m => ({ default: m.ShareModal })));
+const AnimationPreview = lazy(() => import('@/components/deckforge/AnimationPreview').then(m => ({ default: m.AnimationPreview })));
+const BrandKitModal = lazy(() => import('@/components/deckforge/BrandKitModal').then(m => ({ default: m.BrandKitModal })));
+const FontUploadModal = lazy(() => import('@/components/deckforge/FontUploadModal').then(m => ({ default: m.FontUploadModal })));
+const ArrayDuplicateModal = lazy(() => import('@/components/deckforge/ArrayDuplicateModal').then(m => ({ default: m.ArrayDuplicateModal })));
+const ExportPreview = lazy(() => import('@/components/deckforge/ExportPreview').then(m => ({ default: m.ExportPreview })));
+const ExportPresetsModal = lazy(() => import('@/components/deckforge/ExportPresetsModal').then(m => ({ default: m.ExportPresetsModal })));
 import { MobileDrawer } from '@/components/deckforge/MobileDrawer';
 import { LayerList } from '@/components/deckforge/LayerList';
 import { DECK_WIDTH, DECK_HEIGHT } from '@/components/deckforge/WorkbenchStage';
@@ -869,51 +871,54 @@ export default function DeckForge() {
         </div>
       </MobileDrawer>
 
-      {/* Version History Modal */}
-      <VersionHistory 
-        isOpen={isVersionHistoryOpen}
-        onClose={() => setIsVersionHistoryOpen(false)}
-      />
-
-      {/* Share Modal */}
-      {currentDesignId && (
-        <ShareModal
-          isOpen={isShareModalOpen}
-          onClose={() => setIsShareModalOpen(false)}
-          designId={currentDesignId}
-          designName={designName}
+      {/* Lazy-loaded modals with Suspense */}
+      <Suspense fallback={null}>
+        {/* Version History Modal */}
+        <VersionHistory 
+          isOpen={isVersionHistoryOpen}
+          onClose={() => setIsVersionHistoryOpen(false)}
         />
-      )}
 
-      {/* Animation Preview */}
-      <AnimationPreview
-        isOpen={isAnimationPreviewOpen}
-        onClose={() => setIsAnimationPreviewOpen(false)}
-      />
+        {/* Share Modal */}
+        {currentDesignId && (
+          <ShareModal
+            isOpen={isShareModalOpen}
+            onClose={() => setIsShareModalOpen(false)}
+            designId={currentDesignId}
+            designName={designName}
+          />
+        )}
 
-      {/* Font Upload Modal */}
-      <FontUploadModal
-        isOpen={isFontUploadModalOpen}
-        onClose={() => setIsFontUploadModalOpen(false)}
-        onFontUploaded={(font) => {
-          toast.success(`${font.name} is now available!`, {
-            description: 'You can now use this font in your text objects.',
-          });
-        }}
-      />
+        {/* Animation Preview */}
+        <AnimationPreview
+          isOpen={isAnimationPreviewOpen}
+          onClose={() => setIsAnimationPreviewOpen(false)}
+        />
 
-      {/* Array Duplicate Modal */}
-      <ArrayDuplicateModal
-        open={isArrayDuplicateOpen}
-        onClose={() => setIsArrayDuplicateOpen(false)}
-        onDuplicate={(rows, cols, gapX, gapY) => {
-          if (selectedId) {
-            arrayDuplicate(selectedId, rows, cols, gapX, gapY);
-            const totalCopies = (rows * cols) - 1;
-            toast.success(`Created ${totalCopies} ${totalCopies === 1 ? 'copy' : 'copies'} in ${rows}×${cols} grid`);
-          }
-        }}
-      />
+        {/* Font Upload Modal */}
+        <FontUploadModal
+          isOpen={isFontUploadModalOpen}
+          onClose={() => setIsFontUploadModalOpen(false)}
+          onFontUploaded={(font) => {
+            toast.success(`${font.name} is now available!`, {
+              description: 'You can now use this font in your text objects.',
+            });
+          }}
+        />
+
+        {/* Array Duplicate Modal */}
+        <ArrayDuplicateModal
+          open={isArrayDuplicateOpen}
+          onClose={() => setIsArrayDuplicateOpen(false)}
+          onDuplicate={(rows, cols, gapX, gapY) => {
+            if (selectedId) {
+              arrayDuplicate(selectedId, rows, cols, gapX, gapY);
+              const totalCopies = (rows * cols) - 1;
+              toast.success(`Created ${totalCopies} ${totalCopies === 1 ? 'copy' : 'copies'} in ${rows}×${cols} grid`);
+            }
+          }}
+        />
+      </Suspense>
 
       {/* Brand Kit Modal */}
       <BrandKitModal
@@ -984,22 +989,23 @@ export default function DeckForge() {
         }}
       />
 
-      {/* Export Preview Modal */}
-      <ExportPreview
-        isOpen={isExportPreviewOpen}
-        onClose={() => setIsExportPreviewOpen(false)}
-        objects={objects}
-        designName={designName}
-        onConfirmExport={() => {
-          toast.success('Design exported successfully');
-        }}
-      />
+      {/* Export modals with Suspense */}
+      <Suspense fallback={null}>
+        <ExportPreview
+          isOpen={isExportPreviewOpen}
+          onClose={() => setIsExportPreviewOpen(false)}
+          objects={objects}
+          designName={designName}
+          onConfirmExport={() => {
+            toast.success('Design exported successfully');
+          }}
+        />
 
-      {/* Export Presets Modal */}
-      <ExportPresetsModal
-        open={isExportPresetsOpen}
-        onClose={() => setIsExportPresetsOpen(false)}
-      />
+        <ExportPresetsModal
+          open={isExportPresetsOpen}
+          onClose={() => setIsExportPresetsOpen(false)}
+        />
+      </Suspense>
 
       {/* Batch Actions Toolbar (appears when multiple objects selected) */}
       <BatchActionsToolbar />

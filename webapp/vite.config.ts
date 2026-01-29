@@ -19,4 +19,31 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Core React and UI libraries
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-ui': ['lucide-react', 'sonner'],
+          
+          // Heavy libraries
+          'vendor-supabase': ['@supabase/supabase-js'],
+          
+          // Our component groups (lazy loaded)
+          'modals': [
+            './src/components/deckforge/ExportPreview.tsx',
+            './src/components/deckforge/ExportPresetsModal.tsx',
+            './src/components/deckforge/VersionHistory.tsx',
+            './src/components/deckforge/ShareModal.tsx',
+            './src/components/deckforge/BrandKitModal.tsx',
+            './src/components/deckforge/FontUploadModal.tsx',
+            './src/components/deckforge/ArrayDuplicateModal.tsx',
+          ],
+        },
+      },
+    },
+    // Increase chunk size warning limit since we're splitting intentionally
+    chunkSizeWarningLimit: 600,
+  },
 }));
