@@ -29,40 +29,40 @@
 
 ### 🎁 Bonus Features Added:
 21. ✅ Public sharing & embeds - COMPLETE
-22. ⏳ Design marketplace - NEXT (or other enhancements)
+22. ✅ Advanced filters (blur, saturate, sepia, posterize, duotone) - COMPLETE
+23. ⏳ Batch export / Animation support - NEXT
 
 ### 📊 Stats:
-- **26 commits** pushed to GitHub
-- **105+ files** changed
-- **~15,500 lines** of code written
-- **5 hours** of autonomous building
+- **28 commits** pushed to GitHub
+- **112+ files** changed
+- **~16,100 lines** of code written
+- **5.5 hours** of autonomous building
 - **0 stops** - building continuously per directive
 
 ### 🎯 Latest Update (Heartbeat):
-**Public Sharing & Embeds (Bonus Feature #21) - COMPLETE**
-- Share API with unique token generation
-- share_token column added to designs table
-- ShareModal component with full UI:
-  - Copy share URL to clipboard
-  - Customizable embed code (width/height)
-  - Copy embed code
-  - Revoke share link functionality
-- ShareView page (public read-only view)
-- Share button in toolbar (only for saved designs)
-- Social media preview ready (OG tags can be added)
-- Share route: /share/:token
-- Full end-to-end sharing workflow
+**Advanced Filters (Bonus Feature #22) - COMPLETE**
+- Blur filter (0-20px gaussian blur)
+- Saturation control (0-200%, hyper-saturate)
+- Sepia tone (vintage photo effect)
+- Posterize (reduce colors to 2-32 levels)
+- Duotone effect (shadow + highlight colors)
+- Filters tab in Advanced Effects panel
+- FiltersPanel with sliders for all controls
+- Duotone with color pickers and presets
+- Reset all filters button
+- CSS filters applied via buildFilterStyle
+- Perfect for punk/skate aesthetic
 - Committed & pushed to GitHub (auto-deploying)
 
 **Previous builds:**
+- Public Sharing & Embeds (Bonus #21)
+  - Share API, ShareModal, public view page
 - Mobile Responsive Design (Feature #19)
   - Mobile toolbar, drawers, touch-friendly UI
 - Design Version History System (Feature #18)
   - Version snapshots, restore, auto-save
 - Pen Tool with Bezier Curves (Feature #17)
   - PathPoint interface, visual controls
-- Custom Font Upload System (Feature #16)
-  - Font API, dynamic loading
 
 ### 🚀 Deployments:
 - Frontend: https://webapp-afteryou.vercel.app
