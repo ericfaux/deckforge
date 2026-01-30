@@ -47,6 +47,14 @@
 - **0 stops** - building continuously per directive
 
 ### 🎯 Latest Update (Heartbeat):
+**Blend Modes & Layer Compositing (2026-01-30 00:50 UTC)**
+- Added 16 professional blend modes (multiply, screen, overlay, etc.)
+- Photoshop-style layer compositing
+- Clean dropdown UI in Inspector
+- Applied to all object types
+- **17 commits in 110 minutes** - continuous building
+- All features live and deployed
+
 **Advanced Text & Object Effects (2026-01-30 00:47 UTC)**
 - Professional text formatting: letter spacing, line height, alignment
 - Font weight/style controls (light/bold/italic)
