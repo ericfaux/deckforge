@@ -959,6 +959,7 @@ export function WorkbenchStage() {
     backgroundColor,
     copiedObjectId,
     pastedObjectId,
+    undoRedoChangedIds,
   } = useDeckForgeStore();
 
   // Handle container resize
@@ -1249,6 +1250,7 @@ export function WorkbenchStage() {
               const visualClasses = [
                 obj.id === copiedObjectId ? 'copy-flash' : '',
                 obj.id === pastedObjectId ? 'paste-flash' : '',
+                undoRedoChangedIds.includes(obj.id) ? 'undo-highlight' : '',
               ].filter(Boolean).join(' ');
 
               return (

@@ -46,7 +46,7 @@ import { cn } from '@/lib/utils';
 import { toastUtils } from '@/lib/toast-utils';
 
 export default function DeckForge() {
-  const { selectedId, selectedIds, deleteObject, undo, redo, getCanvasState, currentDesignId, setDesignId, setSaving, isSaving, objects, designName, createVersion, past, future, updateObject, saveToHistory, addObject, selectObject, setActiveTool, stageScale, setStageScale, arrayDuplicate, showRulers, toggleRulers, groupObjects, ungroupObject, flashCopiedObject, flashPastedObject } = useDeckForgeStore();
+  const { selectedId, selectedIds, deleteObject, undo, redo, getCanvasState, currentDesignId, setDesignId, setSaving, isSaving, objects, designName, createVersion, past, future, updateObject, saveToHistory, addObject, selectObject, setActiveTool, stageScale, setStageScale, arrayDuplicate, showRulers, toggleRulers, groupObjects, ungroupObject, flashCopiedObject, flashPastedObject, lastAction, undoRedoChangedIds } = useDeckForgeStore();
   const { isAuthenticated } = useAuthStore();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -212,6 +212,15 @@ export default function DeckForge() {
       setHasUnsavedChanges(true);
     }
   }, [past.length, isSaving]);
+
+  // Show feedback for undo/redo actions
+  useEffect(() => {
+    if (lastAction && undoRedoChangedIds.length > 0) {
+      const count = undoRedoChangedIds.length;
+      const action = lastAction === 'undo' ? 'Undone' : 'Redone';
+      toastUtils.success(`${action}`, `${count} object${count !== 1 ? 's' : ''} changed`);
+    }
+  }, [lastAction, undoRedoChangedIds]);
 
   // Keyboard shortcuts
   useEffect(() => {

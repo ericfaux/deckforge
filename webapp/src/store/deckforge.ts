@@ -214,6 +214,10 @@ interface DeckForgeState {
   // Visual feedback for copy/paste
   copiedObjectId: string | null;
   pastedObjectId: string | null;
+  
+  // Visual feedback for undo/redo
+  undoRedoChangedIds: string[];
+  lastAction: 'undo' | 'redo' | null;
 
   // Actions
   addObject: (obj: Omit<CanvasObject, 'id'>) => void;
@@ -294,6 +298,8 @@ export const useDeckForgeStore = create<DeckForgeState>((set, get) => ({
   isSaving: false,
   copiedObjectId: null,
   pastedObjectId: null,
+  undoRedoChangedIds: [],
+  lastAction: null,
 
   saveToHistory: () => {
     const { objects, past } = get();
@@ -592,12 +598,29 @@ export const useDeckForgeStore = create<DeckForgeState>((set, get) => ({
     const previous = past[past.length - 1];
     const newPast = past.slice(0, -1);
 
+    // Detect what changed
+    const currentIds = new Set(objects.map(o => o.id));
+    const previousIds = new Set(previous.objects.map(o => o.id));
+    
+    // Find added, removed, or modified objects
+    const changedIds = [
+      ...previous.objects.filter(o => !currentIds.has(o.id)).map(o => o.id), // Restored objects
+      ...objects.filter(o => !previousIds.has(o.id)).map(o => o.id), // Removed objects (track for animation)
+    ];
+
     set({
       past: newPast,
       objects: previous.objects,
       future: [{ objects: JSON.parse(JSON.stringify(objects)) }, ...future],
       selectedId: null,
+      undoRedoChangedIds: changedIds,
+      lastAction: 'undo',
     });
+
+    // Clear highlight after animation
+    setTimeout(() => {
+      set({ undoRedoChangedIds: [], lastAction: null });
+    }, 600);
   },
 
   redo: () => {
@@ -607,12 +630,29 @@ export const useDeckForgeStore = create<DeckForgeState>((set, get) => ({
     const next = future[0];
     const newFuture = future.slice(1);
 
+    // Detect what changed
+    const currentIds = new Set(objects.map(o => o.id));
+    const nextIds = new Set(next.objects.map(o => o.id));
+    
+    // Find added, removed, or modified objects
+    const changedIds = [
+      ...next.objects.filter(o => !currentIds.has(o.id)).map(o => o.id), // Re-added objects
+      ...objects.filter(o => !nextIds.has(o.id)).map(o => o.id), // About to be removed
+    ];
+
     set({
       past: [...past, { objects: JSON.parse(JSON.stringify(objects)) }],
       objects: next.objects,
       future: newFuture,
       selectedId: null,
+      undoRedoChangedIds: changedIds,
+      lastAction: 'redo',
     });
+
+    // Clear highlight after animation
+    setTimeout(() => {
+      set({ undoRedoChangedIds: [], lastAction: null });
+    }, 600);
   },
 
   toggleTexture: (id) => {
