@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Download, Instagram, MessageCircle, Printer, FileImage, Loader2 } from 'lucide-react';
+import { Download, Instagram, MessageCircle, Printer, FileImage, Loader2, Crown, Sparkles } from 'lucide-react';
 import { exportToPNG } from '@/lib/export';
 import { useDeckForgeStore } from '@/store/deckforge';
 import { toast } from 'sonner';
@@ -15,6 +15,7 @@ interface ExportPreset {
   height: number;
   scale: number; // Multiplier for resolution
   format: 'png' | 'jpg';
+  isPro?: boolean; // Premium feature
 }
 
 const presets: ExportPreset[] = [
@@ -57,6 +58,39 @@ const presets: ExportPreset[] = [
     height: 294, // Native deck height
     scale: 10, // 10x for print quality
     format: 'png',
+  },
+  {
+    id: 'ultra-hd-6x',
+    name: 'Ultra HD (6x)',
+    description: 'Professional • 576×1764px',
+    icon: <Crown className="w-5 h-5" />,
+    width: 96,
+    height: 294,
+    scale: 6,
+    format: 'png',
+    isPro: true,
+  },
+  {
+    id: 'ultra-hd-8x',
+    name: 'Ultra HD (8x)',
+    description: 'Gallery Quality • 768×2352px',
+    icon: <Crown className="w-5 h-5" />,
+    width: 96,
+    height: 294,
+    scale: 8,
+    format: 'png',
+    isPro: true,
+  },
+  {
+    id: 'ultra-hd-12x',
+    name: 'Ultra HD (12x)',
+    description: 'Museum Grade • 1152×3528px',
+    icon: <Sparkles className="w-5 h-5" />,
+    width: 96,
+    height: 294,
+    scale: 12,
+    format: 'png',
+    isPro: true,
   },
   {
     id: 'web-preview',
@@ -169,7 +203,14 @@ export function ExportPresetsModal({ open, onClose }: ExportPresetsModalProps) {
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-medium text-sm mb-0.5">{preset.name}</h3>
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <h3 className="font-medium text-sm">{preset.name}</h3>
+                    {preset.isPro && (
+                      <span className="text-[10px] font-bold bg-gradient-to-r from-amber-500 to-orange-500 text-white px-1.5 py-0.5 rounded">
+                        PRO
+                      </span>
+                    )}
+                  </div>
                   <p className="text-xs text-muted-foreground">{preset.description}</p>
                   <div className="flex items-center gap-2 mt-1">
                     <span className="text-[10px] font-mono bg-secondary px-1.5 py-0.5 rounded">
@@ -178,6 +219,11 @@ export function ExportPresetsModal({ open, onClose }: ExportPresetsModalProps) {
                     <span className="text-[10px] text-muted-foreground">
                       {preset.scale}x resolution
                     </span>
+                    {preset.isPro && (
+                      <span className="text-[10px] text-amber-500 font-medium">
+                        ✨ Premium
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -190,7 +236,13 @@ export function ExportPresetsModal({ open, onClose }: ExportPresetsModalProps) {
 
           <div className="mt-4 p-3 rounded-lg bg-muted/50 border border-border">
             <p className="text-xs text-muted-foreground">
-              💡 <strong>Tip:</strong> Print Quality exports at 10x resolution for crisp physical prints. Web Preview uses JPG for smaller file sizes.
+              💡 <strong>Tip:</strong> Ultra HD exports (6x-12x) provide gallery and museum-quality resolution for professional printing. Print Quality (10x) is perfect for crisp physical decks. Web Preview uses JPG for smaller file sizes.
+            </p>
+          </div>
+
+          <div className="mt-3 p-3 rounded-lg bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20">
+            <p className="text-xs text-amber-700 dark:text-amber-400 font-medium">
+              ⚡ Ultra HD exports generate very large files (10-50MB) but deliver unmatched print quality. Perfect for professional manufacturing and archival purposes.
             </p>
           </div>
         </div>
