@@ -1,5 +1,5 @@
 import { Download, Grid3X3, RotateCcw, ChevronDown, Type, Lock, Unlock, ArrowUp, ArrowDown, ChevronsUp, ChevronsDown } from 'lucide-react';
-import { useState, useEffect, memo, useMemo } from 'react';
+import { useState, useEffect, memo, useMemo, useRef } from 'react';
 import { useDeckForgeStore, CanvasObject } from '@/store/deckforge';
 import { Slider } from '@/components/ui/slider';
 import { Input } from '@/components/ui/input';
@@ -35,6 +35,34 @@ export function Inspector() {
   // Font management state
   const [isFontModalOpen, setIsFontModalOpen] = useState(false);
   const [userFonts, setUserFonts] = useState<Font[]>([]);
+
+  // Ref for scrollable properties container
+  const propertiesPanelRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to relevant section when object type changes
+  useEffect(() => {
+    if (!selectedObject || !propertiesPanelRef.current) return;
+
+    // Map object types to section identifiers (data attributes or IDs)
+    const sectionMap: Record<string, string> = {
+      text: 'text-controls',
+      sticker: 'sticker-controls',
+      shape: 'shape-controls',
+      image: 'image-controls',
+      path: 'path-controls',
+      pattern: 'pattern-controls',
+    };
+
+    const sectionId = sectionMap[selectedObject.type];
+    if (!sectionId) return;
+
+    // Find the section element
+    const sectionElement = propertiesPanelRef.current.querySelector(`[data-section="${sectionId}"]`);
+    if (sectionElement) {
+      // Scroll smoothly to the section
+      sectionElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [selectedObject?.type, selectedObject?.id]);
 
   // Load user fonts on mount
   useEffect(() => {
@@ -78,7 +106,7 @@ export function Inspector() {
       </div>
 
       {/* Properties panel */}
-      <div className="flex-1 overflow-auto">
+      <div ref={propertiesPanelRef} className="flex-1 overflow-auto">
         {selectedObject ? (
           <div className="p-3 space-y-4">
             <div className="py-2 border-b border-border flex items-center justify-between">
@@ -295,7 +323,7 @@ export function Inspector() {
 
             {/* Pattern Controls (for shapes with patterns) */}
             {selectedObject.type === 'shape' && selectedObject.patternType && (
-              <div className="pt-4 border-t border-border space-y-4">
+              <div data-section="shape-controls" className="pt-4 border-t border-border space-y-4">
                 <div className="py-2">
                   <span className="font-display text-[10px] uppercase tracking-widest text-muted-foreground">
                     Pattern Settings
@@ -361,7 +389,7 @@ export function Inspector() {
 
             {/* Color Tint (for images/paths) */}
             {(selectedObject.type === 'image' || selectedObject.type === 'path') && (
-              <div className="space-y-2">
+              <div data-section={selectedObject.type === 'image' ? 'image-controls' : 'path-controls'} className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
                     Color Tint
@@ -395,7 +423,7 @@ export function Inspector() {
 
             {/* Sticker-specific controls */}
             {selectedObject.type === 'sticker' && (
-              <div className="pt-4 border-t border-border space-y-4">
+              <div data-section="sticker-controls" className="pt-4 border-t border-border space-y-4">
                 <div className="py-2">
                   <span className="font-display text-[10px] uppercase tracking-widest text-muted-foreground">
                     Sticker Options
@@ -715,7 +743,7 @@ export function Inspector() {
 
             {/* Text specific */}
             {selectedObject.type === 'text' && (
-              <>
+              <div data-section="text-controls">
                 <div className="space-y-2">
                   <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
                     Text
@@ -994,7 +1022,7 @@ export function Inspector() {
                     </AccordionContent>
                   </AccordionItem>
                 </Accordion>
-              </>
+              </div>
             )}
 
             {/* Filters Section - Punk Zine Aesthetic */}
