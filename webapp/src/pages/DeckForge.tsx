@@ -6,6 +6,7 @@ import { Inspector } from '@/components/deckforge/Inspector';
 import { BatchActionsToolbar } from '@/components/deckforge/BatchActionsToolbar';
 import { MobileToolbar } from '@/components/deckforge/MobileToolbar';
 import { AlignmentTools } from '@/components/deckforge/AlignmentTools';
+import { DeckSizeSelector } from '@/components/deckforge/DeckSizeSelector';
 import { useDebounce } from '@/hooks/use-debounce';
 
 // Lazy load modals for better performance
@@ -969,6 +970,9 @@ export default function DeckForge() {
                   </TooltipContent>
                 </Tooltip>
               </div>
+              
+              {/* Deck Size Selector */}
+              <DeckSizeSelector />
               
               <Tooltip delayDuration={300}>
                 <TooltipTrigger asChild>

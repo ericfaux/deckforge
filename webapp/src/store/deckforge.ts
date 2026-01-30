@@ -210,6 +210,9 @@ interface DeckForgeState {
   currentDesignId: string | null;
   designName: string;
   isSaving: boolean;
+  
+  // Deck size configuration
+  deckSizeId: string; // ID of selected deck size (e.g., '32mm', '33.3mm')
 
   // Visual feedback for copy/paste
   copiedObjectId: string | null;
@@ -254,6 +257,7 @@ interface DeckForgeState {
   loadDesign: (designData: any) => void;
   setDesignName: (name: string) => void;
   setDesignId: (id: string | null) => void;
+  setDeckSize: (sizeId: string) => void;
   setSaving: (saving: boolean) => void;
   resetCanvas: () => void;
   getCanvasState: () => any;
@@ -296,6 +300,7 @@ export const useDeckForgeStore = create<DeckForgeState>((set, get) => ({
   currentDesignId: null,
   designName: 'Untitled Design',
   isSaving: false,
+  deckSizeId: '32mm', // Default to industry standard 32mm
   copiedObjectId: null,
   pastedObjectId: null,
   undoRedoChangedIds: [],
@@ -817,6 +822,8 @@ export const useDeckForgeStore = create<DeckForgeState>((set, get) => ({
   setDesignName: (name) => set({ designName: name }),
   
   setDesignId: (id) => set({ currentDesignId: id }),
+  
+  setDeckSize: (sizeId) => set({ deckSizeId: sizeId }),
   
   setSaving: (saving) => set({ isSaving: saving }),
   
