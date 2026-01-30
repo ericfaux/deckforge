@@ -29,6 +29,11 @@ import { designsAPI } from '@/lib/api';
 import { exportToPNG, exportToSVG, downloadBlob } from '@/lib/export';
 import { preloadUserFonts } from '@/lib/fonts';
 import { Button } from '@/components/ui/button';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Save, Download, User, Sparkles, Clock, Menu, Share2, Play, ChevronDown, Palette, Undo, Redo, Type, Ruler, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { KeyboardShortcuts } from '@/components/deckforge/KeyboardShortcuts';
@@ -687,61 +692,111 @@ export default function DeckForge() {
 
               {/* Undo/Redo with history indicator */}
               <div className="flex items-center gap-1 border border-border rounded">
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={undo}
-                  disabled={past.length === 0}
-                  className="gap-1.5 rounded-r-none border-r border-border"
-                  title={`Undo (Ctrl+Z) - ${past.length} action${past.length !== 1 ? 's' : ''} available`}
-                >
-                  <Undo className="w-4 h-4" />
-                  <span className="text-[10px] text-muted-foreground font-mono">
-                    {past.length}
-                  </span>
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={redo}
-                  disabled={future.length === 0}
-                  className="gap-1.5 rounded-l-none"
-                  title={`Redo (Ctrl+Shift+Z) - ${future.length} action${future.length !== 1 ? 's' : ''} available`}
-                >
-                  <Redo className="w-4 h-4" />
-                  <span className="text-[10px] text-muted-foreground font-mono">
-                    {future.length}
-                  </span>
-                </Button>
+                <Tooltip delayDuration={300}>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={undo}
+                      disabled={past.length === 0}
+                      className="gap-1.5 rounded-r-none border-r border-border"
+                    >
+                      <Undo className="w-4 h-4" />
+                      <span className="text-[10px] text-muted-foreground font-mono">
+                        {past.length}
+                      </span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <div className="flex items-center gap-2">
+                      <span>Undo</span>
+                      <kbd className="px-1.5 py-0.5 text-xs bg-muted border border-border rounded font-mono">Ctrl+Z</kbd>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {past.length} action{past.length !== 1 ? 's' : ''} available
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+                <Tooltip delayDuration={300}>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={redo}
+                      disabled={future.length === 0}
+                      className="gap-1.5 rounded-l-none"
+                    >
+                      <Redo className="w-4 h-4" />
+                      <span className="text-[10px] text-muted-foreground font-mono">
+                        {future.length}
+                      </span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <div className="flex items-center gap-2">
+                      <span>Redo</span>
+                      <kbd className="px-1.5 py-0.5 text-xs bg-muted border border-border rounded font-mono">Ctrl+Shift+Z</kbd>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {future.length} action{future.length !== 1 ? 's' : ''} available
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
               </div>
               
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={handleSave}
-                disabled={isSaving}
-                className="gap-2"
-              >
-                {isSaving ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Save className="w-4 h-4" />
-                )}
-                {isSaving ? 'Saving...' : 'Save'}
-              </Button>
+              <Tooltip delayDuration={300}>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleSave}
+                    disabled={isSaving}
+                    className="gap-2"
+                  >
+                    {isSaving ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Save className="w-4 h-4" />
+                    )}
+                    {isSaving ? 'Saving...' : 'Save'}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <div className="flex items-center gap-2">
+                    <span>Save Design</span>
+                    <kbd className="px-1.5 py-0.5 text-xs bg-muted border border-border rounded font-mono">Ctrl+S</kbd>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Save to cloud storage
+                  </p>
+                </TooltipContent>
+              </Tooltip>
 
               <div className="relative">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setShowExportMenu(!showExportMenu)}
-                  disabled={isExporting}
-                  className="gap-2"
-                >
-                  <Download className="w-4 h-4" />
-                  {isExporting ? 'Exporting...' : 'Export'}
-                  <ChevronDown className="w-3 h-3" />
-                </Button>
+                <Tooltip delayDuration={300}>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setShowExportMenu(!showExportMenu)}
+                      disabled={isExporting}
+                      className="gap-2"
+                    >
+                      <Download className="w-4 h-4" />
+                      {isExporting ? 'Exporting...' : 'Export'}
+                      <ChevronDown className="w-3 h-3" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <div className="flex items-center gap-2">
+                      <span>Export Design</span>
+                      <kbd className="px-1.5 py-0.5 text-xs bg-muted border border-border rounded font-mono">Ctrl+E</kbd>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Export as PNG, SVG, or use presets
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
 
                 {showExportMenu && !isExporting && (
                   <div className="absolute top-full mt-1 right-0 z-50 bg-card border border-border shadow-lg min-w-[180px] rounded-lg overflow-hidden">
@@ -777,68 +832,128 @@ export default function DeckForge() {
                 )}
               </div>
 
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setIsBrandKitModalOpen(true)}
-                className="gap-2"
-              >
-                <Palette className="w-4 h-4" />
-                Brand Kits
-                <span className="ml-1 text-[9px] text-accent">PRO</span>
-              </Button>
+              <Tooltip delayDuration={300}>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setIsBrandKitModalOpen(true)}
+                    className="gap-2"
+                  >
+                    <Palette className="w-4 h-4" />
+                    Brand Kits
+                    <span className="ml-1 text-[9px] text-accent">PRO</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <span className="font-semibold">Brand Kits</span>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Save and reuse color palettes and styles
+                  </p>
+                </TooltipContent>
+              </Tooltip>
 
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setIsColorExtractorOpen(true)}
-                className="gap-2"
-              >
-                <Palette className="w-4 h-4" />
-                Extract Colors
-              </Button>
+              <Tooltip delayDuration={300}>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setIsColorExtractorOpen(true)}
+                    className="gap-2"
+                  >
+                    <Palette className="w-4 h-4" />
+                    Extract Colors
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <span className="font-semibold">Extract Colors</span>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Extract color palette from any image
+                  </p>
+                </TooltipContent>
+              </Tooltip>
 
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setIsFontUploadModalOpen(true)}
-                className="gap-2"
-              >
-                <Type className="w-4 h-4" />
-                Custom Fonts
-              </Button>
+              <Tooltip delayDuration={300}>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setIsFontUploadModalOpen(true)}
+                    className="gap-2"
+                  >
+                    <Type className="w-4 h-4" />
+                    Custom Fonts
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <span className="font-semibold">Custom Fonts</span>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Upload and use your own font files
+                  </p>
+                </TooltipContent>
+              </Tooltip>
 
               {currentDesignId && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setIsShareModalOpen(true)}
-                  className="gap-2"
-                >
-                  <Share2 className="w-4 h-4" />
-                  Share
-                </Button>
+                <Tooltip delayDuration={300}>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setIsShareModalOpen(true)}
+                      className="gap-2"
+                    >
+                      <Share2 className="w-4 h-4" />
+                      Share
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <span className="font-semibold">Share Design</span>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Get shareable link or embed code
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
               )}
 
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setIsVersionHistoryOpen(true)}
-                className="gap-2"
-              >
-                <Clock className="w-4 h-4" />
-                History
-              </Button>
+              <Tooltip delayDuration={300}>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setIsVersionHistoryOpen(true)}
+                    className="gap-2"
+                  >
+                    <Clock className="w-4 h-4" />
+                    History
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <span className="font-semibold">Version History</span>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    View and restore previous versions
+                  </p>
+                </TooltipContent>
+              </Tooltip>
 
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setIsAnimationPreviewOpen(true)}
-                className="gap-2"
-              >
-                <Play className="w-4 h-4" />
-                Preview
-              </Button>
+              <Tooltip delayDuration={300}>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setIsAnimationPreviewOpen(true)}
+                    className="gap-2"
+                  >
+                    <Play className="w-4 h-4" />
+                    Preview
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <span className="font-semibold">3D Preview</span>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Animate your deck in 3D rotation
+                  </p>
+                </TooltipContent>
+              </Tooltip>
 
               <Button
                 size="sm"
