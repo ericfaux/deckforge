@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Download, Grid3X3, Ruler, Save, Share2, Trash2, RotateCcw, FolderOpen, ShoppingCart } from 'lucide-react';
+import { Download, Grid3X3, Ruler, Save, Share2, Trash2, RotateCcw, FolderOpen, ShoppingCart, HelpCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import Konva from 'konva';
 import { getShapeForObstacle } from '@/lib/park-shapes';
@@ -16,6 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { ParkBuilderHelp } from '@/components/deckforge/ParkBuilderHelp';
 import {
   saveProject,
   loadProject,
@@ -70,18 +71,31 @@ export default function FingerparkBuilder() {
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [showLoadDialog, setShowLoadDialog] = useState(false);
   const [showMaterialsDialog, setShowMaterialsDialog] = useState(false);
+  const [showHelpDialog, setShowHelpDialog] = useState(false);
   const [saveDescription, setSaveDescription] = useState('');
   const [saveAsPublic, setSaveAsPublic] = useState(false);
   const [myProjects, setMyProjects] = useState<FingerparkProject[]>([]);
   const [materials, setMaterials] = useState<MaterialsEstimate | null>(null);
 
   const addObstacle = (obstacleTemplate: any) => {
+    // Determine obstacle type
+    const obstacleType = obstacleTemplate.id.includes('rail') ? 'rail' :
+                        obstacleTemplate.id.includes('ledge') ? 'ledge' :
+                        obstacleTemplate.id.includes('stair') || obstacleTemplate.id.includes('gap') ? 'stairs' :
+                        obstacleTemplate.id.includes('ramp') || obstacleTemplate.id.includes('quarter') || obstacleTemplate.id.includes('bank') || obstacleTemplate.id.includes('launch') || obstacleTemplate.id.includes('pipe') ? 'ramp' : 'box';
+    
+    // Color code by type for better visibility
+    const colorByType = {
+      'ramp': '#D4AF37',    // Gold - transition obstacles
+      'rail': '#C0C0C0',    // Silver - grind obstacles
+      'ledge': '#A0A0A0',   // Gray - ledge obstacles
+      'stairs': '#8B7355',  // Brown - stairs/gaps
+      'box': '#8B4513',     // Dark brown - boxes/platforms
+    };
+    
     const newObstacle: ParkObject = {
       id: `${obstacleTemplate.id}-${Date.now()}`,
-      type: obstacleTemplate.id.includes('rail') ? 'rail' :
-            obstacleTemplate.id.includes('ledge') ? 'ledge' :
-            obstacleTemplate.id.includes('stair') || obstacleTemplate.id.includes('gap') ? 'stairs' :
-            obstacleTemplate.id.includes('ramp') || obstacleTemplate.id.includes('quarter') || obstacleTemplate.id.includes('bank') || obstacleTemplate.id.includes('launch') ? 'ramp' : 'box',
+      type: obstacleType,
       subtype: obstacleTemplate.id,
       x: CANVAS_WIDTH / 2 - (obstacleTemplate.defaultLength * GRID_SIZE) / 2,
       y: CANVAS_HEIGHT / 2 - (obstacleTemplate.defaultWidth * GRID_SIZE) / 2,
@@ -89,7 +103,7 @@ export default function FingerparkBuilder() {
       length: obstacleTemplate.defaultLength * GRID_SIZE,
       height: obstacleTemplate.defaultHeight,
       rotation: 0,
-      color: '#8B4513', // Brown wood color
+      color: colorByType[obstacleType as keyof typeof colorByType] || '#8B4513',
     };
 
     setObjects([...objects, newObstacle]);
@@ -185,7 +199,18 @@ export default function FingerparkBuilder() {
       <div className="border-b border-border bg-card px-4 py-3">
         <div className="max-w-[1800px] mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <h1 className="text-xl font-bold text-foreground">Fingerpark Builder</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl font-bold text-foreground">Fingerpark Builder</h1>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowHelpDialog(true)}
+                className="gap-1.5 text-primary hover:text-primary"
+              >
+                <HelpCircle className="w-4 h-4" />
+                <span className="text-xs">What is this?</span>
+              </Button>
+            </div>
             <Input
               value={parkName}
               onChange={(e) => setParkName(e.target.value)}
@@ -416,29 +441,39 @@ export default function FingerparkBuilder() {
                       >
                         {shape && shape.type === 'polygon' && shape.points ? (
                           // Render realistic shape with polygon
-                          <Line
-                            points={shape.points}
-                            closed
-                            fill={obj.color}
-                            stroke={isSelected ? '#3b82f6' : '#666'}
-                            strokeWidth={isSelected ? 3 : 1}
-                            shadowColor="black"
-                            shadowBlur={5}
-                            shadowOpacity={0.3}
-                            shadowOffsetY={2}
-                          />
+                          <>
+                            <Line
+                              points={shape.points}
+                              closed
+                              fill={obj.color}
+                              stroke={isSelected ? '#3b82f6' : '#000'}
+                              strokeWidth={isSelected ? 3 : 2}
+                              shadowColor="black"
+                              shadowBlur={8}
+                              shadowOpacity={0.4}
+                              shadowOffsetY={3}
+                            />
+                            {/* Inner highlight for depth */}
+                            <Line
+                              points={shape.points}
+                              closed
+                              stroke="rgba(255, 255, 255, 0.2)"
+                              strokeWidth={1}
+                              listening={false}
+                            />
+                          </>
                         ) : (
                           // Fallback to simple rectangle
                           <Rect
                             width={obj.length}
                             height={obj.width}
                             fill={obj.color}
-                            stroke={isSelected ? '#3b82f6' : '#666'}
-                            strokeWidth={isSelected ? 3 : 1}
+                            stroke={isSelected ? '#3b82f6' : '#000'}
+                            strokeWidth={isSelected ? 3 : 2}
                             shadowColor="black"
-                            shadowBlur={5}
-                            shadowOpacity={0.3}
-                            shadowOffsetY={2}
+                            shadowBlur={8}
+                            shadowOpacity={0.4}
+                            shadowOffsetY={3}
                           />
                         )}
                         <Text
@@ -765,6 +800,9 @@ export default function FingerparkBuilder() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Help Dialog */}
+      <ParkBuilderHelp open={showHelpDialog} onOpenChange={setShowHelpDialog} />
     </div>
   );
 }
