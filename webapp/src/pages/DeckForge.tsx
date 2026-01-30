@@ -22,6 +22,7 @@ const TemplateGalleryModal = lazy(() => import('@/components/deckforge/TemplateG
 const DeckGenerator3D = lazy(() => import('@/components/deckforge/DeckGenerator3D').then(m => ({ default: m.default })));
 import { MobileDrawer } from '@/components/deckforge/MobileDrawer';
 import { LayerList } from '@/components/deckforge/LayerList';
+import { ComponentErrorBoundary } from '@/components/ComponentErrorBoundary';
 import { DECK_WIDTH, DECK_HEIGHT } from '@/components/deckforge/WorkbenchStage';
 import { useDeckForgeStore, CanvasObject } from '@/store/deckforge';
 import { useAuthStore } from '@/store/auth';
@@ -1212,9 +1213,15 @@ export default function DeckForge() {
         {!isMobile && (
           <>
             <ToolRail />
-            <ToolDrawer />
-            <WorkbenchStage />
-            <Inspector />
+            <ComponentErrorBoundary componentName="Tool Drawer">
+              <ToolDrawer />
+            </ComponentErrorBoundary>
+            <ComponentErrorBoundary componentName="Canvas">
+              <WorkbenchStage />
+            </ComponentErrorBoundary>
+            <ComponentErrorBoundary componentName="Inspector">
+              <Inspector />
+            </ComponentErrorBoundary>
           </>
         )}
 
@@ -1222,8 +1229,12 @@ export default function DeckForge() {
         {isMobile && (
           <>
             <ToolRail />
-            <ToolDrawer />
-            <WorkbenchStage />
+            <ComponentErrorBoundary componentName="Tool Drawer">
+              <ToolDrawer />
+            </ComponentErrorBoundary>
+            <ComponentErrorBoundary componentName="Canvas">
+              <WorkbenchStage />
+            </ComponentErrorBoundary>
           </>
         )}
       </div>
@@ -1247,7 +1258,9 @@ export default function DeckForge() {
         onClose={() => setMobileInspectorOpen(false)}
         title="Properties"
       >
-        <Inspector />
+        <ComponentErrorBoundary componentName="Inspector">
+          <Inspector />
+        </ComponentErrorBoundary>
       </MobileDrawer>
 
       <MobileDrawer
@@ -1255,7 +1268,9 @@ export default function DeckForge() {
         onClose={() => setMobileLayersOpen(false)}
         title="Layers"
       >
-        <LayerList />
+        <ComponentErrorBoundary componentName="Layers Panel">
+          <LayerList />
+        </ComponentErrorBoundary>
       </MobileDrawer>
 
       <MobileDrawer
