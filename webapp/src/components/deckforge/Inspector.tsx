@@ -1,5 +1,5 @@
 import { Download, Grid3X3, RotateCcw, ChevronDown, Type, Lock, Unlock, ArrowUp, ArrowDown, ChevronsUp, ChevronsDown } from 'lucide-react';
-import { useState, useEffect, memo } from 'react';
+import { useState, useEffect, memo, useMemo } from 'react';
 import { useDeckForgeStore, CanvasObject } from '@/store/deckforge';
 import { Slider } from '@/components/ui/slider';
 import { Input } from '@/components/ui/input';
@@ -22,7 +22,11 @@ import {
 
 export function Inspector() {
   const { objects, selectedId, updateObject, saveToHistory, generatePattern, moveLayer, bringToFront, sendToBack } = useDeckForgeStore();
-  const selectedObject = objects.find((obj) => obj.id === selectedId);
+  
+  // Memoize selected object lookup to avoid recalculating on every render
+  const selectedObject = useMemo(() => {
+    return objects.find((obj) => obj.id === selectedId);
+  }, [objects, selectedId]);
 
   // Pattern generator state
   const [patternGap, setPatternGap] = useState(5);

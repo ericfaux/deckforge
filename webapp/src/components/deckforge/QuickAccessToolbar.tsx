@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useDeckForgeStore } from '@/store/deckforge';
 import { Button } from '@/components/ui/button';
 import { EnhancedTooltip } from '@/components/ui/enhanced-tooltip';
@@ -47,11 +47,20 @@ export function QuickAccessToolbar() {
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  const selectedObjects = objects.filter((obj) => selectedIds.includes(obj.id));
-  const allLocked = selectedObjects.length > 0 && selectedObjects.every((obj) => obj.locked);
-  const anyLocked = selectedObjects.some((obj) => obj.locked);
-  const allHidden = selectedObjects.length > 0 && selectedObjects.every((obj) => obj.hidden);
-  const anyHidden = selectedObjects.some((obj) => obj.hidden);
+  // Memoize selected objects to avoid filtering on every render
+  const selectedObjects = useMemo(() => {
+    return objects.filter((obj) => selectedIds.includes(obj.id));
+  }, [objects, selectedIds]);
+
+  // Memoize computed properties
+  const { allLocked, anyLocked, allHidden, anyHidden } = useMemo(() => {
+    return {
+      allLocked: selectedObjects.length > 0 && selectedObjects.every((obj) => obj.locked),
+      anyLocked: selectedObjects.some((obj) => obj.locked),
+      allHidden: selectedObjects.length > 0 && selectedObjects.every((obj) => obj.hidden),
+      anyHidden: selectedObjects.some((obj) => obj.hidden),
+    };
+  }, [selectedObjects]);
 
   const handleDuplicate = () => {
     if (selectedIds.length === 0) return;

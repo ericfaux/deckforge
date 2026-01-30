@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState, useCallback, memo } from 'react';
+import { useRef, useEffect, useState, useCallback, memo, useMemo } from 'react';
 import { useDeckForgeStore, CanvasObject } from '@/store/deckforge';
 import { ZoomControls } from './ZoomControls';
 import { PenTool } from './PenTool';
@@ -988,9 +988,24 @@ export function WorkbenchStage() {
     return () => window.removeEventListener('resize', updateSize);
   }, []);
 
+  // Memoize visible objects (filter only when objects change)
+  const visibleObjects = useMemo(() => {
+    return objects.filter(obj => !obj.hidden);
+  }, [objects]);
+
+  // Memoize selected object lookup
+  const selectedObject = useMemo(() => {
+    return selectedId ? objects.find(obj => obj.id === selectedId) : null;
+  }, [objects, selectedId]);
+
   // Calculate center position for deck
-  const deckX = containerSize.width / 2 - (DECK_WIDTH * stageScale) / 2;
-  const deckY = containerSize.height / 2 - (DECK_HEIGHT * stageScale) / 2;
+  const deckX = useMemo(() => {
+    return containerSize.width / 2 - (DECK_WIDTH * stageScale) / 2;
+  }, [containerSize.width, stageScale]);
+
+  const deckY = useMemo(() => {
+    return containerSize.height / 2 - (DECK_HEIGHT * stageScale) / 2;
+  }, [containerSize.height, stageScale]);
 
   // Handle wheel zoom
   const handleWheel = useCallback((e: React.WheelEvent) => {
@@ -1287,7 +1302,7 @@ export function WorkbenchStage() {
             transform={`translate(${deckX}, ${deckY}) scale(${stageScale})`}
             style={{ transition: 'transform 0.15s cubic-bezier(0.4, 0, 0.2, 1)' }}
           >
-            {objects.filter(obj => !obj.hidden).map((obj) => {
+            {visibleObjects.map((obj) => {
               // Apply visual feedback classes
               const visualClasses = [
                 obj.id === copiedObjectId ? 'copy-flash' : '',
@@ -1335,12 +1350,11 @@ export function WorkbenchStage() {
 
             {/* Transform handles for selected object */}
             {selectedId && activeTool !== 'pen' && !isDraggingObject && (() => {
-              const selectedObj = objects.find(obj => obj.id === selectedId);
-              if (!selectedObj || selectedObj.locked) return null;
+              if (!selectedObject || selectedObject.locked) return null;
               
               return (
                 <TransformHandles
-                  object={selectedObj}
+                  object={selectedObject}
                   stageScale={stageScale}
                   deckX={deckX}
                   deckY={deckY}
