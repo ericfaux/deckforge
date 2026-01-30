@@ -6,6 +6,7 @@ import { TransformHandles } from './TransformHandles';
 import { SnapGuides, calculateSnapGuides } from './SnapGuides';
 import { RulerOverlay } from './RulerOverlay';
 import { ContextMenu } from './ContextMenu';
+import { SelectionBox } from './SelectionBox';
 import type { LucideIcon } from 'lucide-react';
 import { Skull, Flame, Zap, Sword, Ghost, Bug, Eye, Target, Radio, Disc3, Music2, Rocket, Crown, Anchor, Sun, Moon, Triangle, Hexagon, Circle, Square, Star, Heart, Sparkles, Hand, Cat, Dog, Fish, Bird, Leaf, Cloud } from 'lucide-react';
 import { toast } from 'sonner';
@@ -1317,6 +1318,15 @@ export function WorkbenchStage() {
             stageScale={stageScale}
             enabled={showRulers}
           />
+
+          {/* Selection box for multi-select */}
+          <g transform={`translate(${deckX}, ${deckY}) scale(${stageScale})`}>
+            <SelectionBox
+              deckX={deckX}
+              deckY={deckY}
+              stageScale={stageScale}
+            />
+          </g>
 
           {/* Texture overlays with blend modes */}
           {enabledTextures.map((texture) => (
