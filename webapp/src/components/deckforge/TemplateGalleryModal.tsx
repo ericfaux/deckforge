@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { X, Search, Download, Star } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { X, Search, Download, Star, ChevronLeft, ChevronRight } from 'lucide-react';
 import { CanvasObject } from '@/store/deckforge';
 import { useDeckForgeStore } from '@/store/deckforge';
 import { toast } from 'sonner';
@@ -841,9 +841,12 @@ const TEMPLATES: Template[] = [
   },
 ];
 
+const ITEMS_PER_PAGE = 6;
+
 export function TemplateGalleryModal({ isOpen, onClose }: TemplateGalleryModalProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [currentPage, setCurrentPage] = useState(1);
   const { setObjects, saveToHistory } = useDeckForgeStore();
 
   if (!isOpen) return null;
@@ -857,14 +860,42 @@ export function TemplateGalleryModal({ isOpen, onClose }: TemplateGalleryModalPr
     { value: 'pro', label: 'Pro' },
   ];
 
-  // Filter templates
-  const filteredTemplates = TEMPLATES.filter((template) => {
-    const matchesSearch =
-      template.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      template.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || template.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
+  // Filter and paginate templates
+  const { filteredTemplates, paginatedTemplates, totalPages, startIndex, endIndex } = useMemo(() => {
+    // Filter templates
+    const filtered = TEMPLATES.filter((template) => {
+      const matchesSearch =
+        template.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        template.description.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesCategory = selectedCategory === 'all' || template.category === selectedCategory;
+      return matchesSearch && matchesCategory;
+    });
+
+    // Calculate pagination
+    const total = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    const end = start + ITEMS_PER_PAGE;
+    const paginated = filtered.slice(start, end);
+
+    return {
+      filteredTemplates: filtered,
+      paginatedTemplates: paginated,
+      totalPages: total,
+      startIndex: start,
+      endIndex: Math.min(end, filtered.length),
+    };
+  }, [searchQuery, selectedCategory, currentPage]);
+
+  // Reset to page 1 when search/filter changes
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+    setCurrentPage(1);
+  };
+
+  const handleCategoryChange = (value: string) => {
+    setSelectedCategory(value);
+    setCurrentPage(1);
+  };
 
   const handleUseTemplate = (template: Template) => {
     // Deep clone objects to prevent reference issues
@@ -907,7 +938,7 @@ export function TemplateGalleryModal({ isOpen, onClose }: TemplateGalleryModalPr
               type="text"
               placeholder="Search templates..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => handleSearchChange(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
@@ -917,7 +948,7 @@ export function TemplateGalleryModal({ isOpen, onClose }: TemplateGalleryModalPr
             {categories.map((cat) => (
               <button
                 key={cat.value}
-                onClick={() => setSelectedCategory(cat.value)}
+                onClick={() => handleCategoryChange(cat.value)}
                 className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                   selectedCategory === cat.value
                     ? 'bg-blue-500 text-white'
@@ -940,8 +971,14 @@ export function TemplateGalleryModal({ isOpen, onClose }: TemplateGalleryModalPr
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredTemplates.map((template) => (
+            <>
+              {/* Results count */}
+              <div className="mb-4 text-sm text-gray-600 dark:text-gray-400">
+                Showing {startIndex + 1}-{endIndex} of {filteredTemplates.length} templates
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {paginatedTemplates.map((template) => (
                 <div
                   key={template.id}
                   className="group border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden hover:shadow-lg transition-all cursor-pointer bg-white dark:bg-gray-900"
@@ -976,6 +1013,44 @@ export function TemplateGalleryModal({ isOpen, onClose }: TemplateGalleryModalPr
                 </div>
               ))}
             </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="mt-8 flex items-center justify-center gap-4">
+                <button
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+
+                <div className="flex items-center gap-2">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`px-3 py-1 rounded-lg font-medium transition-colors ${
+                        currentPage === page
+                          ? 'bg-blue-500 text-white'
+                          : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                </div>
+
+                <button
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              </div>
+            )}
+          </>
           )}
         </div>
 
