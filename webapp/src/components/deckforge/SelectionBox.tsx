@@ -84,7 +84,7 @@ export function SelectionBox({ deckX, deckY, stageScale }: SelectionBoxProps) {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isDrawing, startPoint, endPoint, objects, selectMultiple, activeTool, deckX, deckY, stageScale]);
+  }, [isDrawing, startPoint, endPoint, objects, activeTool, deckX, deckY, stageScale, setSelectedIds]);
 
   if (!isDrawing) return null;
 
