@@ -33,6 +33,7 @@ import { Save, Download, User, Sparkles, Clock, Menu, Share2, Play, ChevronDown,
 import { useNavigate } from 'react-router-dom';
 import { KeyboardShortcuts } from '@/components/deckforge/KeyboardShortcuts';
 import { CommandPalette } from '@/components/CommandPalette';
+import { QuickAccessToolbar } from '@/components/deckforge/QuickAccessToolbar';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -934,6 +935,9 @@ export default function DeckForge() {
           )}
         </div>
       </header>
+
+      {/* Quick Access Toolbar */}
+      {!isMobile && <QuickAccessToolbar />}
 
       {/* Main content */}
       <div className={cn(
