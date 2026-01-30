@@ -861,6 +861,17 @@ export default function DeckForge() {
 
               <Button
                 size="sm"
+                variant="outline"
+                onClick={() => navigate('/fingerpark')}
+                className="gap-2"
+              >
+                <Ruler className="w-4 h-4" />
+                Park Builder
+                <span className="ml-1 text-[9px] text-primary">NEW</span>
+              </Button>
+
+              <Button
+                size="sm"
                 variant="ghost"
                 onClick={() => navigate('/gallery')}
                 className="gap-2"
