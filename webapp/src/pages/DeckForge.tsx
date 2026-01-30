@@ -47,6 +47,7 @@ export default function DeckForge() {
   const [isVersionHistoryOpen, setIsVersionHistoryOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isAnimationPreviewOpen, setIsAnimationPreviewOpen] = useState(false);
+  const [isShortcutsModalOpen, setIsShortcutsModalOpen] = useState(false);
   const [isBrandKitModalOpen, setIsBrandKitModalOpen] = useState(false);
   const [isFontUploadModalOpen, setIsFontUploadModalOpen] = useState(false);
   const [isArrayDuplicateOpen, setIsArrayDuplicateOpen] = useState(false);
@@ -635,6 +636,13 @@ export default function DeckForge() {
           return;
         }
       }
+
+      // Show keyboard shortcuts (?)
+      if (key === '?' || (e.shiftKey && key === '/')) {
+        e.preventDefault();
+        setIsShortcutsModalOpen(true);
+        return;
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
@@ -903,7 +911,10 @@ export default function DeckForge() {
                 <Ruler className="w-4 h-4" />
               </Button>
 
-              <KeyboardShortcuts />
+              <KeyboardShortcuts 
+                open={isShortcutsModalOpen}
+                onOpenChange={setIsShortcutsModalOpen}
+              />
             </>
           )}
 

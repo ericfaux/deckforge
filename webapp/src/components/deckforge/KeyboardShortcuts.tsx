@@ -93,8 +93,17 @@ function KeyboardKey({ text }: { text: string }) {
   );
 }
 
-export function KeyboardShortcuts() {
-  const [open, setOpen] = useState(false);
+interface KeyboardShortcutsProps {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
+
+export function KeyboardShortcuts({ open: controlledOpen, onOpenChange }: KeyboardShortcutsProps = {}) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  
+  // Use controlled state if provided, otherwise use internal state
+  const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
+  const setOpen = onOpenChange || setInternalOpen;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
