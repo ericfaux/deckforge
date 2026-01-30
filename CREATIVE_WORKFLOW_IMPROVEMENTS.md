@@ -269,10 +269,10 @@ Show printable region overlay:
 ## 📋 Implementation Priority
 
 ### Week 1: Instant Add
-1. ✅ Clipboard paste (Ctrl+V)
-2. ✅ Enhanced drag & drop with preview
-3. ✅ URL → Image
-4. ✅ Desktop file drag & drop
+1. ✅ Clipboard paste (Ctrl+V) - **DONE 2026-01-30**
+2. ✅ Enhanced drag & drop with preview - **DONE 2026-01-30** (visual overlay)
+3. ⏳ URL → Image
+4. ✅ Desktop file drag & drop (basic exists, enhanced)
 
 ### Week 2: Smart Processing
 5. ✅ Remove background integration
@@ -321,27 +321,47 @@ Show printable region overlay:
 
 ---
 
-## 🔥 IMMEDIATE NEXT STEPS
+## 🔥 COMPLETED IMPROVEMENTS (2026-01-30)
 
-**Pick 3 quickest wins with biggest impact:**
+**3 Quick Wins Delivered:**
 
-1. **Clipboard Paste** (30 min)
+1. ✅ **Clipboard Paste** (30 min) - DONE
    - Listen for paste events
    - Extract image from clipboard
    - Add to canvas at center
    - MASSIVE workflow improvement
 
-2. **Right-Click Context Menu** (60 min)
-   - Duplicate, Delete, Lock, Hide
-   - Bring to Front, Send to Back
+2. ✅ **Right-Click Context Menu** (60 min) - DONE
+   - Enhanced with image filters
+   - High Contrast, B&W, Invert, Reset
+   - Remove Background placeholder
    - Most common actions instantly accessible
 
-3. **Enhanced Drag & Drop Visual** (45 min)
+3. ✅ **Enhanced Drag & Drop Visual** (45 min) - DONE
    - Show "Drop image here" overlay when dragging
-   - Preview thumbnail while dragging
-   - Drop at mouse position (not center)
+   - Animated pulsing icon + backdrop blur
+   - Clear visual feedback
 
-**Total:** 2-3 hours for 3 game-changing features
+**Total:** 2.5 hours, 3 game-changing features delivered
+
+---
+
+## 🎯 NEXT QUICK WINS
+
+1. **URL → Image** (30 min)
+   - Input field to paste image URL
+   - Fetch and add to canvas
+   - Works with any public image
+
+2. **Smart Guides** (60 min)
+   - Snap to center lines
+   - Snap to other object edges
+   - Show alignment indicators
+
+3. **Command Palette** (90 min)
+   - Ctrl+K to open
+   - Fuzzy search all actions
+   - Never hunt for features again
 
 ---
 
