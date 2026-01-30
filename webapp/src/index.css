@@ -126,3 +126,44 @@
     @apply border-primary bg-primary/10 text-primary;
   }
 }
+
+/* ============================================
+   Keyboard Navigation & Focus Management
+   ============================================ */
+
+/* Only show focus rings when navigating with keyboard (not mouse clicks) */
+body:not(.keyboard-nav) button:focus,
+body:not(.keyboard-nav) a:focus,
+body:not(.keyboard-nav) input:focus,
+body:not(.keyboard-nav) textarea:focus,
+body:not(.keyboard-nav) select:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+/* Enhanced focus styles for keyboard navigation */
+body.keyboard-nav button:focus-visible,
+body.keyboard-nav a:focus-visible,
+body.keyboard-nav [role="button"]:focus-visible {
+  @apply ring-2 ring-primary ring-offset-2 ring-offset-background;
+  outline: none;
+}
+
+body.keyboard-nav input:focus-visible,
+body.keyboard-nav textarea:focus-visible,
+body.keyboard-nav select:focus-visible {
+  @apply ring-2 ring-ring ring-offset-2;
+  outline: none;
+}
+
+/* Skip to content link (for screen readers & keyboard users) */
+.skip-to-content {
+  @apply sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50;
+  @apply bg-primary text-primary-foreground px-4 py-2 rounded-md;
+  @apply ring-2 ring-primary ring-offset-2 ring-offset-background;
+}
+
+/* Visible focus for tool rail items */
+.keyboard-nav .tool-rail-item:focus-visible {
+  @apply ring-2 ring-primary ring-offset-2 ring-offset-card;
+}

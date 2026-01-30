@@ -1177,6 +1177,7 @@ export function WorkbenchStage() {
 
   return (
     <div
+      id="main-canvas"
       className="relative flex-1 h-full overflow-hidden"
       ref={containerRef}
       onDrop={handleDrop}
@@ -1186,6 +1187,7 @@ export function WorkbenchStage() {
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
+      tabIndex={-1}
     >
       {/* Dot grid background */}
       <div className="absolute inset-0 dot-grid bg-background" />

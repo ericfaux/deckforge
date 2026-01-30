@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Breadcrumb } from "@/components/Breadcrumb";
+import { useKeyboardNavigation } from "@/hooks/use-keyboard-navigation";
 import DeckForge from "./pages/DeckForge";
 import Auth from "./pages/Auth";
 import Designs from "./pages/Designs";
@@ -20,9 +21,15 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
+function KeyboardNavigationManager() {
+  useKeyboardNavigation();
+  return null;
+}
+
 const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
+      <KeyboardNavigationManager />
       <TooltipProvider>
         <Toaster />
         <Sonner />

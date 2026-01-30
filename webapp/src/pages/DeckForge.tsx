@@ -690,6 +690,11 @@ export default function DeckForge() {
 
   return (
     <div className="h-screen w-screen flex flex-col bg-background overflow-hidden">
+      {/* Skip to content link for keyboard navigation */}
+      <a href="#main-canvas" className="skip-to-content">
+        Skip to canvas
+      </a>
+
       {/* Command Palette (Cmd+K) */}
       <CommandPalette />
 
