@@ -5,6 +5,7 @@ import { WorkbenchStage } from '@/components/deckforge/WorkbenchStage';
 import { Inspector } from '@/components/deckforge/Inspector';
 import { BatchActionsToolbar } from '@/components/deckforge/BatchActionsToolbar';
 import { MobileToolbar } from '@/components/deckforge/MobileToolbar';
+import { AlignmentTools } from '@/components/deckforge/AlignmentTools';
 
 // Lazy load modals for better performance
 const VersionHistory = lazy(() => import('@/components/deckforge/VersionHistory').then(m => ({ default: m.VersionHistory })));
@@ -347,6 +348,76 @@ export default function DeckForge() {
           toast.error('Selected object is not a group');
         }
         return;
+      }
+
+      // === ALIGNMENT (requires 2+ selected objects) ===
+      
+      if (selectedIds.length >= 2) {
+        const selectedObjects = objects.filter(obj => selectedIds.includes(obj.id));
+        
+        // Align Left (Ctrl+Shift+L)
+        if (ctrl && shift && key === 'l') {
+          e.preventDefault();
+          saveToHistory();
+          const minX = Math.min(...selectedObjects.map(obj => obj.x));
+          selectedObjects.forEach(obj => updateObject(obj.id, { x: minX }));
+          toast.success('Aligned to left edge');
+          return;
+        }
+        
+        // Align Right (Ctrl+Shift+;)
+        if (ctrl && shift && key === ';') {
+          e.preventDefault();
+          saveToHistory();
+          const maxX = Math.max(...selectedObjects.map(obj => obj.x + obj.width));
+          selectedObjects.forEach(obj => updateObject(obj.id, { x: maxX - obj.width }));
+          toast.success('Aligned to right edge');
+          return;
+        }
+        
+        // Align Center Horizontal (Ctrl+Shift+C)
+        if (ctrl && shift && key === 'c') {
+          e.preventDefault();
+          saveToHistory();
+          const minX = Math.min(...selectedObjects.map(obj => obj.x));
+          const maxX = Math.max(...selectedObjects.map(obj => obj.x + obj.width));
+          const centerX = (minX + maxX) / 2;
+          selectedObjects.forEach(obj => updateObject(obj.id, { x: centerX - obj.width / 2 }));
+          toast.success('Aligned horizontally');
+          return;
+        }
+        
+        // Align Top (Ctrl+Shift+T)
+        if (ctrl && shift && key === 't') {
+          e.preventDefault();
+          saveToHistory();
+          const minY = Math.min(...selectedObjects.map(obj => obj.y));
+          selectedObjects.forEach(obj => updateObject(obj.id, { y: minY }));
+          toast.success('Aligned to top edge');
+          return;
+        }
+        
+        // Align Bottom (Ctrl+Shift+B)
+        if (ctrl && shift && key === 'b') {
+          e.preventDefault();
+          saveToHistory();
+          const maxY = Math.max(...selectedObjects.map(obj => obj.y + obj.height));
+          selectedObjects.forEach(obj => updateObject(obj.id, { y: maxY - obj.height }));
+          toast.success('Aligned to bottom edge');
+          return;
+        }
+        
+        // Align Center Vertical (Ctrl+Shift+M)
+        if (ctrl && shift && key === 'm') {
+          e.preventDefault();
+          saveToHistory();
+          const minY = Math.min(...selectedObjects.map(obj => obj.y));
+          const maxY = Math.max(...selectedObjects.map(obj => obj.y + obj.height));
+          const centerY = (minY + maxY) / 2;
+          selectedObjects.forEach(obj => updateObject(obj.id, { y: centerY - obj.height / 2 }));
+          toast.success('Aligned vertically');
+          return;
+        }
       }
 
       // === NUDGING WITH ARROW KEYS ===
@@ -1098,6 +1169,9 @@ export default function DeckForge() {
 
       {/* Batch Actions Toolbar (appears when multiple objects selected) */}
       <BatchActionsToolbar />
+      
+      {/* Alignment Tools (appears when multiple objects selected) */}
+      <AlignmentTools />
     </div>
   );
 }
