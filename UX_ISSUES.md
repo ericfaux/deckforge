@@ -93,19 +93,18 @@
 - Default: Only "Basic" and "Style" expanded
 - Remember user's collapse preferences
 
-### 4. Left Tool Rail - No Active State Visual Feedback
+### 4. Left Tool Rail - No Active State Visual Feedback ✅ FIXED
 **Severity:** MEDIUM-HIGH  
 **Impact:** Users don't know which tool is selected
 
-**Problem:**
-- Tool buttons lack clear "active" state
-- Hover and active states look too similar
-- No indicator showing current tool
-
-**Solution:**
-- Add strong active state (border + bg color)
-- Add subtle animation on tool switch
-- Maybe add tool name label below active tool
+**Fixed:** 2026-01-30  
+**Solution Implemented:**
+- Added prominent left accent bar (desktop) / top bar (mobile)
+- Enhanced border to 2px with primary color
+- Added subtle shadow glow (shadow-primary/20)
+- Increased icon stroke weight when active
+- Made mobile labels bold + primary colored
+- Smooth slide-in animation for accent bars
 
 ### 5. Layers Panel - No Search/Filter
 **Severity:** MEDIUM-HIGH  
@@ -410,16 +409,16 @@ useEffect(() => {
 
 ## 🎯 PRIORITY FIX ORDER
 
-### Phase 1: Critical (Do First)
-1. Fix toolbar horizontal overflow
-2. Verify CORS fix deployed
-3. Add horizontal scroll or responsive menu
+### Phase 1: Critical ✅ COMPLETE
+1. ✅ Fix toolbar horizontal overflow
+2. ⏳ Verify CORS fix deployed (blocked by backend auth config)
+3. ✅ Add horizontal scroll or responsive menu
 
-### Phase 2: High Priority (Next Week)
-4. Add collapsible sections to Inspector
-5. Improve tool active state visual feedback
-6. Add layer search/filter
-7. Add loading states to modals
+### Phase 2: High Priority (In Progress)
+4. ⏳ Add collapsible sections to Inspector (planned)
+5. ✅ Improve tool active state visual feedback
+6. ⏳ Add layer search/filter
+7. ⏳ Add loading states to modals
 
 ### Phase 3: Medium Priority (Polish Sprint)
 8. Implement click-outside for dropdowns

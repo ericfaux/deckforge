@@ -39,15 +39,27 @@
 **Blockers:**
 - None currently
 
-**Next hour's plan:**
-- Wait for deployment to complete (~2min)
-- Test fixes on live Vercel site with agent-browser
-- Tackle next high-priority UX issues:
-  - Tool Rail active state visual feedback
-  - Layer search/filter functionality
-  - OR Inspector collapsible sections (bigger lift)
+6. ✅ **High-Priority UX Fix: Tool Rail Active State** (Issue #4)
+   - Added prominent accent bars (left for desktop, top for mobile)
+   - Enhanced border to 2px with primary color + shadow glow
+   - Increased icon stroke weight when active (1.5 → 2)
+   - Made mobile labels bold + primary colored
+   - Smooth slide-in animations (200ms)
+   - Now immediately obvious which tool is selected
 
-**Commits:** 3 commits, all pushed to main, deploying now
+**Deployment Status:**
+- Tested live site - found backend auth blocking fonts API (not code issue)
+- Backend requires Vercel authentication (deployment config)
+- Frontend code changes are correct, just need backend to be public or use different URL
+- Documented in BUGS_FOUND.md for Eric
+
+**Next hour's plan:**
+- Continue with high-priority UX fixes:
+  - Layer search/filter functionality
+  - Modal loading states
+  - OR Inspector collapsible sections (bigger lift, high impact)
+
+**Commits:** 4 commits, all pushed to main, deploying now
 
 ---
 
