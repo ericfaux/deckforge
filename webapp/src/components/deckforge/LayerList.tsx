@@ -1,8 +1,10 @@
-import { GripVertical, Eye, EyeOff, Lock, Unlock, Trash2, Type, ImageIcon, Square, Circle, Star, Sticker, Minus, Pen, Mountain, Layers as LayersIcon, Info } from 'lucide-react';
+import { GripVertical, Eye, EyeOff, Lock, Unlock, Trash2, Type, ImageIcon, Square, Circle, Star, Sticker, Minus, Pen, Mountain, Layers as LayersIcon, Info, Search, X, Filter } from 'lucide-react';
 import { useDeckForgeStore, CanvasObject } from '@/store/deckforge';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
+import { useState } from 'react';
 import {
   Tooltip,
   TooltipContent,
@@ -187,9 +189,45 @@ function LayerItem({
 
 export function LayerList() {
   const { objects, selectedId, selectObject, deleteObject, moveLayer } = useDeckForgeStore();
+  
+  // Filter state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showVisibleOnly, setShowVisibleOnly] = useState(false);
+  const [showLockedOnly, setShowLockedOnly] = useState(false);
+  const [showSelectedOnly, setShowSelectedOnly] = useState(false);
+
+  // Filter objects based on search and filters
+  const filteredObjects = objects.filter(obj => {
+    // Search filter
+    if (searchQuery) {
+      const label = getObjectLabel(obj).toLowerCase();
+      if (!label.includes(searchQuery.toLowerCase())) {
+        return false;
+      }
+    }
+    
+    // Visibility filter
+    if (showVisibleOnly && obj.hidden) {
+      return false;
+    }
+    
+    // Locked filter
+    if (showLockedOnly && !obj.locked) {
+      return false;
+    }
+    
+    // Selected filter
+    if (showSelectedOnly && selectedId !== obj.id) {
+      return false;
+    }
+    
+    return true;
+  });
 
   // Reverse order so topmost layer shows first
-  const reversedObjects = [...objects].reverse();
+  const reversedObjects = [...filteredObjects].reverse();
+  
+  const hasActiveFilters = searchQuery || showVisibleOnly || showLockedOnly || showSelectedOnly;
 
   return (
     <div className="border-t border-border">
@@ -198,7 +236,7 @@ export function LayerList() {
           <div className="flex items-center gap-2">
             <LayersIcon className="w-4 h-4 text-accent" />
             <span className="font-display text-xs uppercase tracking-widest text-foreground font-semibold">
-              Layers {objects.length > 0 && `(${objects.length})`}
+              Layers {objects.length > 0 && `(${filteredObjects.length}/${objects.length})`}
             </span>
           </div>
           <Tooltip>
@@ -210,19 +248,107 @@ export function LayerList() {
             <TooltipContent side="left" className="max-w-xs">
               <p className="text-xs font-semibold mb-1">Layers Panel</p>
               <p className="text-xs text-muted-foreground">
-                Shows all elements on your deck. Click to select, hover to reveal delete button.
+                Search layers, filter by state, click to select
               </p>
             </TooltipContent>
           </Tooltip>
         </div>
+        
         {objects.length > 0 && (
-          <p className="text-[9px] text-muted-foreground mt-1">
-            Click layer to select • Hover to delete
-          </p>
+          <div className="mt-2 space-y-2">
+            {/* Search input */}
+            <div className="relative">
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Search layers..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="h-7 pl-7 pr-7 text-xs bg-background border-border"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 flex items-center justify-center hover:bg-secondary rounded transition-colors"
+                >
+                  <X className="w-3 h-3 text-muted-foreground" />
+                </button>
+              )}
+            </div>
+            
+            {/* Filter buttons */}
+            <div className="flex items-center gap-1">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={() => setShowVisibleOnly(!showVisibleOnly)}
+                    className={cn(
+                      "flex items-center gap-1 px-2 py-1 text-[10px] rounded border transition-all duration-200",
+                      showVisibleOnly 
+                        ? "bg-primary/10 border-primary text-primary font-semibold" 
+                        : "bg-secondary border-border text-muted-foreground hover:bg-secondary/80"
+                    )}
+                  >
+                    <Eye className="w-3 h-3" />
+                    <span className="uppercase tracking-wider">Visible</span>
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  <p className="text-xs">Show visible layers only</p>
+                </TooltipContent>
+              </Tooltip>
+              
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={() => setShowLockedOnly(!showLockedOnly)}
+                    className={cn(
+                      "flex items-center gap-1 px-2 py-1 text-[10px] rounded border transition-all duration-200",
+                      showLockedOnly 
+                        ? "bg-primary/10 border-primary text-primary font-semibold" 
+                        : "bg-secondary border-border text-muted-foreground hover:bg-secondary/80"
+                    )}
+                  >
+                    <Lock className="w-3 h-3" />
+                    <span className="uppercase tracking-wider">Locked</span>
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  <p className="text-xs">Show locked layers only</p>
+                </TooltipContent>
+              </Tooltip>
+              
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={() => setShowSelectedOnly(!showSelectedOnly)}
+                    className={cn(
+                      "flex items-center gap-1 px-2 py-1 text-[10px] rounded border transition-all duration-200",
+                      showSelectedOnly 
+                        ? "bg-primary/10 border-primary text-primary font-semibold" 
+                        : "bg-secondary border-border text-muted-foreground hover:bg-secondary/80"
+                    )}
+                  >
+                    <Filter className="w-3 h-3" />
+                    <span className="uppercase tracking-wider">Selected</span>
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  <p className="text-xs">Show selected layer only</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+            
+            {hasActiveFilters && filteredObjects.length === 0 && (
+              <p className="text-[9px] text-muted-foreground italic">
+                No layers match filters
+              </p>
+            )}
+          </div>
         )}
       </div>
       <ScrollArea className="h-48">
-        {reversedObjects.length === 0 ? (
+        {objects.length === 0 ? (
           <div className="p-6 text-center space-y-3 animate-in fade-in-50 duration-500">
             <div className="relative group inline-block">
               {/* Subtle glow effect */}
@@ -243,6 +369,26 @@ export function LayerList() {
                 <kbd className="px-1.5 py-0.5 text-[9px] font-mono bg-muted rounded border border-border">S</kbd> for stickers, or{' '}
                 <kbd className="px-1.5 py-0.5 text-[9px] font-mono bg-muted rounded border border-border">U</kbd> to upload
               </p>
+            </div>
+          </div>
+        ) : reversedObjects.length === 0 ? (
+          <div className="p-6 text-center space-y-2 animate-in fade-in-50 duration-300">
+            <Filter className="w-8 h-8 text-muted-foreground/50 mx-auto" />
+            <div className="space-y-1">
+              <p className="text-xs font-semibold text-muted-foreground">
+                No layers match filters
+              </p>
+              <button
+                onClick={() => {
+                  setSearchQuery('');
+                  setShowVisibleOnly(false);
+                  setShowLockedOnly(false);
+                  setShowSelectedOnly(false);
+                }}
+                className="text-[10px] text-primary hover:underline"
+              >
+                Clear all filters
+              </button>
             </div>
           </div>
         ) : (
