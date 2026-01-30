@@ -46,7 +46,7 @@ import { cn } from '@/lib/utils';
 import { toastUtils } from '@/lib/toast-utils';
 
 export default function DeckForge() {
-  const { selectedId, selectedIds, deleteObject, undo, redo, getCanvasState, currentDesignId, setDesignId, setSaving, isSaving, objects, designName, createVersion, past, future, updateObject, saveToHistory, addObject, selectObject, setActiveTool, stageScale, setStageScale, arrayDuplicate, showRulers, toggleRulers, groupObjects, ungroupObject } = useDeckForgeStore();
+  const { selectedId, selectedIds, deleteObject, undo, redo, getCanvasState, currentDesignId, setDesignId, setSaving, isSaving, objects, designName, createVersion, past, future, updateObject, saveToHistory, addObject, selectObject, setActiveTool, stageScale, setStageScale, arrayDuplicate, showRulers, toggleRulers, groupObjects, ungroupObject, flashCopiedObject, flashPastedObject } = useDeckForgeStore();
   const { isAuthenticated } = useAuthStore();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -485,6 +485,7 @@ export default function DeckForge() {
         if (obj) {
           // Store in sessionStorage (simple clipboard)
           sessionStorage.setItem('deckforge_clipboard', JSON.stringify(obj));
+          flashCopiedObject(selectedId);
           toastUtils.success('Copied to clipboard', 'Press Ctrl+V to paste');
         }
         return;
@@ -498,11 +499,20 @@ export default function DeckForge() {
           try {
             const obj = JSON.parse(clipboardData);
             const { id, ...objWithoutId } = obj;
+            const previousLength = objects.length;
             addObject({
               ...objWithoutId,
               x: obj.x + 20,
               y: obj.y + 20,
             });
+            // Flash the newly pasted object
+            setTimeout(() => {
+              const newObjects = useDeckForgeStore.getState().objects;
+              if (newObjects.length > previousLength) {
+                const newObj = newObjects[newObjects.length - 1];
+                flashPastedObject(newObj.id);
+              }
+            }, 0);
             toastUtils.success('Pasted from clipboard');
           } catch (err) {
             toastUtils.error('Failed to paste', 'The clipboard data may be corrupted');

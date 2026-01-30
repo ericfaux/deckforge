@@ -957,6 +957,8 @@ export function WorkbenchStage() {
     activeTool,
     setActiveTool,
     backgroundColor,
+    copiedObjectId,
+    pastedObjectId,
   } = useDeckForgeStore();
 
   // Handle container resize
@@ -1242,41 +1244,50 @@ export function WorkbenchStage() {
 
           {/* Render all objects inside the clip mask */}
           <g transform={`translate(${deckX}, ${deckY}) scale(${stageScale})`}>
-            {objects.filter(obj => !obj.hidden).map((obj) => (
-              <CanvasObjectItem
-                key={obj.id}
-                obj={obj}
-                isSelected={selectedIds.includes(obj.id)}
-                onSelect={(e) => handleObjectSelect(obj.id, e)}
-                onChange={(updates) => {
-                  updateObject(obj.id, updates);
-                }}
-                deckX={deckX}
-                deckY={deckY}
-                stageScale={stageScale}
-                onDragStart={() => {
-                  saveToHistory();
-                  setIsDraggingObject(true);
-                }}
-                onDragMove={(draggedObj) => {
-                  // Calculate snap guides
-                  const otherObjects = objects.filter(o => o.id !== draggedObj.id);
-                  const guides = calculateSnapGuides(draggedObj, otherObjects, 5);
-                  setSnapGuides(guides);
-                }}
-                onDragEnd={() => {
-                  setIsDraggingObject(false);
-                  setSnapGuides([]);
-                }}
-                onContextMenu={(e, objId) => {
-                  setContextMenu({
-                    x: e.clientX,
-                    y: e.clientY,
-                    objectId: objId,
-                  });
-                }}
-              />
-            ))}
+            {objects.filter(obj => !obj.hidden).map((obj) => {
+              // Apply visual feedback classes
+              const visualClasses = [
+                obj.id === copiedObjectId ? 'copy-flash' : '',
+                obj.id === pastedObjectId ? 'paste-flash' : '',
+              ].filter(Boolean).join(' ');
+
+              return (
+                <g key={obj.id} className={visualClasses}>
+                  <CanvasObjectItem
+                    obj={obj}
+                    isSelected={selectedIds.includes(obj.id)}
+                    onSelect={(e) => handleObjectSelect(obj.id, e)}
+                    onChange={(updates) => {
+                      updateObject(obj.id, updates);
+                    }}
+                    deckX={deckX}
+                    deckY={deckY}
+                    stageScale={stageScale}
+                    onDragStart={() => {
+                      saveToHistory();
+                      setIsDraggingObject(true);
+                    }}
+                    onDragMove={(draggedObj) => {
+                      // Calculate snap guides
+                      const otherObjects = objects.filter(o => o.id !== draggedObj.id);
+                      const guides = calculateSnapGuides(draggedObj, otherObjects, 5);
+                      setSnapGuides(guides);
+                    }}
+                    onDragEnd={() => {
+                      setIsDraggingObject(false);
+                      setSnapGuides([]);
+                    }}
+                    onContextMenu={(e, objId) => {
+                      setContextMenu({
+                        x: e.clientX,
+                        y: e.clientY,
+                        objectId: objId,
+                      });
+                    }}
+                  />
+                </g>
+              );
+            })}
 
             {/* Transform handles for selected object */}
             {selectedId && activeTool !== 'pen' && !isDraggingObject && (() => {

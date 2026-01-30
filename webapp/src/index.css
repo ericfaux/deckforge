@@ -167,3 +167,37 @@ body.keyboard-nav select:focus-visible {
 .keyboard-nav .tool-rail-item:focus-visible {
   @apply ring-2 ring-primary ring-offset-2 ring-offset-card;
 }
+
+/* ============================================
+   Copy/Paste Visual Feedback
+   ============================================ */
+
+/* Pulse animation for copied objects */
+@keyframes copy-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.02);
+  }
+}
+
+.copy-flash {
+  animation: copy-pulse 0.4s ease-in-out;
+}
+
+/* Highlight effect for pasted objects */
+@keyframes paste-flash {
+  0% {
+    filter: brightness(1.5) drop-shadow(0 0 8px hsl(var(--primary)));
+  }
+  100% {
+    filter: brightness(1) drop-shadow(0 0 0 transparent);
+  }
+}
+
+.paste-flash {
+  animation: paste-flash 0.6s ease-out;
+}

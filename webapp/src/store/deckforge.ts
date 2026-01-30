@@ -211,6 +211,10 @@ interface DeckForgeState {
   designName: string;
   isSaving: boolean;
 
+  // Visual feedback for copy/paste
+  copiedObjectId: string | null;
+  pastedObjectId: string | null;
+
   // Actions
   addObject: (obj: Omit<CanvasObject, 'id'>) => void;
   addObjects: (objs: Omit<CanvasObject, 'id'>[]) => void;
@@ -255,6 +259,10 @@ interface DeckForgeState {
   restoreVersion: (versionId: string) => void;
   deleteVersion: (versionId: string) => void;
   renameVersion: (versionId: string, newName: string) => void;
+
+  // Visual feedback
+  flashCopiedObject: (id: string) => void;
+  flashPastedObject: (id: string) => void;
 }
 
 const generateId = () => `obj_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -284,6 +292,8 @@ export const useDeckForgeStore = create<DeckForgeState>((set, get) => ({
   currentDesignId: null,
   designName: 'Untitled Design',
   isSaving: false,
+  copiedObjectId: null,
+  pastedObjectId: null,
 
   saveToHistory: () => {
     const { objects, past } = get();
@@ -855,5 +865,15 @@ export const useDeckForgeStore = create<DeckForgeState>((set, get) => ({
         v.id === versionId ? { ...v, name: newName } : v
       ),
     });
+  },
+
+  flashCopiedObject: (id) => {
+    set({ copiedObjectId: id });
+    setTimeout(() => set({ copiedObjectId: null }), 400);
+  },
+
+  flashPastedObject: (id) => {
+    set({ pastedObjectId: id });
+    setTimeout(() => set({ pastedObjectId: null }), 600);
   },
 }));
