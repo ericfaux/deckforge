@@ -121,9 +121,27 @@
     @apply border border-border bg-card;
   }
 
-  /* Active tool indicator */
+  /* Active tool indicator with smooth transitions */
   .tool-active {
     @apply border-primary bg-primary/10 text-primary;
+    box-shadow: 0 0 0 2px hsl(var(--primary) / 0.1);
+  }
+
+  /* Pulse animation when tool is first activated */
+  @keyframes tool-activate-pulse {
+    0% {
+      box-shadow: 0 0 0 0 hsl(var(--primary) / 0.4);
+    }
+    50% {
+      box-shadow: 0 0 0 4px hsl(var(--primary) / 0);
+    }
+    100% {
+      box-shadow: 0 0 0 2px hsl(var(--primary) / 0.1);
+    }
+  }
+
+  .tool-just-activated {
+    animation: tool-activate-pulse 0.4s ease-out;
   }
 
   /* Interactive button base - Figma-level hover states */

@@ -134,7 +134,13 @@ export function ToolRail() {
                         isActive && 'tool-active border-primary bg-primary/10 scale-105'
                       )}
                     >
-                      <Icon className="w-5 h-5" strokeWidth={1.5} />
+                      <Icon 
+                        className={cn(
+                          'w-5 h-5 transition-colors duration-200',
+                          isActive && 'text-primary'
+                        )} 
+                        strokeWidth={1.5} 
+                      />
                     </button>
                   </TooltipTrigger>
                   <TooltipContent side="right" className="max-w-xs">
@@ -176,7 +182,13 @@ export function ToolRail() {
                     isActive && 'tool-active border-primary bg-primary/10'
                   )}
                 >
-                  <Icon className="w-5 h-5" strokeWidth={1.5} />
+                  <Icon 
+                    className={cn(
+                      'w-5 h-5 transition-colors duration-200',
+                      isActive && 'text-primary'
+                    )} 
+                    strokeWidth={1.5} 
+                  />
                   <span className="text-[9px] uppercase tracking-wider">
                     {tool.label}
                   </span>
