@@ -772,8 +772,15 @@ export function Inspector() {
                   </Label>
                   <Input
                     type="number"
+                    min="6"
+                    max="200"
                     value={selectedObject.fontSize || 24}
-                    onChange={(e) => updateWithHistory({ fontSize: Number(e.target.value) })}
+                    onChange={(e) => {
+                      const value = Number(e.target.value);
+                      if (value >= 6 && value <= 200) {
+                        updateWithHistory({ fontSize: value });
+                      }
+                    }}
                     className="h-8 text-xs font-mono bg-secondary border-border"
                   />
                 </div>
