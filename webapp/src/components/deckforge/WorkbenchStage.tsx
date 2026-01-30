@@ -237,7 +237,11 @@ function CanvasObjectItem({
       <g
         transform={`translate(${obj.x}, ${obj.y}) rotate(${obj.rotation}) scale(${obj.scaleX}, ${obj.scaleY})`}
         opacity={obj.opacity}
-        style={{ cursor, mixBlendMode: obj.mixBlendMode || 'normal' }}
+        style={{ 
+          cursor, 
+          mixBlendMode: obj.mixBlendMode || 'normal',
+          transition: 'opacity 0.2s ease-out, transform 0.15s cubic-bezier(0.4, 0, 0.2, 1)',
+        }}
         onMouseDown={handleMouseDown}
         onContextMenu={handleRightClick}
       >
@@ -598,7 +602,11 @@ function CanvasObjectItem({
       <g
         transform={`translate(${obj.x}, ${obj.y}) rotate(${obj.rotation}, ${size/2}, ${size/2})`}
         opacity={obj.opacity}
-        style={{ cursor, filter: filterStyle }}
+        style={{ 
+          cursor, 
+          filter: filterStyle,
+          transition: 'opacity 0.2s ease-out, transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), filter 0.2s ease-out',
+        }}
         onMouseDown={handleMouseDown}
       >
         <foreignObject width={size} height={size}>
@@ -641,6 +649,7 @@ function CanvasObjectItem({
           cursor,
           filter: filterStyle,
           mixBlendMode: blendMode,
+          transition: 'opacity 0.2s ease-out, transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), filter 0.2s ease-out',
         }}
         onMouseDown={handleMouseDown}
       >

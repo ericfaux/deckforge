@@ -250,3 +250,20 @@ body.keyboard-nav select:focus-visible {
 .undo-highlight {
   animation: undo-highlight 0.6s ease-out;
 }
+
+/* ============================================
+   Property Change Transitions
+   ============================================ */
+
+/* Smooth transitions for object property changes */
+.canvas-object-smooth {
+  transition: opacity 0.2s ease-out, 
+              transform 0.15s cubic-bezier(0.4, 0, 0.2, 1),
+              filter 0.2s ease-out;
+}
+
+.canvas-object-color-smooth {
+  transition: fill 0.2s ease-out, 
+              stroke 0.2s ease-out,
+              opacity 0.2s ease-out;
+}
