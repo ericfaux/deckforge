@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState, useCallback } from 'react';
+import { useRef, useEffect, useState, useCallback, memo } from 'react';
 import { useDeckForgeStore, CanvasObject } from '@/store/deckforge';
 import { ZoomControls } from './ZoomControls';
 import { PenTool } from './PenTool';
@@ -110,7 +110,7 @@ function getColorizeStyle(obj: CanvasObject): React.CSSProperties | undefined {
 }
 
 // Individual object component
-function CanvasObjectItem({
+const CanvasObjectItem = memo(function CanvasObjectItem({
   obj,
   isSelected,
   onSelect,
@@ -938,7 +938,7 @@ function CanvasObjectItem({
   }
 
   return null;
-}
+});
 
 export function WorkbenchStage() {
   const containerRef = useRef<HTMLDivElement>(null);
