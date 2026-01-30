@@ -232,7 +232,7 @@ export default function Designs() {
   const hasSelection = selectedIds.size > 0;
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col page-transition">
       {/* Header */}
       <header className="h-16 border-b border-border flex items-center px-6 bg-card shrink-0">
         <h1 className="font-display text-xl uppercase tracking-widest">

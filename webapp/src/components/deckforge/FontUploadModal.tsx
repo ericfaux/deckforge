@@ -148,12 +148,12 @@ export function FontUploadModal({ isOpen, onClose, onFontUploaded }: FontUploadM
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm modal-backdrop"
         onClick={onClose}
       />
 
       {/* Modal */}
-      <div className="relative bg-card border-2 border-border shadow-xl w-full max-w-2xl max-h-[90vh] overflow-auto">
+      <div className="relative bg-card border-2 border-border shadow-xl w-full max-w-2xl max-h-[90vh] overflow-auto modal-content">
         {/* Header */}
         <div className="sticky top-0 bg-card border-b border-border p-4 flex items-center justify-between">
           <h2 className="font-display text-lg uppercase tracking-wider">Custom Fonts</h2>

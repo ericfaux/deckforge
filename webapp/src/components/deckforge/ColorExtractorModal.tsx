@@ -28,9 +28,9 @@ export function ColorExtractorModal({ isOpen, onClose }: ColorExtractorModalProp
   };
 
   return (
-    <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 modal-backdrop" onClick={onClose}>
       <div 
-        className="bg-gray-900 rounded-lg shadow-2xl w-full max-w-md border border-gray-700"
+        className="bg-gray-900 rounded-lg shadow-2xl w-full max-w-md border border-gray-700 modal-content"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

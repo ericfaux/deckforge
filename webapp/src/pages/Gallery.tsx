@@ -133,7 +133,7 @@ export default function Gallery() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background page-transition">
       {/* Header */}
       <header className="h-16 border-b border-border flex items-center px-6 bg-card">
         <h1 className="font-display text-xl uppercase tracking-widest">

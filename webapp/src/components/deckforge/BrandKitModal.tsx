@@ -128,8 +128,8 @@ export function BrandKitModal({
 
   if (!isAuthenticated) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-        <div className="bg-card border border-border w-full max-w-md p-6 space-y-4">
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 modal-backdrop">
+        <div className="bg-card border border-border w-full max-w-md p-6 space-y-4 modal-content">
           <div className="flex items-center justify-between">
             <h2 className="font-display text-lg uppercase tracking-widest">Brand Kits</h2>
             <button onClick={onClose} className="p-1 hover:bg-secondary transition-colors">
@@ -148,8 +148,8 @@ export function BrandKitModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-card border border-border w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 modal-backdrop">
+      <div className="bg-card border border-border w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col modal-content">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-border">
           <div className="flex items-center gap-2">
