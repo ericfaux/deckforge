@@ -114,6 +114,26 @@ export interface CanvasObject {
     color1: string;       // Shadow color
     color2: string;       // Highlight color
   };
+  // Object effects
+  dropShadow?: {
+    enabled: boolean;
+    offsetX: number;
+    offsetY: number;
+    blur: number;
+    color: string;
+    opacity: number;
+  };
+  glow?: {
+    enabled: boolean;
+    blur: number;
+    color: string;
+    opacity: number;
+  };
+  outlineStroke?: {
+    enabled: boolean;
+    width: number;
+    color: string;
+  };
   // Layer effects
   dropShadow?: {
     enabled: boolean;

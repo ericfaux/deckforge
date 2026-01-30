@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { LayerList } from './LayerList';
 import { AdvancedEffects } from './AdvancedEffects';
 import { FontUploadModal } from './FontUploadModal';
+import { ObjectEffects } from './ObjectEffects';
 import { GradientPicker } from './GradientPicker';
 import { ColorPicker } from './ColorPicker';
 import { DECK_WIDTH, DECK_HEIGHT } from './WorkbenchStage';
@@ -1197,6 +1198,16 @@ export function Inspector() {
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
+
+            {/* Object Effects Section */}
+            <div className="pt-4 border-t border-border">
+              <div className="py-2">
+                <span className="font-display text-[10px] uppercase tracking-widest text-muted-foreground">
+                  Effects
+                </span>
+              </div>
+              <ObjectEffects />
+            </div>
 
             {/* Pattern Generator Section */}
             {(selectedObject.type === 'shape' || selectedObject.type === 'image' || selectedObject.type === 'sticker') && (
