@@ -228,9 +228,22 @@ export function BrandKitModal({
               <Loader2 className="w-6 h-6 mx-auto animate-spin text-muted-foreground" />
             </div>
           ) : kits.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-sm text-muted-foreground">
-                No brand kits yet. Save your first one!
+            <div className="text-center py-12 animate-in fade-in-50 duration-500">
+              <div className="relative group inline-block mb-4">
+                {/* Subtle glow effect */}
+                <div className="absolute inset-0 rounded-full bg-primary/5 blur-xl group-hover:bg-primary/10 transition-all duration-500" />
+                
+                {/* Icon with gradient background */}
+                <div className="relative rounded-full bg-gradient-to-br from-muted/80 to-muted/40 p-4">
+                  <Palette className="w-8 h-8 text-muted-foreground/70 group-hover:text-primary/80 transition-colors duration-300" />
+                </div>
+              </div>
+              
+              <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                No Brand Kits Yet
+              </p>
+              <p className="text-xs text-muted-foreground/80 max-w-xs mx-auto leading-relaxed">
+                Save your colors and fonts as a brand kit. Create your first one by clicking "Save as Brand Kit" above!
               </p>
             </div>
           ) : (

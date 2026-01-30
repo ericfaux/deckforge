@@ -723,9 +723,24 @@ function UploadsContent({ onAddObject, deckCenterX, deckCenterY }: {
           ))}
         </div>
       ) : (
-        <p className="text-center text-xs text-muted-foreground py-4">
-          No uploads yet. Click above to upload!
-        </p>
+        <div className="text-center py-8 animate-in fade-in-50 duration-500">
+          <div className="relative group inline-block mb-3">
+            {/* Subtle glow effect */}
+            <div className="absolute inset-0 rounded-full bg-primary/5 blur-xl group-hover:bg-primary/10 transition-all duration-500" />
+            
+            {/* Icon with gradient background */}
+            <div className="relative rounded-full bg-gradient-to-br from-muted/80 to-muted/40 p-3">
+              <Upload className="w-6 h-6 text-muted-foreground/70 group-hover:text-primary/80 transition-colors duration-300" />
+            </div>
+          </div>
+          
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+            No Uploads Yet
+          </p>
+          <p className="text-[10px] text-muted-foreground/80 max-w-[200px] mx-auto leading-relaxed">
+            Upload your own images, SVGs, and assets. Click the upload button above!
+          </p>
+        </div>
       )}
     </div>
   );
