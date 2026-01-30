@@ -6,6 +6,7 @@ import { Inspector } from '@/components/deckforge/Inspector';
 import { BatchActionsToolbar } from '@/components/deckforge/BatchActionsToolbar';
 import { MobileToolbar } from '@/components/deckforge/MobileToolbar';
 import { AlignmentTools } from '@/components/deckforge/AlignmentTools';
+import { useDebounce } from '@/hooks/use-debounce';
 
 // Lazy load modals for better performance
 const VersionHistory = lazy(() => import('@/components/deckforge/VersionHistory').then(m => ({ default: m.VersionHistory })));
@@ -89,6 +90,7 @@ export default function DeckForge() {
       return;
     }
 
+    cancelAutoSave(); // Cancel any pending auto-save
     setSaving(true);
     setSaveStatus('Saving...');
 
@@ -126,6 +128,34 @@ export default function DeckForge() {
       setSaving(false);
     }
   };
+
+  // Debounced auto-save to reduce DB calls
+  const performAutoSave = async () => {
+    if (!isAuthenticated || !currentDesignId) return; // Only auto-save existing designs
+    if (isSaving) return; // Don't auto-save if manual save in progress
+
+    setSaving(true);
+    setSaveStatus('Auto-saving...');
+
+    try {
+      const canvasState = getCanvasState();
+      await designsAPI.update(currentDesignId, {
+        canvas_data: canvasState,
+        name: canvasState.name,
+      });
+      setSaveStatus('Auto-saved');
+      setHasUnsavedChanges(false);
+      setTimeout(() => setSaveStatus(''), 2000);
+    } catch (err) {
+      console.error('Auto-save failed:', err);
+      // Silently fail for auto-save (don't show toast)
+      setSaveStatus('');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const [debouncedAutoSave, cancelAutoSave] = useDebounce(performAutoSave, 3000); // 3s delay
 
   const handleExport = async () => {
     setIsExporting(true);
@@ -257,6 +287,17 @@ export default function DeckForge() {
       setHasUnsavedChanges(true);
     }
   }, [past.length, isSaving]);
+
+  // Auto-save after changes (debounced to reduce DB calls)
+  useEffect(() => {
+    if (hasUnsavedChanges && currentDesignId && isAuthenticated) {
+      debouncedAutoSave();
+    }
+
+    return () => {
+      cancelAutoSave(); // Cancel pending auto-save on unmount or deps change
+    };
+  }, [hasUnsavedChanges, currentDesignId, isAuthenticated, debouncedAutoSave, cancelAutoSave]);
 
   // Show feedback for undo/redo actions
   useEffect(() => {
