@@ -563,3 +563,43 @@ Wrapped all major buttons in Tooltip components with:
 **Commit:** `2912db9` - "feat: complete toolbar tooltips - all header buttons now have helpful hints"
 **Status:** Deployed to production
 
+
+## 2026-01-30 14:26 UTC - Quick Wins #6 & #7 Already Complete
+
+### ✅ Verified: Command Palette & Keyboard Shortcuts (Quick Wins #6 & #7)
+**Both features already fully implemented and integrated**
+
+**Command Palette (Ctrl+K):**
+- Already exists in `/components/CommandPalette.tsx`
+- 30+ commands organized by category:
+  - **File:** New, Save, Open, Export (all with shortcuts)
+  - **Edit:** Undo, Redo, Delete, Duplicate, Group/Ungroup
+  - **Add:** Rectangle, Circle, Text, Image (quick object creation)
+  - **Navigate:** Marketplace, Designs, Templates, Park Builder
+  - **Help:** Shortcuts, Search Help
+- Fuzzy search with keywords
+- Keyboard shortcuts displayed in each command
+- Opens with Ctrl+K (or Cmd+K on Mac)
+
+**Keyboard Shortcuts Overlay (?):**
+- Already exists in `/components/deckforge/KeyboardShortcuts.tsx`
+- 45+ shortcuts organized by category:
+  - Selection & Navigation
+  - Editing (Undo/Redo/Duplicate/Group/etc.)
+  - Transform (Move/Scale/Rotate with modifiers)
+  - Layers (Bring forward/Send backward)
+  - Alignment (Align left/right/center/top/bottom/middle)
+  - View (Pan/Zoom/Rulers/Hardware guide)
+  - Tools (T/R/C/L/V for different tools)
+  - File (Save with Ctrl+S)
+- Opens with '?' key (or Shift+/)
+- Clean, organized modal with ScrollArea
+- Already integrated in DeckForge.tsx
+
+**Status:**
+Both features were already complete! No additional work needed.
+
+**Progress Update:**
+- Quick Wins: 7/10 complete (70%)
+- Next: Quick Win #8 (Better error messages)
+

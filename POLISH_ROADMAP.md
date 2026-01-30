@@ -176,8 +176,8 @@ Last updated: 2026-01-30 03:15 UTC
 3. ✅ Add smooth transitions to panel toggles (Accordion animations now use 0.3s cubic-bezier with opacity fade)
 4. ✅ Better empty states with illustrations (EmptyState + LayerList: glow effects, gradients, keyboard hints, smooth animations)
 5. ✅ Tooltips for all toolbar buttons (All 17 header buttons complete with keyboard shortcuts and descriptions)
-6. [ ] Command palette (Ctrl+K)
-7. [ ] Keyboard shortcut overlay (press ?)
+6. ✅ Command palette (Ctrl+K) - Already implemented with 30+ commands grouped by category
+7. ✅ Keyboard shortcut overlay (press ?) - Already implemented with 45+ shortcuts
 8. [ ] Better error messages
 9. [ ] Auto-save indicator
 10. [ ] Zoom shortcuts (Ctrl+1, Ctrl+2, Ctrl+0)
