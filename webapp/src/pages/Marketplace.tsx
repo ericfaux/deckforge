@@ -4,6 +4,7 @@ import { marketplaceAPI, MarketplaceDesign } from '@/lib/marketplace';
 import { Search, Heart, Download, DollarSign, Filter, TrendingUp, Clock, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 
 export default function Marketplace() {
@@ -156,9 +157,22 @@ export default function Marketplace() {
       {/* Designs Grid */}
       <div className="max-w-7xl mx-auto px-4 py-8">
         {loading ? (
-          <div className="text-center py-20">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            <p className="mt-4 text-muted-foreground">Loading designs...</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="border border-border rounded-lg overflow-hidden">
+                <Skeleton className="aspect-[3/8] w-full" />
+                <div className="p-4 space-y-2">
+                  <Skeleton className="h-5 w-3/4" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-2/3" />
+                  <div className="flex items-center gap-3 pt-2">
+                    <Skeleton className="h-3 w-12" />
+                    <Skeleton className="h-3 w-12" />
+                  </div>
+                  <Skeleton className="h-6 w-16 mt-2" />
+                </div>
+              </div>
+            ))}
           </div>
         ) : designs.length === 0 ? (
           <div className="text-center py-20">
