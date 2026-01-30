@@ -81,6 +81,12 @@ No 'Access-Control-Allow-Origin' header is present on the requested resource.
 3. **SHORT-TERM:** Implement font caching
 4. **SHORT-TERM:** Add proper error handling for API failures
 
+## ✅ FIXED
+
+### 4. Top Toolbar Horizontal Overflow
+**Fixed:** 2026-01-30  
+**Solution:** Added `overflow-x-auto` to toolbar button container with custom scrollbar styling
+
 ## Next Testing Steps
 
 After fixing CORS:

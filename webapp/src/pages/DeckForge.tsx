@@ -735,7 +735,7 @@ export default function DeckForge() {
           </div>
         )}
 
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex items-center gap-2 overflow-x-auto overflow-y-hidden scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent pr-2">
           {!isMobile && (
             <>
               <span className="text-[10px] text-muted-foreground uppercase tracking-widest hidden md:block mr-4">
