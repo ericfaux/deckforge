@@ -14,6 +14,7 @@ const AnimationPreview = lazy(() => import('@/components/deckforge/AnimationPrev
 const BrandKitModal = lazy(() => import('@/components/deckforge/BrandKitModal').then(m => ({ default: m.BrandKitModal })));
 const FontUploadModal = lazy(() => import('@/components/deckforge/FontUploadModal').then(m => ({ default: m.FontUploadModal })));
 const ColorExtractorModal = lazy(() => import('@/components/deckforge/ColorExtractorModal').then(m => ({ default: m.ColorExtractorModal })));
+const SmartDuplicateModal = lazy(() => import('@/components/deckforge/SmartDuplicateModal').then(m => ({ default: m.SmartDuplicateModal })));
 const ArrayDuplicateModal = lazy(() => import('@/components/deckforge/ArrayDuplicateModal').then(m => ({ default: m.ArrayDuplicateModal })));
 const ExportPreview = lazy(() => import('@/components/deckforge/ExportPreview').then(m => ({ default: m.ExportPreview })));
 const ExportPresetsModal = lazy(() => import('@/components/deckforge/ExportPresetsModal').then(m => ({ default: m.ExportPresetsModal })));
@@ -54,6 +55,7 @@ export default function DeckForge() {
   const [isTemplateGalleryOpen, setIsTemplateGalleryOpen] = useState(false);
   const [is3DGeneratorOpen, setIs3DGeneratorOpen] = useState(false);
   const [isColorExtractorOpen, setIsColorExtractorOpen] = useState(false);
+  const [isSmartDuplicateOpen, setIsSmartDuplicateOpen] = useState(false);
   const [mobileInspectorOpen, setMobileInspectorOpen] = useState(false);
   const [mobileLayersOpen, setMobileLayersOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -244,10 +246,10 @@ export default function DeckForge() {
         return;
       }
 
-      // Array Duplicate (Ctrl+Shift+D) - Open array duplicate modal
+      // Smart Duplicate (Ctrl+Shift+D) - Open smart duplicate modal
       if (ctrl && shift && key === 'd' && selectedId) {
         e.preventDefault();
-        setIsArrayDuplicateOpen(true);
+        setIsSmartDuplicateOpen(true);
         return;
       }
 
@@ -1164,6 +1166,12 @@ export default function DeckForge() {
         <ColorExtractorModal
           isOpen={isColorExtractorOpen}
           onClose={() => setIsColorExtractorOpen(false)}
+        />
+
+        {/* Smart Duplicate */}
+        <SmartDuplicateModal
+          isOpen={isSmartDuplicateOpen}
+          onClose={() => setIsSmartDuplicateOpen(false)}
         />
       </Suspense>
 
