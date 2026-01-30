@@ -4,7 +4,21 @@
 **Benchmark: Figma-level UI/UX**
 
 ### Latest Update (Heartbeat):
-**Quick Win #1: Loading Spinners - COMPLETE (2026-01-30 03:30 UTC)**
+**Quick Win #2: Enhanced Hover States - COMPLETE (2026-01-30 04:00 UTC)**
+- Enhanced Button component with better transitions (200ms, transition-all)
+- Added shadow effects on hover (default/destructive/secondary variants)
+- Added active:scale-95 for press feedback across all buttons
+- ToolRail: Added hover:scale-105 lift effect + rounded corners
+- ToolRail: Active tools now visually elevated with scale-105
+- ToolRail mobile: Added hover support for tablets with mice
+- LayerList: Added hover:shadow-sm to items
+- LayerList: Eye/Lock/Delete buttons have scale-110 hover + scale-95 active
+- All transitions smoothed to 200ms for Figma-like feel
+- **Quick Win #2 complete** - Figma-level button interactions
+- Built, deployed, tested on Vercel with agent-browser ✓
+- 1 commit, no errors
+
+**Previous: Quick Win #1: Loading Spinners - COMPLETE (2026-01-30 03:30 UTC)**
 - Added Loader2 spinner to Save button when saving
 - Verified export modal already has perfect loading states (spinner, disabled buttons, visual feedback)
 - Verified Designs page has loading spinner

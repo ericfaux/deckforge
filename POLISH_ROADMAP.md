@@ -172,7 +172,7 @@ Last updated: 2026-01-30 03:15 UTC
 *High impact, low effort*
 
 1. ✅ Add loading spinners to all async actions (Save button spinner added, export/gallery already had spinners)
-2. [ ] Improve hover states on all buttons
+2. ✅ Improve hover states on all buttons (Button component, ToolRail, LayerList all enhanced with scale animations, shadows, smoother transitions)
 3. [ ] Add smooth transitions to panel toggles
 4. [ ] Better empty states with illustrations
 5. [ ] Tooltips for all toolbar buttons
