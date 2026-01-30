@@ -129,17 +129,24 @@ export function ToolRail() {
                     <button
                       onClick={() => setActiveTool(isActive ? null : tool.id)}
                       className={cn(
-                        'w-10 h-10 flex items-center justify-center border border-transparent rounded-md',
-                        'hover:border-border hover:bg-secondary hover:scale-105 transition-all duration-200 active:scale-95',
-                        isActive && 'tool-active border-primary bg-primary/10 scale-105'
+                        'relative w-10 h-10 flex items-center justify-center rounded-md transition-all duration-200',
+                        'border-2 border-transparent',
+                        'hover:border-border hover:bg-secondary hover:scale-105 active:scale-95',
+                        isActive 
+                          ? 'tool-active border-primary bg-primary/10 scale-105 shadow-lg shadow-primary/20' 
+                          : 'hover:shadow-md'
                       )}
                     >
+                      {/* Active indicator bar */}
+                      {isActive && (
+                        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-primary rounded-r-full animate-in slide-in-from-left-2 duration-200" />
+                      )}
                       <Icon 
                         className={cn(
                           'w-5 h-5 transition-colors duration-200',
-                          isActive && 'text-primary'
+                          isActive ? 'text-primary drop-shadow-sm' : 'text-muted-foreground'
                         )} 
-                        strokeWidth={1.5} 
+                        strokeWidth={isActive ? 2 : 1.5} 
                       />
                     </button>
                   </TooltipTrigger>
@@ -177,19 +184,29 @@ export function ToolRail() {
                   key={tool.id}
                   onClick={() => setActiveTool(isActive ? null : tool.id)}
                   className={cn(
-                    'min-w-[64px] h-16 flex flex-col items-center justify-center gap-1 border border-transparent shrink-0 rounded-md',
-                    'hover:bg-secondary/50 hover:border-border active:bg-secondary/80 active:scale-95 transition-all duration-200 touch-manipulation',
-                    isActive && 'tool-active border-primary bg-primary/10'
+                    'relative min-w-[64px] h-16 flex flex-col items-center justify-center gap-1 shrink-0 rounded-md transition-all duration-200',
+                    'border-2 border-transparent touch-manipulation',
+                    'hover:bg-secondary/50 hover:border-border active:bg-secondary/80 active:scale-95',
+                    isActive 
+                      ? 'tool-active border-primary bg-primary/10 shadow-lg shadow-primary/20' 
+                      : 'hover:shadow-md'
                   )}
                 >
+                  {/* Active indicator bar (top for mobile) */}
+                  {isActive && (
+                    <div className="absolute top-0 left-1/2 -translate-x-1/2 h-1 w-8 bg-primary rounded-b-full animate-in slide-in-from-top-2 duration-200" />
+                  )}
                   <Icon 
                     className={cn(
                       'w-5 h-5 transition-colors duration-200',
-                      isActive && 'text-primary'
+                      isActive ? 'text-primary drop-shadow-sm' : 'text-muted-foreground'
                     )} 
-                    strokeWidth={1.5} 
+                    strokeWidth={isActive ? 2 : 1.5} 
                   />
-                  <span className="text-[9px] uppercase tracking-wider">
+                  <span className={cn(
+                    "text-[9px] uppercase tracking-wider transition-colors duration-200",
+                    isActive ? 'text-primary font-semibold' : 'text-muted-foreground'
+                  )}>
                     {tool.label}
                   </span>
                 </button>

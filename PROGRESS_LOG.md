@@ -4,7 +4,54 @@
 **Benchmark: Figma-level UI/UX**
 
 ### Latest Update (Heartbeat):
-**Quick Win #2: Enhanced Hover States - COMPLETE (2026-01-30 04:00 UTC)**
+**UX Audit & Fixes Session - 2026-01-30 18:40 UTC**
+
+**Completed this session:**
+1. ✅ **Comprehensive UX Audit** - Found 23 issues across all priority levels
+   - Created UX_ISSUES.md with full documentation
+   - Categorized: 2 Critical, 5 High, 6 Medium, 10 Low priority
+   - Defined 4-phase implementation plan
+   - Testing matrix for all devices/browsers
+
+2. ✅ **Critical Fix: Toolbar Horizontal Overflow** (Issue #1)
+   - Added `overflow-x-auto` to top toolbar button container
+   - Custom scrollbar styling for better UX
+   - Prevents buttons being cut off on screens <1400px
+   - 15+ buttons now accessible on all screen sizes
+
+3. ✅ **Critical Fix: CORS Error** (Issue #2) 
+   - Fixed backend endpoint mismatch (fonts.ts using wrong URL)
+   - Fixed API endpoints (/fonts → /api/fonts)
+   - Enhanced CORS middleware with proper headers
+   - Added DEFAULT_FONTS fallback (Arial, Impact, etc.)
+   - Created BUGS_FOUND.md documentation
+
+4. ✅ **UX Fix: Unsaved Changes Warning** (Issue #8)
+   - Added beforeunload event handler
+   - Warns users before closing tab with unsaved work
+   - Prevents accidental data loss
+
+5. ✅ **UX Fix: Export Menu Click-Outside** (Issue #7)
+   - Export dropdown now closes when clicking outside
+   - Proper useEffect cleanup and data attributes
+   - Better UX for dropdown interactions
+
+**Blockers:**
+- None currently
+
+**Next hour's plan:**
+- Wait for deployment to complete (~2min)
+- Test fixes on live Vercel site with agent-browser
+- Tackle next high-priority UX issues:
+  - Tool Rail active state visual feedback
+  - Layer search/filter functionality
+  - OR Inspector collapsible sections (bigger lift)
+
+**Commits:** 3 commits, all pushed to main, deploying now
+
+---
+
+**Previous: Quick Win #2: Enhanced Hover States - COMPLETE (2026-01-30 04:00 UTC)**
 - Enhanced Button component with better transitions (200ms, transition-all)
 - Added shadow effects on hover (default/destructive/secondary variants)
 - Added active:scale-95 for press feedback across all buttons
