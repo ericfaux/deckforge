@@ -316,3 +316,281 @@ body.keyboard-nav select:focus-visible {
 .page-transition {
   animation: page-fade-in 0.3s ease-out;
 }
+
+/* ============================================
+   Elevation System (Consistent Shadows)
+   ============================================ */
+
+/* Level 0: Flat elements (no shadow) */
+.elevation-0 {
+  box-shadow: none;
+}
+
+/* Level 1: Subtle elevation - cards, panels, inline elements */
+.elevation-1 {
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+}
+
+/* Level 2: Medium elevation - dropdowns, tooltips, popovers */
+.elevation-2 {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 
+              0 2px 4px -1px rgba(0, 0, 0, 0.3);
+}
+
+/* Level 3: High elevation - modals, dialogs, overlays */
+.elevation-3 {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 
+              0 4px 6px -2px rgba(0, 0, 0, 0.3);
+}
+
+/* Level 4: Maximum elevation - context menus, drag items */
+.elevation-4 {
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.6), 
+              0 10px 10px -5px rgba(0, 0, 0, 0.4);
+}
+
+/* Hover elevation - lifts element on hover */
+.elevation-hover {
+  transition: box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.elevation-hover:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 
+              0 4px 6px -2px rgba(0, 0, 0, 0.3);
+}
+
+/* ============================================
+   Typography Hierarchy
+   ============================================ */
+
+/* Display headings - large, bold, uppercase */
+.text-display {
+  font-family: 'Oswald', sans-serif;
+  font-size: 1.5rem; /* 24px */
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  line-height: 1.2;
+}
+
+.text-display-sm {
+  font-family: 'Oswald', sans-serif;
+  font-size: 1.125rem; /* 18px */
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  line-height: 1.2;
+}
+
+/* Section headings - medium, uppercase */
+.text-heading {
+  font-size: 0.875rem; /* 14px */
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  line-height: 1.4;
+}
+
+/* Body text - normal reading */
+.text-body {
+  font-size: 0.875rem; /* 14px */
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.text-body-sm {
+  font-size: 0.8125rem; /* 13px */
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+/* Labels - small, uppercase, muted */
+.text-label {
+  font-size: 0.625rem; /* 10px */
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: hsl(var(--muted-foreground));
+  line-height: 1.4;
+}
+
+/* Caption - tiny, for metadata */
+.text-caption {
+  font-size: 0.6875rem; /* 11px */
+  font-weight: 400;
+  color: hsl(var(--muted-foreground));
+  line-height: 1.4;
+}
+
+/* Monospace - for code, values, technical */
+.text-mono {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8125rem; /* 13px */
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.text-mono-sm {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem; /* 12px */
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+/* ============================================
+   Semantic Color System
+   ============================================ */
+
+/* Success states - green */
+.text-success {
+  color: hsl(142 76% 36%);
+}
+
+.bg-success {
+  background-color: hsl(142 76% 36%);
+}
+
+.border-success {
+  border-color: hsl(142 76% 36%);
+}
+
+/* Warning states - yellow/orange */
+.text-warning {
+  color: hsl(38 92% 50%);
+}
+
+.bg-warning {
+  background-color: hsl(38 92% 50%);
+}
+
+.border-warning {
+  border-color: hsl(38 92% 50%);
+}
+
+/* Error/Danger states - red (uses existing --destructive) */
+.text-error {
+  color: hsl(var(--destructive));
+}
+
+.bg-error {
+  background-color: hsl(var(--destructive));
+}
+
+.border-error {
+  border-color: hsl(var(--destructive));
+}
+
+/* Info states - blue */
+.text-info {
+  color: hsl(201 96% 32%);
+}
+
+.bg-info {
+  background-color: hsl(201 96% 32%);
+}
+
+.border-info {
+  border-color: hsl(201 96% 32%);
+}
+
+/* Primary action - acid green */
+.text-primary-action {
+  color: hsl(var(--primary));
+}
+
+.bg-primary-action {
+  background-color: hsl(var(--primary));
+}
+
+.border-primary-action {
+  border-color: hsl(var(--primary));
+}
+
+/* Secondary action - muted */
+.text-secondary-action {
+  color: hsl(var(--muted-foreground));
+}
+
+.bg-secondary-action {
+  background-color: hsl(var(--secondary));
+}
+
+.border-secondary-action {
+  border-color: hsl(var(--border));
+}
+
+/* ============================================
+   Icon Consistency
+   ============================================ */
+
+/* Standard icon sizes */
+.icon-xs {
+  width: 0.75rem; /* 12px */
+  height: 0.75rem;
+}
+
+.icon-sm {
+  width: 1rem; /* 16px */
+  height: 1rem;
+}
+
+.icon-md {
+  width: 1.25rem; /* 20px */
+  height: 1.25rem;
+}
+
+.icon-lg {
+  width: 1.5rem; /* 24px */
+  height: 1.5rem;
+}
+
+.icon-xl {
+  width: 2rem; /* 32px */
+  height: 2rem;
+}
+
+/* Icon button sizes (touch-friendly) */
+.icon-btn-sm {
+  width: 2rem; /* 32px */
+  height: 2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-btn {
+  width: 2.5rem; /* 40px */
+  height: 2.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-btn-lg {
+  width: 2.75rem; /* 44px - mobile touch target */
+  height: 2.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Icon colors - semantic */
+.icon-primary {
+  color: hsl(var(--primary));
+}
+
+.icon-muted {
+  color: hsl(var(--muted-foreground));
+}
+
+.icon-success {
+  color: hsl(142 76% 36%);
+}
+
+.icon-error {
+  color: hsl(var(--destructive));
+}
+
+.icon-warning {
+  color: hsl(38 92% 50%);
+}
