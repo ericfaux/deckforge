@@ -39,6 +39,7 @@ import { useNavigate } from 'react-router-dom';
 import { KeyboardShortcuts } from '@/components/deckforge/KeyboardShortcuts';
 import { CommandPalette } from '@/components/CommandPalette';
 import { QuickAccessToolbar } from '@/components/deckforge/QuickAccessToolbar';
+import { EditorLoadingSkeleton } from '@/components/deckforge/EditorLoadingSkeleton';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -48,6 +49,7 @@ export default function DeckForge() {
   const { isAuthenticated } = useAuthStore();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const [isInitializing, setIsInitializing] = useState(true);
   const [saveStatus, setSaveStatus] = useState<string>('');
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
@@ -172,10 +174,24 @@ export default function DeckForge() {
   };
 
   // Preload user's custom fonts on mount
+  // Initialize editor (preload fonts, set up canvas, etc.)
   useEffect(() => {
-    if (isAuthenticated) {
-      preloadUserFonts().catch(console.error);
-    }
+    const initialize = async () => {
+      try {
+        if (isAuthenticated) {
+          await preloadUserFonts();
+        }
+      } catch (error) {
+        console.error('Failed to initialize editor:', error);
+      } finally {
+        // Show editor after brief delay for smooth transition
+        setTimeout(() => {
+          setIsInitializing(false);
+        }, 300);
+      }
+    };
+
+    initialize();
   }, [isAuthenticated]);
 
   // Auto-save versions every 5 minutes
@@ -665,6 +681,11 @@ export default function DeckForge() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [selectedId, deleteObject, undo, redo, objects, handleSave, handleExport, addObject, selectObject, setActiveTool, updateObject, stageScale, setStageScale]);
+
+  // Show loading skeleton while initializing
+  if (isInitializing) {
+    return <EditorLoadingSkeleton />;
+  }
 
   return (
     <div className="h-screen w-screen flex flex-col bg-background overflow-hidden">
