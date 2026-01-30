@@ -5,6 +5,9 @@ import { useDeckForgeStore } from '@/store/deckforge';
 import { designsAPI } from '@/lib/api';
 import { batchExportDesigns, downloadBlob } from '@/lib/batch-export';
 import { FoldersPanel } from '@/components/FoldersPanel';
+import { LoadingState } from '@/components/LoadingState';
+import { EmptyState } from '@/components/EmptyState';
+import { ErrorState } from '@/components/ErrorState';
 import { Button } from '@/components/ui/button';
 import { Plus, Trash2, Download, Eye, Loader2, CheckSquare, Square, Globe, Lock, FolderInput } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
@@ -284,24 +287,17 @@ export default function Designs() {
         <div className="flex-1 overflow-auto">
           <div className="container mx-auto px-6 py-8">
         {isLoading ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-          </div>
+          <LoadingState message="Loading your designs..." />
         ) : filteredDesigns.length === 0 ? (
-          <div className="text-center py-20 space-y-6">
-            <div>
-              <h2 className="text-2xl font-display uppercase tracking-widest mb-2">
-                No Designs Yet
-              </h2>
-              <p className="text-muted-foreground">
-                Create your first custom deck design!
-              </p>
-            </div>
-            <Button onClick={createNew} size="lg" className="gap-2">
-              <Plus className="w-5 h-5" />
-              Create Design
-            </Button>
-          </div>
+          <EmptyState
+            icon={Plus}
+            title={selectedFolder ? "No designs in this folder" : "No Designs Yet"}
+            description={selectedFolder ? "This folder is empty. Create a design or move existing ones here." : "Create your first custom deck design!"}
+            action={{
+              label: "Create Design",
+              onClick: createNew
+            }}
+          />
         ) : (
           <>
             {/* Select all toolbar */}

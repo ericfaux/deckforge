@@ -1,16 +1,19 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { marketplaceAPI, MarketplaceDesign } from '@/lib/marketplace';
-import { Search, Heart, Download, DollarSign, Filter, TrendingUp, Clock, Sparkles } from 'lucide-react';
+import { Search, Heart, Download, DollarSign, Filter, TrendingUp, Clock, Sparkles, PackageSearch } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { EmptyState } from '@/components/EmptyState';
+import { ErrorState } from '@/components/ErrorState';
 import { toast } from 'sonner';
 
 export default function Marketplace() {
   const navigate = useNavigate();
   const [designs, setDesigns] = useState<MarketplaceDesign[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [category, setCategory] = useState('all');
   const [sortBy, setSortBy] = useState<'newest' | 'popular' | 'trending'>('trending');
@@ -22,6 +25,7 @@ export default function Marketplace() {
 
   const loadDesigns = async () => {
     setLoading(true);
+    setError(null);
     try {
       const params: any = {
         category: category !== 'all' ? category : undefined,
@@ -43,8 +47,8 @@ export default function Marketplace() {
       const data = await marketplaceAPI.browseDesigns(params);
       setDesigns(data);
     } catch (error: any) {
-      toast.error('Failed to load designs');
-      console.error(error);
+      console.error('Failed to load designs:', error);
+      setError(error.message || 'Failed to load marketplace designs');
     } finally {
       setLoading(false);
     }
@@ -174,11 +178,18 @@ export default function Marketplace() {
               </div>
             ))}
           </div>
+        ) : error ? (
+          <ErrorState
+            title="Failed to load designs"
+            message={error}
+            onRetry={loadDesigns}
+          />
         ) : designs.length === 0 ? (
-          <div className="text-center py-20">
-            <p className="text-lg text-muted-foreground">No designs found</p>
-            <p className="text-sm text-muted-foreground mt-2">Try adjusting your filters</p>
-          </div>
+          <EmptyState
+            icon={PackageSearch}
+            title="No designs found"
+            description={searchQuery ? `No results for "${searchQuery}". Try adjusting your search or filters.` : 'No designs available yet. Check back soon!'}
+          />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {designs.map((design) => (
