@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { X, Search, Download, Star, ChevronLeft, ChevronRight } from 'lucide-react';
 import { CanvasObject } from '@/store/deckforge';
 import { useDeckForgeStore } from '@/store/deckforge';
@@ -869,16 +869,22 @@ export function TemplateGalleryModal({ isOpen, onClose }: TemplateGalleryModalPr
     return matchesSearch && matchesCategory;
   });
 
-  // Reset to page 1 when search/filter changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery, selectedCategory]);
-
   // Calculate pagination
   const totalPages = Math.ceil(filteredTemplates.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const endIndex = Math.min(startIndex + ITEMS_PER_PAGE, filteredTemplates.length);
   const paginatedTemplates = filteredTemplates.slice(startIndex, endIndex);
+
+  // Handlers that reset page when filtering
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+    setCurrentPage(1);
+  };
+
+  const handleCategoryChange = (value: string) => {
+    setSelectedCategory(value);
+    setCurrentPage(1);
+  };
 
   const handleUseTemplate = (template: Template) => {
     // Deep clone objects to prevent reference issues
@@ -921,7 +927,7 @@ export function TemplateGalleryModal({ isOpen, onClose }: TemplateGalleryModalPr
               type="text"
               placeholder="Search templates..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => handleSearchChange(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
@@ -931,7 +937,7 @@ export function TemplateGalleryModal({ isOpen, onClose }: TemplateGalleryModalPr
             {categories.map((cat) => (
               <button
                 key={cat.value}
-                onClick={() => setSelectedCategory(cat.value)}
+                onClick={() => handleCategoryChange(cat.value)}
                 className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                   selectedCategory === cat.value
                     ? 'bg-blue-500 text-white'
