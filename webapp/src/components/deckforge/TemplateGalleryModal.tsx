@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Search, Download, Star, ChevronLeft, ChevronRight } from 'lucide-react';
 import { CanvasObject } from '@/store/deckforge';
 import { useDeckForgeStore } from '@/store/deckforge';
@@ -860,36 +860,25 @@ export function TemplateGalleryModal({ isOpen, onClose }: TemplateGalleryModalPr
     { value: 'pro', label: 'Pro' },
   ];
 
+  // Filter templates
+  const filteredTemplates = TEMPLATES.filter((template) => {
+    const matchesSearch =
+      template.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      template.description.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = selectedCategory === 'all' || template.category === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
+
   // Reset to page 1 when search/filter changes
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery, selectedCategory]);
 
-  // Filter and paginate templates
-  const { filteredTemplates, paginatedTemplates, totalPages, startIndex, endIndex } = useMemo(() => {
-    // Filter templates
-    const filtered = TEMPLATES.filter((template) => {
-      const matchesSearch =
-        template.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        template.description.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesCategory = selectedCategory === 'all' || template.category === selectedCategory;
-      return matchesSearch && matchesCategory;
-    });
-
-    // Calculate pagination
-    const total = Math.ceil(filtered.length / ITEMS_PER_PAGE);
-    const start = (currentPage - 1) * ITEMS_PER_PAGE;
-    const end = start + ITEMS_PER_PAGE;
-    const paginated = filtered.slice(start, end);
-
-    return {
-      filteredTemplates: filtered,
-      paginatedTemplates: paginated,
-      totalPages: total,
-      startIndex: start,
-      endIndex: Math.min(end, filtered.length),
-    };
-  }, [searchQuery, selectedCategory, currentPage]);
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredTemplates.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = Math.min(startIndex + ITEMS_PER_PAGE, filteredTemplates.length);
+  const paginatedTemplates = filteredTemplates.slice(startIndex, endIndex);
 
   const handleUseTemplate = (template: Template) => {
     // Deep clone objects to prevent reference issues
