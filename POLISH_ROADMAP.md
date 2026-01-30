@@ -175,7 +175,7 @@ Last updated: 2026-01-30 03:15 UTC
 2. ✅ Improve hover states on all buttons (Button component, ToolRail, LayerList all enhanced with scale animations, shadows, smoother transitions)
 3. ✅ Add smooth transitions to panel toggles (Accordion animations now use 0.3s cubic-bezier with opacity fade)
 4. ✅ Better empty states with illustrations (EmptyState + LayerList: glow effects, gradients, keyboard hints, smooth animations)
-5. ⏳ Tooltips for all toolbar buttons (Header buttons done: Undo/Redo/Save/Export/BrandKits/etc. with shortcuts; more buttons pending)
+5. ✅ Tooltips for all toolbar buttons (All 17 header buttons complete with keyboard shortcuts and descriptions)
 6. [ ] Command palette (Ctrl+K)
 7. [ ] Keyboard shortcut overlay (press ?)
 8. [ ] Better error messages
