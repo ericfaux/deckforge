@@ -32,6 +32,7 @@ import { Button } from '@/components/ui/button';
 import { Save, Download, User, Sparkles, Clock, Menu, Share2, Play, ChevronDown, Palette, Undo, Redo, Type, Ruler, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { KeyboardShortcuts } from '@/components/deckforge/KeyboardShortcuts';
+import { CommandPalette } from '@/components/CommandPalette';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -651,6 +652,9 @@ export default function DeckForge() {
 
   return (
     <div className="h-screen w-screen flex flex-col bg-background overflow-hidden">
+      {/* Command Palette (Cmd+K) */}
+      <CommandPalette />
+
       {/* Header */}
       <header className={cn(
         "border-b border-border flex items-center px-4 bg-card shrink-0",

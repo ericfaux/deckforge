@@ -4,7 +4,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { CommandPalette } from "@/components/CommandPalette";
 import DeckForge from "./pages/DeckForge";
 import Auth from "./pages/Auth";
 import Designs from "./pages/Designs";
@@ -26,7 +25,6 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <CommandPalette />
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<DeckForge />} />
