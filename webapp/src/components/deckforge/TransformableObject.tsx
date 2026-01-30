@@ -1,5 +1,5 @@
 import { useRef, useEffect } from 'react';
-import { Rect, Text, Circle, Star, Image as KonvaImage, Transformer } from 'react-konva';
+import { Rect, Text, Circle, Star, RegularPolygon, Image as KonvaImage, Transformer } from 'react-konva';
 import type Konva from 'konva';
 import { CanvasObject } from '@/store/deckforge';
 import useImage from 'use-image';
@@ -204,6 +204,15 @@ function ShapeObject({ obj, ...props }: { obj: CanvasObject } & Omit<Transformab
             numPoints={5}
             innerRadius={obj.width / 4}
             outerRadius={obj.width / 2}
+          />
+        );
+      case 'polygon':
+        return (
+          <RegularPolygon
+            ref={shapeRef as React.RefObject<Konva.RegularPolygon>}
+            {...commonProps}
+            sides={obj.polygonSides || 6}
+            radius={obj.width / 2}
           />
         );
       default:

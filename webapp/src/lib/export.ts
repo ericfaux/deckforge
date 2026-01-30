@@ -289,6 +289,10 @@ function renderShape(
           drawStar(ctx, x + width / 2, y + height / 2, Math.min(width, height) / 2);
           ctx.fill();
           break;
+        case 'polygon':
+          drawPolygon(ctx, x + width / 2, y + height / 2, Math.min(width, height) / 2, obj.polygonSides || 6);
+          ctx.fill();
+          break;
       }
       
       ctx.restore();
@@ -310,6 +314,12 @@ function renderShape(
 
     case 'star':
       drawStar(ctx, x + width / 2, y + height / 2, Math.min(width, height) / 2);
+      ctx.fill();
+      if (stroke) ctx.stroke();
+      break;
+
+    case 'polygon':
+      drawPolygon(ctx, x + width / 2, y + height / 2, Math.min(width, height) / 2, obj.polygonSides || 6);
       ctx.fill();
       if (stroke) ctx.stroke();
       break;
@@ -366,6 +376,23 @@ function drawStar(ctx: CanvasRenderingContext2D, x: number, y: number, radius: n
     const angle = (i * Math.PI) / points - Math.PI / 2;
     const px = x + r * Math.cos(angle);
     const py = y + r * Math.sin(angle);
+
+    if (i === 0) {
+      ctx.moveTo(px, py);
+    } else {
+      ctx.lineTo(px, py);
+    }
+  }
+  ctx.closePath();
+}
+
+function drawPolygon(ctx: CanvasRenderingContext2D, x: number, y: number, radius: number, sides: number) {
+  const angle = (Math.PI * 2) / sides;
+
+  ctx.beginPath();
+  for (let i = 0; i < sides; i++) {
+    const px = x + radius * Math.cos(angle * i - Math.PI / 2);
+    const py = y + radius * Math.sin(angle * i - Math.PI / 2);
 
     if (i === 0) {
       ctx.moveTo(px, py);
@@ -516,6 +543,10 @@ async function renderObjectToSVG(
       shape = document.createElementNS('http://www.w3.org/2000/svg', 'path');
       const starPath = createStarPath(obj.width / 2);
       shape.setAttribute('d', starPath);
+    } else if (obj.shapeType === 'polygon') {
+      shape = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      const polygonPath = createPolygonPath(obj.width / 2, obj.polygonSides || 6);
+      shape.setAttribute('d', polygonPath);
     }
 
     if (shape) {
@@ -674,6 +705,25 @@ function createStarPath(radius: number): string {
     const angle = (i * Math.PI) / points - Math.PI / 2;
     const x = r * Math.cos(angle);
     const y = r * Math.sin(angle);
+
+    if (i === 0) {
+      d += `M ${x} ${y}`;
+    } else {
+      d += ` L ${x} ${y}`;
+    }
+  }
+
+  d += ' Z';
+  return d;
+}
+
+function createPolygonPath(radius: number, sides: number): string {
+  const angle = (Math.PI * 2) / sides;
+  let d = '';
+
+  for (let i = 0; i < sides; i++) {
+    const x = radius * Math.cos(angle * i - Math.PI / 2);
+    const y = radius * Math.sin(angle * i - Math.PI / 2);
 
     if (i === 0) {
       d += `M ${x} ${y}`;

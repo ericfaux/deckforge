@@ -71,7 +71,8 @@ export interface CanvasObject {
   // For images
   src?: string;
   // For shapes
-  shapeType?: 'rect' | 'circle' | 'star';
+  shapeType?: 'rect' | 'circle' | 'star' | 'polygon';
+  polygonSides?: number; // For polygon: 3-20 sides
   // For patterns (CSS background patterns)
   patternType?: 'checkerboard' | 'speed-lines' | 'halftone' | 'noise' | 'tie-dye' | 'diagonal-stripes' | 'hexagons' | 'crosshatch';
   patternPrimaryColor?: string;

@@ -117,6 +117,10 @@ const graphicAssets = [
   { id: 'g1', label: 'Circle', shapeType: 'circle' as const },
   { id: 'g2', label: 'Square', shapeType: 'rect' as const },
   { id: 'g4', label: 'Star', shapeType: 'star' as const },
+  { id: 'g5', label: 'Triangle', shapeType: 'polygon' as const, polygonSides: 3 },
+  { id: 'g6', label: 'Pentagon', shapeType: 'polygon' as const, polygonSides: 5 },
+  { id: 'g7', label: 'Hexagon', shapeType: 'polygon' as const, polygonSides: 6 },
+  { id: 'g8', label: 'Octagon', shapeType: 'polygon' as const, polygonSides: 8 },
 ];
 
 // Texture preview thumbnails for finishes
@@ -843,7 +847,7 @@ function DrawerContent({ tool, onAddObject, deckCenterX, deckCenterY }: DrawerCo
     });
   };
 
-  const addShape = (shapeType: 'rect' | 'circle' | 'star') => {
+  const addShape = (shapeType: 'rect' | 'circle' | 'star' | 'polygon', polygonSides?: number) => {
     onAddObject({
       type: 'shape',
       x: deckCenterX - 15,
@@ -856,6 +860,7 @@ function DrawerContent({ tool, onAddObject, deckCenterX, deckCenterY }: DrawerCo
       scaleY: 1,
       shapeType,
       fill: '#ffffff',
+      ...(shapeType === 'polygon' && { polygonSides: polygonSides || 6 }),
     });
   };
 
@@ -893,13 +898,18 @@ function DrawerContent({ tool, onAddObject, deckCenterX, deckCenterY }: DrawerCo
                 width: 30,
                 height: 30,
                 fill: '#ffffff',
+                ...(asset.shapeType === 'polygon' && { polygonSides: asset.polygonSides }),
               })}
-              onClick={() => addShape(asset.shapeType)}
+              onClick={() => addShape(asset.shapeType, asset.polygonSides)}
               className="aspect-square border border-border bg-secondary hover:border-primary transition-colors flex items-center justify-center cursor-grab active:cursor-grabbing"
             >
               {asset.shapeType === 'circle' && <div className="w-8 h-8 rounded-full bg-white" />}
               {asset.shapeType === 'rect' && <div className="w-8 h-8 bg-white" />}
               {asset.shapeType === 'star' && <span className="text-white text-2xl">★</span>}
+              {asset.shapeType === 'polygon' && asset.polygonSides === 3 && <span className="text-white text-2xl">▲</span>}
+              {asset.shapeType === 'polygon' && asset.polygonSides === 5 && <span className="text-white text-2xl">⬟</span>}
+              {asset.shapeType === 'polygon' && asset.polygonSides === 6 && <span className="text-white text-2xl">⬡</span>}
+              {asset.shapeType === 'polygon' && asset.polygonSides === 8 && <span className="text-white text-2xl">⯄</span>}
             </button>
           ))}
         </div>
