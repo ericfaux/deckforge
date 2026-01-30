@@ -236,7 +236,7 @@ function CanvasObjectItem({
       <g
         transform={`translate(${obj.x}, ${obj.y}) rotate(${obj.rotation}) scale(${obj.scaleX}, ${obj.scaleY})`}
         opacity={obj.opacity}
-        style={{ cursor }}
+        style={{ cursor, mixBlendMode: obj.mixBlendMode || 'normal' }}
         onMouseDown={handleMouseDown}
         onContextMenu={handleRightClick}
       >

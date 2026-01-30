@@ -180,6 +180,35 @@ export function Inspector() {
               </div>
             </div>
 
+            {/* Blend Mode */}
+            <div className="space-y-2">
+              <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                Blend Mode
+              </Label>
+              <select
+                value={selectedObject.mixBlendMode || 'normal'}
+                onChange={(e) => updateWithHistory({ mixBlendMode: e.target.value as any })}
+                className="w-full h-8 text-xs bg-secondary border border-border px-2"
+              >
+                <option value="normal">Normal</option>
+                <option value="multiply">Multiply</option>
+                <option value="screen">Screen</option>
+                <option value="overlay">Overlay</option>
+                <option value="darken">Darken</option>
+                <option value="lighten">Lighten</option>
+                <option value="color-dodge">Color Dodge</option>
+                <option value="color-burn">Color Burn</option>
+                <option value="hard-light">Hard Light</option>
+                <option value="soft-light">Soft Light</option>
+                <option value="difference">Difference</option>
+                <option value="exclusion">Exclusion</option>
+                <option value="hue">Hue</option>
+                <option value="saturation">Saturation</option>
+                <option value="color">Color</option>
+                <option value="luminosity">Luminosity</option>
+              </select>
+            </div>
+
             {/* Rotation */}
             <div className="space-y-2">
               <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">

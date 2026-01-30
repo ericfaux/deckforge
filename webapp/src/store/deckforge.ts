@@ -42,6 +42,7 @@ export interface CanvasObject {
   scaleY: number;
   locked?: boolean; // Lock object to prevent moving/editing
   hidden?: boolean; // Hide object from canvas (still in layers)
+  mixBlendMode?: 'normal' | 'multiply' | 'screen' | 'overlay' | 'darken' | 'lighten' | 'color-dodge' | 'color-burn' | 'hard-light' | 'soft-light' | 'difference' | 'exclusion' | 'hue' | 'saturation' | 'color' | 'luminosity';
   // For groups
   children?: CanvasObject[]; // Child objects in a group
   // For text
