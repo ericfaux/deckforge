@@ -327,9 +327,9 @@ export default function DeckForge() {
           if (!file) continue;
 
           try {
-            toastUtils.info('Processing image...', 'Adding to canvas');
+            toastUtils.info('Processing image...', 'Compressing and uploading');
 
-            // Upload the image
+            // Upload the image (auto-compressed)
             const result = await assetsAPI.upload(file);
 
             // Add to canvas at center
@@ -351,7 +351,14 @@ export default function DeckForge() {
             selectObject(newObj.id);
             flashPastedObject(newObj.id);
             
-            toastUtils.success('Image pasted!', 'Press T to add text or edit in Inspector');
+            // Show compression savings if applicable
+            let description = 'Press T to add text or edit in Inspector';
+            if (result.originalSize && result.compressedSize && result.compressedSize < result.originalSize) {
+              const savings = ((1 - result.compressedSize / result.originalSize) * 100).toFixed(0);
+              description = `Compressed ${savings}% • ${description}`;
+            }
+            
+            toastUtils.success('Image pasted!', description);
           } catch (error) {
             console.error('Paste image failed:', error);
             toastUtils.error('Failed to paste image', 'Try uploading instead');

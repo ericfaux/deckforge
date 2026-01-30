@@ -576,10 +576,18 @@ function UploadsContent({ onAddObject, deckCenterX, deckCenterY }: {
         } else {
           // Regular image upload
           try {
-            const { url, width, height } = await assetsAPI.upload(file);
+            const result = await assetsAPI.upload(file);
             imageCount++;
+            
+            // Show compression savings if applicable
+            let description = 'Image added to your library';
+            if (result.originalSize && result.compressedSize && result.compressedSize < result.originalSize) {
+              const savings = ((1 - result.compressedSize / result.originalSize) * 100).toFixed(0);
+              description = `Compressed ${savings}% • ${description}`;
+            }
+            
             toast.success(`Uploaded ${file.name}`, {
-              description: 'Image added to your library',
+              description,
             });
             // Add to assets list
             await loadAssets();

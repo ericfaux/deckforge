@@ -1,5 +1,6 @@
 // API client for DeckForge backend
 import { createClient } from '@supabase/supabase-js';
+import { compressImage, formatFileSize } from './image-compression';
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://hvulzgcqdwurrhaebhyy.supabase.co';
@@ -243,16 +244,44 @@ export const assetsAPI = {
     return response.json();
   },
 
-  async upload(file: File): Promise<{url: string; width: number; height: number}> {
+  async upload(file: File): Promise<{url: string; width: number; height: number; originalSize?: number; compressedSize?: number}> {
+    const originalSize = file.size;
+
+    // Compress image before upload (if applicable)
+    let fileToUpload = file;
+    if (file.type.startsWith('image/') && file.type !== 'image/svg+xml') {
+      try {
+        const compressedFile = await compressImage(file, {
+          maxWidth: 2048,
+          maxHeight: 2048,
+          quality: 0.85,
+          maxSizeMB: 2,
+        });
+        
+        fileToUpload = compressedFile;
+        
+        // Log compression results
+        if (compressedFile.size < originalSize) {
+          const savings = ((1 - compressedFile.size / originalSize) * 100).toFixed(1);
+          console.log(
+            `Image compressed: ${formatFileSize(originalSize)} → ${formatFileSize(compressedFile.size)} (${savings}% smaller)`
+          );
+        }
+      } catch (error) {
+        console.warn('Image compression failed, uploading original:', error);
+        // Continue with original file if compression fails
+      }
+    }
+
     // Get signed upload URL
-    const { uploadUrl, path } = await this.getUploadUrl(file.name, file.type);
+    const { uploadUrl, path } = await this.getUploadUrl(fileToUpload.name, fileToUpload.type);
 
     // Upload file directly to Supabase Storage
     const uploadResponse = await fetch(uploadUrl, {
       method: 'PUT',
-      body: file,
+      body: fileToUpload,
       headers: {
-        'Content-Type': file.type,
+        'Content-Type': fileToUpload.type,
       },
     });
 
@@ -261,17 +290,17 @@ export const assetsAPI = {
     }
 
     // Get image dimensions
-    const dimensions = await getImageDimensions(file);
+    const dimensions = await getImageDimensions(fileToUpload);
 
     // Construct public URL
     const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/user-assets/${path}`;
 
     // Record in database
     await this.create({
-      name: file.name,
+      name: fileToUpload.name,
       file_url: publicUrl,
-      file_type: file.type,
-      file_size: file.size,
+      file_type: fileToUpload.type,
+      file_size: fileToUpload.size,
       width: dimensions.width,
       height: dimensions.height,
     });
@@ -280,6 +309,8 @@ export const assetsAPI = {
       url: publicUrl,
       width: dimensions.width,
       height: dimensions.height,
+      originalSize,
+      compressedSize: fileToUpload.size,
     };
   },
 };
