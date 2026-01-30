@@ -334,8 +334,8 @@ export default function Designs() {
                 return (
                   <div
                     key={design.id}
-                    className={`group border transition-colors bg-card overflow-hidden cursor-pointer relative ${
-                      isSelected ? 'border-primary ring-2 ring-primary/20' : 'border-border hover:border-primary'
+                    className={`group border transition-all duration-200 bg-card overflow-hidden cursor-pointer relative ${
+                      isSelected ? 'border-primary ring-2 ring-primary/20' : 'border-border hover:border-primary/50 hover:shadow-xl hover:-translate-y-1'
                     }`}
                     onClick={() => openDesign(design)}
                   >
@@ -361,7 +361,7 @@ export default function Designs() {
                         <img
                           src={design.thumbnail_url}
                           alt={design.name}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         />
                       ) : (
                         <div className="text-muted-foreground text-sm uppercase tracking-widest">

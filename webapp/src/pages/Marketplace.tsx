@@ -5,6 +5,7 @@ import { Search, Heart, Download, DollarSign, Filter, TrendingUp, Clock, Sparkle
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { EmptyState } from '@/components/EmptyState';
 import { ErrorState } from '@/components/ErrorState';
 import { toast } from 'sonner';
@@ -220,15 +221,15 @@ function DesignCard({ design }: { design: MarketplaceDesign }) {
   return (
     <div
       onClick={() => navigate(`/marketplace/design/${design.id}`)}
-      className="group border border-border rounded-lg overflow-hidden hover:shadow-lg transition-all cursor-pointer bg-card"
+      className="group border border-border rounded-lg overflow-hidden hover:shadow-xl hover:border-primary/50 hover:-translate-y-1 transition-all duration-200 cursor-pointer bg-card"
     >
       {/* Thumbnail */}
-      <div className="aspect-[3/8] bg-gradient-to-br from-muted to-muted/50 relative">
+      <div className="aspect-[3/8] bg-gradient-to-br from-muted to-muted/50 relative overflow-hidden">
         {design.thumbnail_url ? (
           <img
             src={design.thumbnail_url}
             alt={design.title}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-6xl">
@@ -237,14 +238,21 @@ function DesignCard({ design }: { design: MarketplaceDesign }) {
         )}
         
         {/* Favorite button */}
-        <button
-          onClick={handleFavorite}
-          className="absolute top-2 right-2 w-8 h-8 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center hover:bg-background transition-colors"
-        >
-          <Heart
-            className={`w-4 h-4 ${isFavorited ? 'fill-red-500 text-red-500' : 'text-foreground'}`}
-          />
-        </button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={handleFavorite}
+              className="absolute top-2 right-2 w-8 h-8 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center hover:bg-background hover:scale-110 transition-all"
+            >
+              <Heart
+                className={`w-4 h-4 ${isFavorited ? 'fill-red-500 text-red-500' : 'text-foreground'}`}
+              />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>{isFavorited ? 'Remove from favorites' : 'Add to favorites'}</p>
+          </TooltipContent>
+        </Tooltip>
 
         {/* Featured badge */}
         {design.featured_until && new Date(design.featured_until) > new Date() && (
