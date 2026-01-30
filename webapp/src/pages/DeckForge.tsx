@@ -29,7 +29,7 @@ import { designsAPI } from '@/lib/api';
 import { exportToPNG, exportToSVG, downloadBlob } from '@/lib/export';
 import { preloadUserFonts } from '@/lib/fonts';
 import { Button } from '@/components/ui/button';
-import { Save, Download, User, Sparkles, Clock, Menu, Share2, Play, ChevronDown, Palette, Undo, Redo, Type, Ruler } from 'lucide-react';
+import { Save, Download, User, Sparkles, Clock, Menu, Share2, Play, ChevronDown, Palette, Undo, Redo, Type, Ruler, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { KeyboardShortcuts } from '@/components/deckforge/KeyboardShortcuts';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -709,7 +709,11 @@ export default function DeckForge() {
                 disabled={isSaving}
                 className="gap-2"
               >
-                <Save className="w-4 h-4" />
+                {isSaving ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Save className="w-4 h-4" />
+                )}
                 {isSaving ? 'Saving...' : 'Save'}
               </Button>
 
