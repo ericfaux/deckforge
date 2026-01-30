@@ -125,6 +125,19 @@
   .tool-active {
     @apply border-primary bg-primary/10 text-primary;
   }
+
+  /* Interactive button base - Figma-level hover states */
+  .btn-interactive {
+    @apply transition-all duration-200 ease-out;
+    @apply hover:scale-[1.02] active:scale-95;
+    @apply cursor-pointer;
+  }
+
+  .btn-interactive-icon {
+    @apply transition-all duration-200 ease-out;
+    @apply hover:scale-110 active:scale-95;
+    @apply cursor-pointer;
+  }
 }
 
 /* ============================================
