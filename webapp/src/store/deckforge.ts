@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { getDeckSize } from '@/lib/deck-sizes';
 
 export type ToolType = 'templates' | 'graphics' | 'text' | 'uploads' | 'background' | 'finishes' | 'stickers' | 'patterns' | 'textures' | 'lines' | 'pen';
 
@@ -379,14 +380,38 @@ export const useDeckForgeStore = create<DeckForgeState>((set, get) => ({
   clearSelection: () => set({ selectedId: null, selectedIds: [] }),
 
   alignObjects: (alignment) => {
-    const { selectedIds, objects } = get();
-    if (selectedIds.length < 2) return;
+    const { selectedIds, objects, deckSizeId } = get();
+    if (selectedIds.length === 0) return;
 
     const state = get();
     state.saveToHistory();
 
     const selectedObjects = objects.filter(obj => selectedIds.includes(obj.id));
     
+    // For single objects, align to canvas center
+    if (selectedIds.length === 1) {
+      const obj = selectedObjects[0];
+      const deckSize = getDeckSize(deckSizeId);
+      const DECK_WIDTH = deckSize.widthPx;
+      const DECK_HEIGHT = deckSize.lengthPx;
+      
+      if (alignment === 'center') {
+        state.updateObject(obj.id, { x: (DECK_WIDTH - obj.width * obj.scaleX) / 2 });
+      } else if (alignment === 'middle') {
+        state.updateObject(obj.id, { y: (DECK_HEIGHT - obj.height * obj.scaleY) / 2 });
+      } else if (alignment === 'left') {
+        state.updateObject(obj.id, { x: 0 });
+      } else if (alignment === 'right') {
+        state.updateObject(obj.id, { x: DECK_WIDTH - obj.width * obj.scaleX });
+      } else if (alignment === 'top') {
+        state.updateObject(obj.id, { y: 0 });
+      } else if (alignment === 'bottom') {
+        state.updateObject(obj.id, { y: DECK_HEIGHT - obj.height * obj.scaleY });
+      }
+      return;
+    }
+    
+    // For multiple objects, align relative to each other
     if (alignment === 'left') {
       const minX = Math.min(...selectedObjects.map(obj => obj.x));
       selectedObjects.forEach(obj => {

@@ -13,15 +13,19 @@ export function DeckSizeSelector() {
 
   return (
     <div className="relative">
-      <EnhancedTooltip content="Change deck size" shortcut="">
+      <EnhancedTooltip content="Change deck size - Click to choose your board width!" shortcut="">
         <Button
-          variant="ghost"
+          variant="outline"
           size="sm"
           onClick={() => setIsOpen(!isOpen)}
-          className="gap-2"
+          className="gap-2 border-primary/30 hover:border-primary relative"
         >
-          <Ruler className="w-4 h-4" />
-          <span className="text-xs font-mono">{currentSize.name}</span>
+          <Ruler className="w-4 h-4 text-primary" />
+          <span className="text-xs font-mono font-semibold">{currentSize.name}</span>
+          <span className="absolute -top-1 -right-1 flex h-3 w-3">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
+          </span>
         </Button>
       </EnhancedTooltip>
 

@@ -983,6 +983,29 @@ export default function DeckForge() {
               
               {/* Deck Size Selector */}
               <DeckSizeSelector />
+
+              {/* Ruler Toggle - Always Visible */}
+              <Tooltip delayDuration={300}>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant={showRulers ? "default" : "ghost"}
+                    onClick={() => {
+                      toggleRulers();
+                      toast.success(showRulers ? 'Rulers hidden' : 'Rulers visible');
+                    }}
+                    className="gap-2 border border-border"
+                  >
+                    <Ruler className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <div className="flex items-center gap-2">
+                    <span>Toggle Rulers</span>
+                    <kbd className="px-1.5 py-0.5 text-xs bg-muted border border-border rounded font-mono">Ctrl+Shift+R</kbd>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
               
               <Tooltip delayDuration={300}>
                 <TooltipTrigger asChild>
@@ -1378,28 +1401,6 @@ export default function DeckForge() {
                   <p className="text-xs text-muted-foreground mt-1">
                     {isAuthenticated ? 'View all your saved designs' : 'Sign in to save your work'}
                   </p>
-                </TooltipContent>
-              </Tooltip>
-
-              <Tooltip delayDuration={300}>
-                <TooltipTrigger asChild>
-                  <Button
-                    size="sm"
-                    variant={showRulers ? "default" : "ghost"}
-                    onClick={() => {
-                      toggleRulers();
-                      toast.success(showRulers ? 'Rulers hidden' : 'Rulers visible');
-                    }}
-                    className="gap-2"
-                  >
-                    <Ruler className="w-4 h-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <div className="flex items-center gap-2">
-                    <span>Toggle Rulers</span>
-                    <kbd className="px-1.5 py-0.5 text-xs bg-muted border border-border rounded font-mono">Ctrl+Shift+R</kbd>
-                  </div>
                 </TooltipContent>
               </Tooltip>
 

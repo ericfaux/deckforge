@@ -125,10 +125,21 @@ export function QuickAccessToolbar() {
   };
 
   const handleAlign = (alignment: 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom') => {
-    if (selectedIds.length < 2) return;
+    if (selectedIds.length === 0) return;
     
     alignObjects(alignment);
-    toastUtils.success(`Aligned ${alignment}`);
+    
+    // Better toast messages
+    const isSingle = selectedIds.length === 1;
+    const messages = {
+      left: isSingle ? 'Aligned to left edge' : 'Aligned left',
+      center: isSingle ? 'Centered horizontally' : 'Aligned center',
+      right: isSingle ? 'Aligned to right edge' : 'Aligned right',
+      top: isSingle ? 'Aligned to top edge' : 'Aligned top',
+      middle: isSingle ? 'Centered vertically' : 'Aligned middle',
+      bottom: isSingle ? 'Aligned to bottom edge' : 'Aligned bottom',
+    };
+    toastUtils.success(messages[alignment]);
   };
 
   return (
@@ -220,88 +231,89 @@ export function QuickAccessToolbar() {
           </div>
 
           {multipleSelected && (
-            <>
-              <div className="flex items-center gap-1 border-r border-border pr-2">
-                <EnhancedTooltip content="Group" shortcut="Ctrl+G">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 w-8 p-0"
-                    onClick={handleGroup}
-                  >
-                    <Layers className="h-4 w-4" />
-                  </Button>
-                </EnhancedTooltip>
-              </div>
+            <div className="flex items-center gap-1 border-r border-border pr-2">
+              <EnhancedTooltip content="Group" shortcut="Ctrl+G">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0"
+                  onClick={handleGroup}
+                >
+                  <Layers className="h-4 w-4" />
+                </Button>
+              </EnhancedTooltip>
+            </div>
+          )}
 
-              <div className="flex items-center gap-1">
-                <EnhancedTooltip content="Align Left">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 w-8 p-0"
-                    onClick={() => handleAlign('left')}
-                  >
-                    <AlignLeft className="h-4 w-4" />
-                  </Button>
-                </EnhancedTooltip>
+          {/* Alignment - available for single or multiple selection */}
+          {hasSelection && (
+            <div className="flex items-center gap-1">
+              <EnhancedTooltip content={multipleSelected ? "Align objects left" : "Align to left edge"}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0"
+                  onClick={() => handleAlign('left')}
+                >
+                  <AlignLeft className="h-4 w-4" />
+                </Button>
+              </EnhancedTooltip>
 
-                <EnhancedTooltip content="Align Center">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 w-8 p-0"
-                    onClick={() => handleAlign('center')}
-                  >
-                    <AlignHorizontalJustifyCenter className="h-4 w-4" />
-                  </Button>
-                </EnhancedTooltip>
+              <EnhancedTooltip content={multipleSelected ? "Align objects center" : "Center horizontally"}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0"
+                  onClick={() => handleAlign('center')}
+                >
+                  <AlignHorizontalJustifyCenter className="h-4 w-4" />
+                </Button>
+              </EnhancedTooltip>
 
-                <EnhancedTooltip content="Align Right">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 w-8 p-0"
-                    onClick={() => handleAlign('right')}
-                  >
-                    <AlignRight className="h-4 w-4" />
-                  </Button>
-                </EnhancedTooltip>
+              <EnhancedTooltip content={multipleSelected ? "Align objects right" : "Align to right edge"}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0"
+                  onClick={() => handleAlign('right')}
+                >
+                  <AlignRight className="h-4 w-4" />
+                </Button>
+              </EnhancedTooltip>
 
-                <EnhancedTooltip content="Align Top">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 w-8 p-0"
-                    onClick={() => handleAlign('top')}
-                  >
-                    <AlignLeft className="h-4 w-4 rotate-90" />
-                  </Button>
-                </EnhancedTooltip>
+              <EnhancedTooltip content={multipleSelected ? "Align objects top" : "Align to top edge"}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0"
+                  onClick={() => handleAlign('top')}
+                >
+                  <AlignLeft className="h-4 w-4 rotate-90" />
+                </Button>
+              </EnhancedTooltip>
 
-                <EnhancedTooltip content="Align Middle">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 w-8 p-0"
-                    onClick={() => handleAlign('middle')}
-                  >
-                    <AlignVerticalJustifyCenter className="h-4 w-4" />
-                  </Button>
-                </EnhancedTooltip>
+              <EnhancedTooltip content={multipleSelected ? "Align objects middle" : "Center vertically"}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0"
+                  onClick={() => handleAlign('middle')}
+                >
+                  <AlignVerticalJustifyCenter className="h-4 w-4" />
+                </Button>
+              </EnhancedTooltip>
 
-                <EnhancedTooltip content="Align Bottom">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 w-8 p-0"
-                    onClick={() => handleAlign('bottom')}
-                  >
-                    <AlignRight className="h-4 w-4 rotate-90" />
-                  </Button>
-                </EnhancedTooltip>
-              </div>
-            </>
+              <EnhancedTooltip content={multipleSelected ? "Align objects bottom" : "Align to bottom edge"}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0"
+                  onClick={() => handleAlign('bottom')}
+                >
+                  <AlignRight className="h-4 w-4 rotate-90" />
+                </Button>
+              </EnhancedTooltip>
+            </div>
           )}
         </>
       )}
