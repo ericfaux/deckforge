@@ -1,5 +1,5 @@
 import { Download, Grid3X3, RotateCcw, ChevronDown, Type, Lock, Unlock, ArrowUp, ArrowDown, ChevronsUp, ChevronsDown } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import { useDeckForgeStore, CanvasObject } from '@/store/deckforge';
 import { Slider } from '@/components/ui/slider';
 import { Input } from '@/components/ui/input';
