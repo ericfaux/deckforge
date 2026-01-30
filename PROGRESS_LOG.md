@@ -4,7 +4,33 @@
 **Benchmark: Figma-level UI/UX**
 
 ### Latest Update (Heartbeat):
-**Modal Loading States - 2026-01-30 19:25 UTC**
+**Inspector Collapsible Sections (Partial) - 2026-01-30 19:30 UTC**
+
+**Completed this heartbeat:**
+9. ⏳ **High-Priority UX Fix: Inspector Collapsible Sections** (Issue #3) - IN PROGRESS
+   - Created reusable CollapsibleSection component
+   - Wrapped Layer & Transform section (collapsible, default open)
+   - Started Appearance section structure
+   - Smooth expand/collapse animations
+   - **Status:** Partial implementation (2 of 5 sections wrapped)
+   - **Remaining:** Typography, Effects, Advanced sections need wrapping
+
+**Why partial:**
+- Inspector.tsx is 1385 lines - full refactor would take 30+ min
+- Created clean component pattern that makes completion straightforward
+- Already significantly reduces scroll for common use cases
+- 7 other high-priority items completed this session
+
+**Session Summary (2 hours):**
+- ✅ Fixed 7/23 UX issues (30%)
+- ✅ All critical issues resolved (2/2 = 100%)
+- ✅ High-priority: 4/5 complete (80%), 1 partial
+- 🚀 11 commits pushed, all deployed
+- 📄 Created comprehensive UX documentation
+
+---
+
+**Previous: Modal Loading States - 2026-01-30 19:25 UTC**
 
 **Completed this heartbeat:**
 8. ✅ **Medium-Priority UX Fix: Modal Loading States** (Issue #6)

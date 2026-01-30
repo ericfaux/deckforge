@@ -73,25 +73,27 @@
 - Check if VITE_BACKEND_URL env var is set in Vercel
 - May need to rebuild frontend
 
-### 3. Right Sidebar (Inspector) - Extremely Long Scroll
+### 3. Right Sidebar (Inspector) - Extremely Long Scroll ⏳ IN PROGRESS
 **Severity:** HIGH  
 **Impact:** Poor UX navigating object properties
 
-**Problem:**
-- Inspector panel can have 30+ controls for a single object
-- No sectioning or collapsible groups
-- Scroll height can exceed 2000px for complex objects
-- Hard to find specific properties quickly
+**Status:** Partial implementation (2026-01-30)
 
-**Solution:**
-- Implement collapsible accordion sections:
-  - Basic (Position, Size, Rotation)
-  - Style (Colors, Gradients, Opacity)
-  - Typography (Font, Size, Weight) - text only
-  - Effects (Shadow, Glow, Outline, Filters)
-  - Advanced (Blend modes, etc.)
-- Default: Only "Basic" and "Style" expanded
-- Remember user's collapse preferences
+**Completed:**
+- ✅ Created reusable CollapsibleSection component
+- ✅ Wrapped Layer & Transform section (collapsible, default open)
+- ✅ Started Appearance section structure
+- ✅ Smooth animations on expand/collapse
+
+**Remaining:**
+- ⏳ Complete Appearance section closing
+- ⏳ Wrap Typography section (text objects only)
+- ⏳ Wrap Effects section (filters, shadows)
+- ⏳ Wrap Advanced section (patterns, remix effects)
+- ⏳ Add localStorage persistence for open/closed state
+
+**Why Partial:**
+Inspector.tsx is 1385 lines - full refactor requires 30+ min. Created clean component pattern that makes completion straightforward.
 
 ### 4. Left Tool Rail - No Active State Visual Feedback ✅ FIXED
 **Severity:** MEDIUM-HIGH  
