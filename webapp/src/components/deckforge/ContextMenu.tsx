@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Copy, Scissors, Clipboard, Trash2, Lock, Unlock, Eye, EyeOff, ChevronUp, ChevronDown, ChevronsUp, ChevronsDown, Group, Ungroup } from 'lucide-react';
+import { Copy, Scissors, Clipboard, Trash2, Lock, Unlock, Eye, EyeOff, ChevronUp, ChevronDown, ChevronsUp, ChevronsDown, Group, Ungroup, Wand2, Palette, ImageIcon, RotateCcw } from 'lucide-react';
 import { useDeckForgeStore, CanvasObject } from '@/store/deckforge';
 import { toast } from 'sonner';
+import { toastUtils } from '@/lib/toast-utils';
 
 interface ContextMenuProps {
   x: number;
@@ -185,9 +186,53 @@ export function ContextMenu({ x, y, objectId, onClose }: ContextMenuProps) {
     onClose();
   };
 
+  const handleHighContrast = () => {
+    updateObject(obj.id, {
+      contrast: 2,
+      brightness: 1.2,
+    });
+    toastUtils.success('High Contrast applied', 'Punk zine effect');
+    onClose();
+  };
+
+  const handleBlackAndWhite = () => {
+    updateObject(obj.id, {
+      grayscale: 100,
+    });
+    toastUtils.success('Black & White applied');
+    onClose();
+  };
+
+  const handleInvert = () => {
+    updateObject(obj.id, {
+      invert: !(obj.invert || false),
+    });
+    toastUtils.success('Colors inverted');
+    onClose();
+  };
+
+  const handleResetFilters = () => {
+    updateObject(obj.id, {
+      contrast: 1,
+      brightness: 1,
+      grayscale: 0,
+      invert: false,
+      blur: 0,
+    });
+    toastUtils.success('Filters reset');
+    onClose();
+  };
+
+  const handleRemoveBackground = () => {
+    toastUtils.info('Remove Background', 'This feature will use AI to remove backgrounds from images. Coming soon!');
+    onClose();
+  };
+
   const hasClipboard = !!sessionStorage.getItem('deckforge_clipboard');
   const isGroup = obj.type === 'group';
   const canGroup = selectedIds.length >= 2;
+  const isImage = obj.type === 'image';
+  const hasFilters = obj.contrast !== 1 || obj.brightness !== 1 || obj.grayscale !== 0 || obj.invert || obj.blur;
 
   const menuItems: MenuItem[] = [
     {
@@ -274,6 +319,39 @@ export function ContextMenu({ x, y, objectId, onClose }: ContextMenuProps) {
     });
   }
 
+  // Image-specific menu items
+  if (isImage) {
+    menuItems.push({
+      label: 'High Contrast',
+      icon: <Palette className="w-4 h-4" />,
+      action: handleHighContrast,
+      divider: false,
+    });
+    menuItems.push({
+      label: 'Black & White',
+      icon: <Palette className="w-4 h-4" />,
+      action: handleBlackAndWhite,
+    });
+    menuItems.push({
+      label: 'Invert Colors',
+      icon: <Palette className="w-4 h-4" />,
+      action: handleInvert,
+    });
+    if (hasFilters) {
+      menuItems.push({
+        label: 'Reset Filters',
+        icon: <RotateCcw className="w-4 h-4" />,
+        action: handleResetFilters,
+      });
+    }
+    menuItems.push({
+      label: 'Remove Background',
+      icon: <Wand2 className="w-4 h-4" />,
+      action: handleRemoveBackground,
+      divider: true,
+    });
+  }
+
   // Delete at the end
   menuItems.push({
     label: 'Delete',
@@ -281,7 +359,7 @@ export function ContextMenu({ x, y, objectId, onClose }: ContextMenuProps) {
     shortcut: 'Delete',
     action: handleDelete,
     destructive: true,
-    divider: canGroup || isGroup, // Add divider before delete if group options exist
+    divider: true,
   });
 
   return (
