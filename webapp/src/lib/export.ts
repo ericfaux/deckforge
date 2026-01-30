@@ -687,6 +687,75 @@ function createStarPath(radius: number): string {
 }
 
 /**
+ * Export canvas to PDF (Premium Feature)
+ * Embeds high-resolution PNG in industry-standard PDF format
+ */
+export async function exportToPDF(
+  objects: CanvasObject[],
+  options: {
+    scale?: number;
+    includeBackground?: boolean;
+    title?: string;
+  } = {}
+): Promise<Blob> {
+  const { scale = 6, includeBackground = true, title = 'Fingerboard Design' } = options;
+
+  // Dynamically import jspdf (code splitting)
+  const { jsPDF } = await import('jspdf');
+
+  // First, render the design as a high-res PNG
+  const pngBlob = await exportToPNG(objects, {
+    scale,
+    format: 'png',
+    includeBackground,
+  });
+
+  // Convert blob to base64 data URL
+  const dataUrl = await new Promise<string>((resolve) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result as string);
+    reader.readAsDataURL(pngBlob);
+  });
+
+  // Calculate PDF dimensions (in mm)
+  // Deck dimensions in mm: 96mm x 294mm (standard fingerboard)
+  const deckWidthMm = 96;
+  const deckHeightMm = 294;
+
+  // Create PDF in portrait orientation
+  const pdf = new jsPDF({
+    orientation: 'portrait',
+    unit: 'mm',
+    format: [deckWidthMm, deckHeightMm],
+  });
+
+  // Add metadata
+  pdf.setProperties({
+    title: title,
+    subject: 'Fingerboard Design',
+    author: 'DeckForge',
+    keywords: 'fingerboard, deck, design',
+    creator: 'DeckForge - deckforge.app',
+  });
+
+  // Add the image to PDF (fills entire page)
+  pdf.addImage(
+    dataUrl,
+    'PNG',
+    0,
+    0,
+    deckWidthMm,
+    deckHeightMm,
+    undefined,
+    'FAST' // Compression mode
+  );
+
+  // Convert PDF to blob
+  const pdfBlob = pdf.output('blob');
+  return pdfBlob;
+}
+
+/**
  * Download blob as file
  */
 export function downloadBlob(blob: Blob, filename: string) {

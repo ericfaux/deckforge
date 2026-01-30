@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Download, Instagram, MessageCircle, Printer, FileImage, Loader2, Crown, Sparkles } from 'lucide-react';
-import { exportToPNG } from '@/lib/export';
+import { Download, Instagram, MessageCircle, Printer, FileImage, Loader2, Crown, Sparkles, FileText } from 'lucide-react';
+import { exportToPNG, exportToPDF } from '@/lib/export';
 import { useDeckForgeStore } from '@/store/deckforge';
 import { toast } from 'sonner';
 
@@ -14,7 +14,7 @@ interface ExportPreset {
   width: number;
   height: number;
   scale: number; // Multiplier for resolution
-  format: 'png' | 'jpg';
+  format: 'png' | 'jpg' | 'pdf';
   isPro?: boolean; // Premium feature
 }
 
@@ -93,6 +93,28 @@ const presets: ExportPreset[] = [
     isPro: true,
   },
   {
+    id: 'pdf-print',
+    name: 'PDF (Print Ready)',
+    description: 'Industry Standard • 96×294mm',
+    icon: <FileText className="w-5 h-5" />,
+    width: 96,
+    height: 294,
+    scale: 6,
+    format: 'pdf',
+    isPro: true,
+  },
+  {
+    id: 'pdf-high-res',
+    name: 'PDF (Ultra HD)',
+    description: 'Premium Quality • 96×294mm',
+    icon: <FileText className="w-5 h-5" />,
+    width: 96,
+    height: 294,
+    scale: 10,
+    format: 'pdf',
+    isPro: true,
+  },
+  {
     id: 'web-preview',
     name: 'Web Preview',
     description: '800×2450px (Web)',
@@ -131,11 +153,23 @@ export function ExportPresetsModal({ open, onClose }: ExportPresetsModalProps) {
         description: 'This may take a moment for high-resolution exports',
       });
 
-      const blob = await exportToPNG(objects, {
-        scale: preset.scale,
-        format: preset.format,
-        includeBackground: true,
-      });
+      let blob: Blob;
+      
+      if (preset.format === 'pdf') {
+        // PDF export
+        blob = await exportToPDF(objects, {
+          scale: preset.scale,
+          includeBackground: true,
+          title: designName || 'Fingerboard Design',
+        });
+      } else {
+        // PNG/JPG export
+        blob = await exportToPNG(objects, {
+          scale: preset.scale,
+          format: preset.format as 'png' | 'jpeg',
+          includeBackground: true,
+        });
+      }
 
       // Download the file
       const url = URL.createObjectURL(blob);
@@ -236,13 +270,13 @@ export function ExportPresetsModal({ open, onClose }: ExportPresetsModalProps) {
 
           <div className="mt-4 p-3 rounded-lg bg-muted/50 border border-border">
             <p className="text-xs text-muted-foreground">
-              💡 <strong>Tip:</strong> Ultra HD exports (6x-12x) provide gallery and museum-quality resolution for professional printing. Print Quality (10x) is perfect for crisp physical decks. Web Preview uses JPG for smaller file sizes.
+              💡 <strong>Tip:</strong> PDF exports are industry-standard for professional printers. Ultra HD exports (6x-12x) provide gallery-quality resolution. Web Preview uses JPG for smaller file sizes.
             </p>
           </div>
 
           <div className="mt-3 p-3 rounded-lg bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20">
             <p className="text-xs text-amber-700 dark:text-amber-400 font-medium">
-              ⚡ Ultra HD exports generate very large files (10-50MB) but deliver unmatched print quality. Perfect for professional manufacturing and archival purposes.
+              📄 PDF exports embed high-resolution images in industry-standard format, perfect for sending to print shops and manufacturers.
             </p>
           </div>
         </div>

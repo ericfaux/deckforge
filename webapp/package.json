@@ -53,6 +53,7 @@
     "embla-carousel-react": "^8.6.0",
     "framer-motion": "^12.23.28",
     "input-otp": "^1.4.2",
+    "jspdf": "^4.0.0",
     "jszip": "^3.10.1",
     "konva": "^10.2.0",
     "lucide-react": "^0.462.0",
