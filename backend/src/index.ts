@@ -30,8 +30,18 @@ const allowed = [
 app.use(
   "*",
   cors({
-    origin: (origin) => (origin && allowed.some((re) => re.test(origin)) ? origin : null),
+    origin: (origin) => {
+      // Allow requests without origin (e.g., Postman, curl)
+      if (!origin) return "*";
+      // Check if origin matches allowed patterns
+      const isAllowed = allowed.some((re) => re.test(origin));
+      return isAllowed ? origin : null;
+    },
     credentials: true,
+    allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowHeaders: ["Content-Type", "Authorization"],
+    exposeHeaders: ["Content-Length", "X-Request-Id"],
+    maxAge: 600, // Cache preflight for 10 minutes
   })
 );
 

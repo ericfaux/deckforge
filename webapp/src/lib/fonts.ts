@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+// Use VITE_BACKEND_URL (same as api.ts) for consistency
+const API_BASE = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
 
 export interface Font {
   id: string;
@@ -17,7 +18,7 @@ export const fontsApi = {
   // Get all user's fonts
   async list(): Promise<Font[]> {
     const token = localStorage.getItem('token');
-    const response = await axios.get(`${API_BASE}/fonts`, {
+    const response = await axios.get(`${API_BASE}/api/fonts`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     return response.data.fonts;
@@ -27,7 +28,7 @@ export const fontsApi = {
   async getUploadUrl(filename: string, contentType: string) {
     const token = localStorage.getItem('token');
     const response = await axios.post(
-      `${API_BASE}/fonts/upload-url`,
+      `${API_BASE}/api/fonts/upload-url`,
       { filename, contentType },
       { headers: { Authorization: `Bearer ${token}` } }
     );
@@ -50,7 +51,7 @@ export const fontsApi = {
     file_size?: number;
   }): Promise<Font> {
     const token = localStorage.getItem('token');
-    const response = await axios.post(`${API_BASE}/fonts`, data, {
+    const response = await axios.post(`${API_BASE}/api/fonts`, data, {
       headers: { Authorization: `Bearer ${token}` },
     });
     return response.data.font;
@@ -59,7 +60,7 @@ export const fontsApi = {
   // Delete font
   async delete(id: string) {
     const token = localStorage.getItem('token');
-    await axios.delete(`${API_BASE}/fonts/${id}`, {
+    await axios.delete(`${API_BASE}/api/fonts/${id}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
   },
@@ -101,14 +102,60 @@ export function loadFont(font: Font): Promise<void> {
   });
 }
 
+// Default system fonts as fallback
+export const DEFAULT_FONTS: Font[] = [
+  {
+    id: 'system-arial',
+    user_id: 'system',
+    name: 'Arial',
+    font_family: 'Arial, sans-serif',
+    file_url: '',
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: 'system-impact',
+    user_id: 'system',
+    name: 'Impact',
+    font_family: 'Impact, fantasy',
+    file_url: '',
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: 'system-times',
+    user_id: 'system',
+    name: 'Times New Roman',
+    font_family: '"Times New Roman", serif',
+    file_url: '',
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: 'system-courier',
+    user_id: 'system',
+    name: 'Courier New',
+    font_family: '"Courier New", monospace',
+    file_url: '',
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: 'system-helvetica',
+    user_id: 'system',
+    name: 'Helvetica',
+    font_family: 'Helvetica, Arial, sans-serif',
+    file_url: '',
+    created_at: new Date().toISOString(),
+  },
+];
+
 // Preload all user fonts
 export async function preloadUserFonts() {
   try {
     const fonts = await fontsApi.list();
     await Promise.all(fonts.map(loadFont));
-    return fonts;
+    // Combine user fonts with system defaults
+    return [...DEFAULT_FONTS, ...fonts];
   } catch (error) {
     console.error('Failed to preload fonts:', error);
-    return [];
+    // Return at least system fonts on error
+    return DEFAULT_FONTS;
   }
 }
