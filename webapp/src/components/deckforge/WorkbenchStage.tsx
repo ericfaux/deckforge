@@ -145,7 +145,7 @@ const CanvasObjectItem = memo(function CanvasObjectItem({
     onSelect(e);
     
     if (obj.locked) {
-      // Show toast that object is locked
+      toast.error('Object is locked', 'Unlock it in the Inspector to move or edit');
       return;
     }
     

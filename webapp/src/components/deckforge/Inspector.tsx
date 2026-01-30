@@ -236,8 +236,15 @@ export function Inspector() {
                   <Input
                     type="number"
                     step="0.1"
+                    min="0.1"
+                    max="10"
                     value={selectedObject.scaleX.toFixed(2)}
-                    onChange={(e) => updateWithHistory({ scaleX: Number(e.target.value) })}
+                    onChange={(e) => {
+                      const value = Number(e.target.value);
+                      if (value >= 0.1 && value <= 10) {
+                        updateWithHistory({ scaleX: value });
+                      }
+                    }}
                     className="h-8 text-xs font-mono bg-secondary border-border"
                   />
                 </div>
@@ -246,8 +253,15 @@ export function Inspector() {
                   <Input
                     type="number"
                     step="0.1"
+                    min="0.1"
+                    max="10"
                     value={selectedObject.scaleY.toFixed(2)}
-                    onChange={(e) => updateWithHistory({ scaleY: Number(e.target.value) })}
+                    onChange={(e) => {
+                      const value = Number(e.target.value);
+                      if (value >= 0.1 && value <= 10) {
+                        updateWithHistory({ scaleY: value });
+                      }
+                    }}
                     className="h-8 text-xs font-mono bg-secondary border-border"
                   />
                 </div>
