@@ -179,7 +179,7 @@ Last updated: 2026-01-30 03:15 UTC
 6. ✅ Command palette (Ctrl+K) - Already implemented with 30+ commands grouped by category
 7. ✅ Keyboard shortcut overlay (press ?) - Already implemented with 45+ shortcuts
 8. [ ] Better error messages
-9. [ ] Auto-save indicator
+9. ✅ Auto-save indicator (Animated status badge + unsaved changes dot on Save button)
 10. [ ] Zoom shortcuts (Ctrl+1, Ctrl+2, Ctrl+0)
 
 ---

@@ -603,3 +603,53 @@ Both features were already complete! No additional work needed.
 - Quick Wins: 7/10 complete (70%)
 - Next: Quick Win #8 (Better error messages)
 
+
+## 2026-01-30 14:45 UTC - Enhanced Auto-Save Indicator
+
+### ✅ Completed: Auto-Save Indicator (Quick Win #9 - COMPLETE)
+**Professional save status with unsaved changes tracking**
+
+**What I Built:**
+
+**Enhanced Save Status Display:**
+1. **Animated icons** - Spinner while saving, checkmark when saved, X on error
+2. **Styled badge** - Rounded background with border, primary color scheme
+3. **Smooth animations** - Fade in/zoom in effects for visual polish
+4. **Auto-fade** - Disappears after 3 seconds (was 2s)
+
+**Unsaved Changes Tracking:**
+1. **Pulsing indicator dot** - Small primary-colored dot on Save button when changes exist
+2. **Border highlight** - Save button border turns primary/50 when unsaved
+3. **Smart detection** - Tracks via undo history (past.length > 0)
+4. **Auto-reset** - Clears on successful save
+5. **Tooltip feedback** - Shows "You have unsaved changes" vs "Save to cloud storage"
+
+**Technical Implementation:**
+```tsx
+// Track unsaved changes via undo history
+useEffect(() => {
+  if (past.length > 0 && !isSaving) {
+    setHasUnsavedChanges(true);
+  }
+}, [past.length, isSaving]);
+
+// Visual indicator
+{hasUnsavedChanges && !isSaving && (
+  <div className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full animate-pulse" />
+)}
+```
+
+**Save Status Icons:**
+- Saving → Spinner (Loader2 animated)
+- Saved → Checkmark (SVG path with zoom-in animation)
+- Failed → X mark (destructive color)
+
+**Impact:**
+- Users always know save state
+- No more uncertainty about whether work is saved
+- Figma-level feedback and polish
+- Clear visual affordance for unsaved work
+
+**Commit:** `abf164d` - "feat: enhanced auto-save indicator with unsaved changes tracking"
+**Status:** Deployed to production
+
