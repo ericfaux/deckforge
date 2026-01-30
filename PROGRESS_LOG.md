@@ -4,7 +4,38 @@
 **Benchmark: Figma-level UI/UX**
 
 ### Latest Update (Heartbeat):
-**Inspector Collapsible Sections (Partial) - 2026-01-30 19:30 UTC**
+**Build Failure & Recovery - 2026-01-30 19:32 UTC**
+
+**What Happened:**
+- ❌ Pushed incomplete Inspector changes (commit `6ac863b`) without running build
+- ❌ Build failed with JSX syntax errors
+- ✅ Reverted immediately (commit `3e73f16`)
+- ✅ Build fixed and deployed
+- ✅ Verified all other features still working
+
+**Current Status:**
+- ✅ 6/7 UX fixes deployed and working:
+  1. ✅ Toolbar overflow fix
+  2. ✅ Tool Rail active states
+  3. ✅ Layer search/filter (verified working on live site)
+  4. ✅ Modal loading states
+  5. ✅ Unsaved changes warning
+  6. ✅ Export menu click-outside
+  7. ❌ Inspector collapsible (reverted, was causing build failure)
+
+**Lesson Learned:**
+- Created `BUILD_FAILURE_POSTMORTEM.md`
+- ALWAYS run `npm run build` before pushing
+- Golden rule: test deployments, not just live URLs
+
+**Next Actions:**
+- Waiting for direction before attempting more changes
+- Inspector refactor needs more careful planning
+- Can tackle other safer UX issues if approved
+
+---
+
+**Previous: Inspector Collapsible Sections (Partial) - 2026-01-30 19:30 UTC**
 
 **Completed this heartbeat:**
 9. ⏳ **High-Priority UX Fix: Inspector Collapsible Sections** (Issue #3) - IN PROGRESS

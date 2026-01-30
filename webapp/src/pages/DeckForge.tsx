@@ -267,6 +267,64 @@ export default function DeckForge() {
     }
   }, [lastAction, undoRedoChangedIds]);
 
+  // Clipboard paste for images
+  useEffect(() => {
+    const handlePaste = async (e: ClipboardEvent) => {
+      // Don't interfere with pasting in text inputs
+      if (document.activeElement instanceof HTMLInputElement || 
+          document.activeElement instanceof HTMLTextAreaElement) {
+        return;
+      }
+
+      const items = e.clipboardData?.items;
+      if (!items) return;
+
+      for (const item of items) {
+        if (item.type.startsWith('image/')) {
+          e.preventDefault();
+          const file = item.getAsFile();
+          if (!file) continue;
+
+          try {
+            toastUtils.info('Processing image...', 'Adding to canvas');
+
+            // Upload the image
+            const result = await assetsAPI.upload(file);
+
+            // Add to canvas at center
+            const newObj: CanvasObject = {
+              id: crypto.randomUUID(),
+              type: 'image',
+              x: DECK_WIDTH / 2,
+              y: DECK_HEIGHT / 2,
+              width: Math.min(result.width, DECK_WIDTH * 0.6),
+              height: Math.min(result.height, DECK_HEIGHT * 0.6),
+              src: result.url,
+              opacity: 1,
+              rotation: 0,
+              scaleX: 1,
+              scaleY: 1,
+            };
+
+            addObject(newObj);
+            selectObject(newObj.id);
+            flashPastedObject(newObj.id);
+            
+            toastUtils.success('Image pasted!', 'Press T to add text or edit in Inspector');
+          } catch (error) {
+            console.error('Paste image failed:', error);
+            toastUtils.error('Failed to paste image', 'Try uploading instead');
+          }
+          
+          return; // Only process first image
+        }
+      }
+    };
+
+    document.addEventListener('paste', handlePaste);
+    return () => document.removeEventListener('paste', handlePaste);
+  }, [addObject, selectObject, flashPastedObject]);
+
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
