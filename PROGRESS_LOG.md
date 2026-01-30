@@ -4,7 +4,28 @@
 **Benchmark: Figma-level UI/UX**
 
 ### Latest Update (Heartbeat):
-**Layer Search & Filter - 2026-01-30 19:20 UTC**
+**Modal Loading States - 2026-01-30 19:25 UTC**
+
+**Completed this heartbeat:**
+8. ✅ **Medium-Priority UX Fix: Modal Loading States** (Issue #6)
+   - Unified loading state system for all lazy-loaded modals
+   - Spinner shows immediately on button click
+   - Buttons disabled during load (prevents double-clicks)
+   - Applied to 10 modals: Brand Kits, Color Extractor, Custom Fonts, Share, History, Preview, 3D Print, Templates, Export Presets, Export Preview
+   - 10ms setTimeout ensures smooth spinner appearance
+   - Users get instant feedback
+
+**Impact:**
+- No more "did my click work?" confusion
+- Professional loading UX
+- Prevents accidental double-clicks
+- Feels much more responsive
+
+**Next: Inspector Collapsible Sections** (biggest high-priority item left)
+
+---
+
+**Previous: Layer Search & Filter - 2026-01-30 19:20 UTC**
 
 **Completed this heartbeat:**
 7. ✅ **High-Priority UX Fix: Layer Search & Filter** (Issue #5)
