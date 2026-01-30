@@ -26,6 +26,7 @@ import { MobileDrawer } from '@/components/deckforge/MobileDrawer';
 import { LayerList } from '@/components/deckforge/LayerList';
 import { ComponentErrorBoundary } from '@/components/ComponentErrorBoundary';
 import { DECK_WIDTH, DECK_HEIGHT } from '@/components/deckforge/WorkbenchStage';
+import { getDeckSize } from '@/lib/deck-sizes';
 import { useDeckForgeStore, CanvasObject } from '@/store/deckforge';
 import { useAuthStore } from '@/store/auth';
 import { designsAPI } from '@/lib/api';
@@ -48,7 +49,12 @@ import { cn } from '@/lib/utils';
 import { toastUtils } from '@/lib/toast-utils';
 
 export default function DeckForge() {
-  const { selectedId, selectedIds, deleteObject, undo, redo, getCanvasState, currentDesignId, setDesignId, setSaving, isSaving, objects, designName, createVersion, past, future, updateObject, saveToHistory, addObject, selectObject, setActiveTool, stageScale, setStageScale, arrayDuplicate, showRulers, toggleRulers, groupObjects, ungroupObject, flashCopiedObject, flashPastedObject, lastAction, undoRedoChangedIds } = useDeckForgeStore();
+  const { selectedId, selectedIds, deleteObject, undo, redo, getCanvasState, currentDesignId, setDesignId, setSaving, isSaving, objects, designName, createVersion, past, future, updateObject, saveToHistory, addObject, selectObject, setActiveTool, stageScale, setStageScale, arrayDuplicate, showRulers, toggleRulers, groupObjects, ungroupObject, flashCopiedObject, flashPastedObject, lastAction, undoRedoChangedIds, deckSizeId } = useDeckForgeStore();
+  
+  // Get current deck dimensions
+  const currentDeckSize = getDeckSize(deckSizeId);
+  const deckWidth = currentDeckSize.canvasWidth;
+  const deckHeight = currentDeckSize.canvasHeight;
   const { isAuthenticated } = useAuthStore();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -169,6 +175,8 @@ export default function DeckForge() {
         scale: 3,
         format: 'png',
         includeBackground: true,
+        width: deckWidth,
+        height: deckHeight,
       });
 
       // Generate filename from design name
@@ -197,6 +205,8 @@ export default function DeckForge() {
       // Export as scalable vector
       const blob = await exportToSVG(objects, {
         includeBackground: true,
+        width: deckWidth,
+        height: deckHeight,
       });
 
       // Generate filename from design name

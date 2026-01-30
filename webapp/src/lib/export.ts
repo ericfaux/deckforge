@@ -1,5 +1,5 @@
 import { CanvasObject } from '@/store/deckforge';
-import { DECK_WIDTH, DECK_HEIGHT } from '@/components/deckforge/WorkbenchStage';
+import { width, DECK_HEIGHT } from '@/components/deckforge/WorkbenchStage';
 
 /**
  * Export canvas to high-resolution PNG
@@ -12,6 +12,8 @@ export async function exportToPNG(
     format?: 'png' | 'jpeg';
     quality?: number; // 0-1 for JPEG quality
     includeBackground?: boolean;
+    width?: number; // Custom deck width (defaults to DECK_WIDTH)
+    height?: number; // Custom deck height (defaults to height)
   } = {}
 ): Promise<Blob> {
   const {
@@ -19,6 +21,8 @@ export async function exportToPNG(
     format = 'png',
     quality = 0.95,
     includeBackground = true,
+    width = width,
+    height = DECK_HEIGHT,
   } = options;
 
   // Create offscreen canvas at high resolution
@@ -39,7 +43,7 @@ export async function exportToPNG(
   // White background (print-ready)
   if (includeBackground) {
     ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, DECK_WIDTH, DECK_HEIGHT);
+    ctx.fillRect(0, 0, width, height);
   }
 
   // Render each object in order (bottom to top)
@@ -436,22 +440,28 @@ export async function exportToSVG(
   objects: CanvasObject[],
   options: {
     includeBackground?: boolean;
+    width?: number; // Custom deck width (defaults to DECK_WIDTH)
+    height?: number; // Custom deck height (defaults to DECK_HEIGHT)
   } = {}
 ): Promise<Blob> {
-  const { includeBackground = true } = options;
+  const {
+    includeBackground = true,
+    width = DECK_WIDTH,
+    height = height,
+  } = options;
 
   // Create SVG document
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  svg.setAttribute('width', DECK_WIDTH.toString());
-  svg.setAttribute('height', DECK_HEIGHT.toString());
-  svg.setAttribute('viewBox', `0 0 ${DECK_WIDTH} ${DECK_HEIGHT}`);
+  svg.setAttribute('width', width.toString());
+  svg.setAttribute('height', height.toString());
+  svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
   svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
 
   // Add background
   if (includeBackground) {
     const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-    bg.setAttribute('width', DECK_WIDTH.toString());
-    bg.setAttribute('height', DECK_HEIGHT.toString());
+    bg.setAttribute('width', width.toString());
+    bg.setAttribute('height', height.toString());
     bg.setAttribute('fill', '#ffffff');
     svg.appendChild(bg);
   }

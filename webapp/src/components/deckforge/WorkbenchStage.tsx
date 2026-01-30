@@ -10,8 +10,9 @@ import { SelectionBox } from './SelectionBox';
 import type { LucideIcon } from 'lucide-react';
 import { Skull, Flame, Zap, Sword, Ghost, Bug, Eye, Target, Radio, Disc3, Music2, Rocket, Crown, Anchor, Sun, Moon, Triangle, Hexagon, Circle, Square, Star, Heart, Sparkles, Hand, Cat, Dog, Fish, Bird, Leaf, Cloud } from 'lucide-react';
 import { toast } from 'sonner';
+import { getDeckSize } from '@/lib/deck-sizes';
 
-// Deck dimensions (32:98 aspect ratio for fingerboard)
+// Legacy deck dimensions (kept for backward compatibility)
 export const DECK_WIDTH = 96;
 export const DECK_HEIGHT = 294;
 
@@ -50,15 +51,15 @@ const iconMap: Record<string, LucideIcon> = {
 };
 
 // Generate deck path for SVG
-function getDeckPath(x: number, y: number): string {
-  const noseRadius = DECK_WIDTH / 2;
+function getDeckPath(x: number, y: number, width: number, height: number): string {
+  const noseRadius = width / 2;
   return `
     M ${x} ${y + noseRadius}
-    Q ${x} ${y} ${x + DECK_WIDTH / 2} ${y}
-    Q ${x + DECK_WIDTH} ${y} ${x + DECK_WIDTH} ${y + noseRadius}
-    L ${x + DECK_WIDTH} ${y + DECK_HEIGHT - noseRadius}
-    Q ${x + DECK_WIDTH} ${y + DECK_HEIGHT} ${x + DECK_WIDTH / 2} ${y + DECK_HEIGHT}
-    Q ${x} ${y + DECK_HEIGHT} ${x} ${y + DECK_HEIGHT - noseRadius}
+    Q ${x} ${y} ${x + width / 2} ${y}
+    Q ${x + width} ${y} ${x + width} ${y + noseRadius}
+    L ${x + width} ${y + height - noseRadius}
+    Q ${x + width} ${y + height} ${x + width / 2} ${y + height}
+    Q ${x} ${y + height} ${x} ${y + height - noseRadius}
     Z
   `;
 }
@@ -970,7 +971,13 @@ export function WorkbenchStage() {
     copiedObjectId,
     pastedObjectId,
     undoRedoChangedIds,
+    deckSizeId,
   } = useDeckForgeStore();
+
+  // Get current deck dimensions based on selected size
+  const currentDeckSize = getDeckSize(deckSizeId);
+  const deckWidth = currentDeckSize.canvasWidth;
+  const deckHeight = currentDeckSize.canvasHeight;
 
   // Handle container resize
   useEffect(() => {
@@ -1000,12 +1007,12 @@ export function WorkbenchStage() {
 
   // Calculate center position for deck
   const deckX = useMemo(() => {
-    return containerSize.width / 2 - (DECK_WIDTH * stageScale) / 2;
-  }, [containerSize.width, stageScale]);
+    return containerSize.width / 2 - (deckWidth * stageScale) / 2;
+  }, [containerSize.width, deckWidth, stageScale]);
 
   const deckY = useMemo(() => {
-    return containerSize.height / 2 - (DECK_HEIGHT * stageScale) / 2;
-  }, [containerSize.height, stageScale]);
+    return containerSize.height / 2 - (deckHeight * stageScale) / 2;
+  }, [containerSize.height, deckHeight, stageScale]);
 
   // Handle wheel zoom
   const handleWheel = useCallback((e: React.WheelEvent) => {
@@ -1259,7 +1266,7 @@ export function WorkbenchStage() {
         <defs>
           {/* Clip path for deck shape */}
           <clipPath id="deck-clip">
-            <path d={getDeckPath(0, 0)} transform={`translate(${deckX}, ${deckY}) scale(${stageScale})`} />
+            <path d={getDeckPath(0, 0, deckWidth, deckHeight)} transform={`translate(${deckX}, ${deckY}) scale(${stageScale})`} />
           </clipPath>
 
           {/* Texture patterns */}
@@ -1291,7 +1298,7 @@ export function WorkbenchStage() {
         <g clipPath="url(#deck-clip)">
           {/* Deck background */}
           <path
-            d={getDeckPath(0, 0)}
+            d={getDeckPath(0, 0, deckWidth, deckHeight)}
             transform={`translate(${deckX}, ${deckY}) scale(${stageScale})`}
             fill={backgroundColor}
             style={{ transition: 'transform 0.15s cubic-bezier(0.4, 0, 0.2, 1)' }}
@@ -1409,7 +1416,7 @@ export function WorkbenchStage() {
               }}
             >
               <path
-                d={getDeckPath(0, 0)}
+                d={getDeckPath(0, 0, deckWidth, deckHeight)}
                 transform={`translate(${deckX}, ${deckY}) scale(${stageScale})`}
                 fill={`url(#${texture.id}-pattern)`}
               />
@@ -1419,7 +1426,7 @@ export function WorkbenchStage() {
 
         {/* Deck outline (outside clip for full visibility) */}
         <path
-          d={getDeckPath(0, 0)}
+          d={getDeckPath(0, 0, deckWidth, deckHeight)}
           transform={`translate(${deckX}, ${deckY}) scale(${stageScale})`}
           stroke="#ccff00"
           strokeWidth={2}
@@ -1433,7 +1440,7 @@ export function WorkbenchStage() {
           <g transform={`translate(${deckX}, ${deckY}) scale(${stageScale})`} pointerEvents="none">
             {/* Front Truck Baseplate */}
             <rect
-              x={DECK_WIDTH / 2 - 20}
+              x={deckWidth / 2 - 20}
               y={35}
               width={40}
               height={18}
@@ -1443,15 +1450,15 @@ export function WorkbenchStage() {
               strokeDasharray="3,2"
             />
             {/* Front Truck Mounting Screws (4 holes) */}
-            <circle cx={DECK_WIDTH / 2 - 12} cy={40} r={2.5} fill="rgba(255, 102, 0, 0.5)" stroke="#ff6600" strokeWidth={0.5} />
-            <circle cx={DECK_WIDTH / 2 + 12} cy={40} r={2.5} fill="rgba(255, 102, 0, 0.5)" stroke="#ff6600" strokeWidth={0.5} />
-            <circle cx={DECK_WIDTH / 2 - 12} cy={48} r={2.5} fill="rgba(255, 102, 0, 0.5)" stroke="#ff6600" strokeWidth={0.5} />
-            <circle cx={DECK_WIDTH / 2 + 12} cy={48} r={2.5} fill="rgba(255, 102, 0, 0.5)" stroke="#ff6600" strokeWidth={0.5} />
+            <circle cx={deckWidth / 2 - 12} cy={40} r={2.5} fill="rgba(255, 102, 0, 0.5)" stroke="#ff6600" strokeWidth={0.5} />
+            <circle cx={deckWidth / 2 + 12} cy={40} r={2.5} fill="rgba(255, 102, 0, 0.5)" stroke="#ff6600" strokeWidth={0.5} />
+            <circle cx={deckWidth / 2 - 12} cy={48} r={2.5} fill="rgba(255, 102, 0, 0.5)" stroke="#ff6600" strokeWidth={0.5} />
+            <circle cx={deckWidth / 2 + 12} cy={48} r={2.5} fill="rgba(255, 102, 0, 0.5)" stroke="#ff6600" strokeWidth={0.5} />
 
             {/* Rear Truck Baseplate */}
             <rect
-              x={DECK_WIDTH / 2 - 20}
-              y={DECK_HEIGHT - 53}
+              x={deckWidth / 2 - 20}
+              y={deckHeight - 53}
               width={40}
               height={18}
               fill="rgba(255, 102, 0, 0.3)"
@@ -1460,14 +1467,14 @@ export function WorkbenchStage() {
               strokeDasharray="3,2"
             />
             {/* Rear Truck Mounting Screws (4 holes) */}
-            <circle cx={DECK_WIDTH / 2 - 12} cy={DECK_HEIGHT - 48} r={2.5} fill="rgba(255, 102, 0, 0.5)" stroke="#ff6600" strokeWidth={0.5} />
-            <circle cx={DECK_WIDTH / 2 + 12} cy={DECK_HEIGHT - 48} r={2.5} fill="rgba(255, 102, 0, 0.5)" stroke="#ff6600" strokeWidth={0.5} />
-            <circle cx={DECK_WIDTH / 2 - 12} cy={DECK_HEIGHT - 40} r={2.5} fill="rgba(255, 102, 0, 0.5)" stroke="#ff6600" strokeWidth={0.5} />
-            <circle cx={DECK_WIDTH / 2 + 12} cy={DECK_HEIGHT - 40} r={2.5} fill="rgba(255, 102, 0, 0.5)" stroke="#ff6600" strokeWidth={0.5} />
+            <circle cx={deckWidth / 2 - 12} cy={deckHeight - 48} r={2.5} fill="rgba(255, 102, 0, 0.5)" stroke="#ff6600" strokeWidth={0.5} />
+            <circle cx={deckWidth / 2 + 12} cy={deckHeight - 48} r={2.5} fill="rgba(255, 102, 0, 0.5)" stroke="#ff6600" strokeWidth={0.5} />
+            <circle cx={deckWidth / 2 - 12} cy={deckHeight - 40} r={2.5} fill="rgba(255, 102, 0, 0.5)" stroke="#ff6600" strokeWidth={0.5} />
+            <circle cx={deckWidth / 2 + 12} cy={deckHeight - 40} r={2.5} fill="rgba(255, 102, 0, 0.5)" stroke="#ff6600" strokeWidth={0.5} />
 
             {/* Labels */}
             <text
-              x={DECK_WIDTH / 2}
+              x={deckWidth / 2}
               y={28}
               textAnchor="middle"
               fontSize={6}
@@ -1477,8 +1484,8 @@ export function WorkbenchStage() {
               FRONT TRUCK
             </text>
             <text
-              x={DECK_WIDTH / 2}
-              y={DECK_HEIGHT - 58}
+              x={deckWidth / 2}
+              y={deckHeight - 58}
               textAnchor="middle"
               fontSize={6}
               fontFamily="JetBrains Mono, monospace"
@@ -1494,8 +1501,8 @@ export function WorkbenchStage() {
           <g transform={`translate(${deckX}, ${deckY}) scale(${stageScale})`} pointerEvents="none">
             {/* Welcome message */}
             <text
-              x={DECK_WIDTH / 2}
-              y={DECK_HEIGHT / 2 - 40}
+              x={deckWidth / 2}
+              y={deckHeight / 2 - 40}
               textAnchor="middle"
               fontSize={16 / stageScale}
               fontFamily="Oswald, sans-serif"
@@ -1506,8 +1513,8 @@ export function WorkbenchStage() {
             </text>
             
             <text
-              x={DECK_WIDTH / 2}
-              y={DECK_HEIGHT / 2 - 20}
+              x={deckWidth / 2}
+              y={deckHeight / 2 - 20}
               textAnchor="middle"
               fontSize={11 / stageScale}
               fontFamily="sans-serif"
@@ -1517,7 +1524,7 @@ export function WorkbenchStage() {
             </text>
 
             {/* Quick start icons */}
-            <g transform={`translate(${DECK_WIDTH / 2 - 60}, ${DECK_HEIGHT / 2 + 10})`}>
+            <g transform={`translate(${deckWidth / 2 - 60}, ${deckHeight / 2 + 10})`}>
               {/* Text tool hint */}
               <g>
                 <rect
@@ -1590,8 +1597,8 @@ export function WorkbenchStage() {
 
             {/* Hints text */}
             <text
-              x={DECK_WIDTH / 2}
-              y={DECK_HEIGHT / 2 + 60}
+              x={deckWidth / 2}
+              y={deckHeight / 2 + 60}
               textAnchor="middle"
               fontSize={9 / stageScale}
               fontFamily="monospace"
@@ -1601,8 +1608,8 @@ export function WorkbenchStage() {
             </text>
             
             <text
-              x={DECK_WIDTH / 2}
-              y={DECK_HEIGHT / 2 + 75}
+              x={deckWidth / 2}
+              y={deckHeight / 2 + 75}
               textAnchor="middle"
               fontSize={9 / stageScale}
               fontFamily="monospace"
@@ -1612,7 +1619,7 @@ export function WorkbenchStage() {
             </text>
 
             {/* Arrow pointing to tool rail */}
-            <g transform={`translate(-10, ${DECK_HEIGHT / 2})`}>
+            <g transform={`translate(-10, ${deckHeight / 2})`}>
               <path
                 d="M 0 0 L -15 -5 L -15 5 Z"
                 fill="#ccff00"
