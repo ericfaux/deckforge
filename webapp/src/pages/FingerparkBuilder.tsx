@@ -1,24 +1,30 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Stage, Layer, Rect, Circle, Line, Group, Text } from 'react-konva';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Download, Grid3X3, Ruler, Save, Share2, Trash2, RotateCcw } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { Download, Grid3X3, Ruler, Save, Share2, Trash2, RotateCcw, FolderOpen, ShoppingCart } from 'lucide-react';
 import { toast } from 'sonner';
 import Konva from 'konva';
-
-interface ParkObject {
-  id: string;
-  type: 'rail' | 'ledge' | 'stairs' | 'ramp' | 'box';
-  subtype: string;
-  x: number;
-  y: number;
-  width: number;
-  length: number;
-  height: number;
-  rotation: number;
-  color: string;
-}
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  saveProject,
+  loadProject,
+  getMyProjects,
+  deleteProject,
+  calculateMaterials,
+  type ParkObject,
+  type FingerparkProject,
+  type MaterialsEstimate,
+} from '@/lib/fingerpark';
 
 const GRID_SIZE = 20; // pixels per inch
 const CANVAS_WIDTH = 48 * GRID_SIZE; // 48 inches (4 feet)
@@ -56,6 +62,16 @@ export default function FingerparkBuilder() {
   const [showGrid, setShowGrid] = useState(true);
   const [parkName, setParkName] = useState('My Fingerpark Setup');
   const stageRef = useRef<Konva.Stage>(null);
+
+  // Save/Load state
+  const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [showLoadDialog, setShowLoadDialog] = useState(false);
+  const [showMaterialsDialog, setShowMaterialsDialog] = useState(false);
+  const [saveDescription, setSaveDescription] = useState('');
+  const [saveAsPublic, setSaveAsPublic] = useState(false);
+  const [myProjects, setMyProjects] = useState<FingerparkProject[]>([]);
+  const [materials, setMaterials] = useState<MaterialsEstimate | null>(null);
 
   const addObstacle = (obstacleTemplate: any) => {
     const newObstacle: ParkObject = {
@@ -111,6 +127,54 @@ export default function FingerparkBuilder() {
     toast.success('Blueprint exported!');
   };
 
+  const handleSave = async () => {
+    const result = await saveProject(parkName, objects, saveDescription, saveAsPublic, currentProjectId || undefined);
+    if (result.success) {
+      setCurrentProjectId(result.projectId || null);
+      setShowSaveDialog(false);
+      toast.success('Project saved!');
+      setSaveDescription('');
+      setSaveAsPublic(false);
+    } else {
+      toast.error(result.error || 'Failed to save project');
+    }
+  };
+
+  const handleLoad = async (projectId: string) => {
+    const project = await loadProject(projectId);
+    if (project) {
+      setObjects(project.objects);
+      setParkName(project.name);
+      setCurrentProjectId(project.id);
+      setShowLoadDialog(false);
+      toast.success(`Loaded "${project.name}"`);
+    } else {
+      toast.error('Failed to load project');
+    }
+  };
+
+  const handleDeleteProject = async (projectId: string) => {
+    if (!confirm('Delete this project?')) return;
+    const success = await deleteProject(projectId);
+    if (success) {
+      toast.success('Project deleted');
+      loadMyProjects();
+    } else {
+      toast.error('Failed to delete project');
+    }
+  };
+
+  const loadMyProjects = async () => {
+    const projects = await getMyProjects();
+    setMyProjects(projects);
+  };
+
+  const showMaterialsList = () => {
+    const estimate = calculateMaterials(objects);
+    setMaterials(estimate);
+    setShowMaterialsDialog(true);
+  };
+
   const selectedObject = objects.find(obj => obj.id === selectedId);
 
   return (
@@ -137,6 +201,37 @@ export default function FingerparkBuilder() {
             >
               <Grid3X3 className="w-4 h-4" />
               {showGrid ? 'Hide' : 'Show'} Grid
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                loadMyProjects();
+                setShowLoadDialog(true);
+              }}
+              className="gap-2"
+            >
+              <FolderOpen className="w-4 h-4" />
+              Load
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowSaveDialog(true)}
+              className="gap-2"
+            >
+              <Save className="w-4 h-4" />
+              Save
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={showMaterialsList}
+              className="gap-2"
+              disabled={objects.length === 0}
+            >
+              <ShoppingCart className="w-4 h-4" />
+              Materials List
             </Button>
             <Button
               variant="outline"
@@ -443,6 +538,209 @@ export default function FingerparkBuilder() {
           </div>
         )}
       </div>
+
+      {/* Save Dialog */}
+      <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Save Fingerpark Project</DialogTitle>
+            <DialogDescription>
+              Save your park setup to load later or share with others
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Project Name</Label>
+              <Input
+                value={parkName}
+                onChange={(e) => setParkName(e.target.value)}
+                placeholder="My awesome park setup..."
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Description (optional)</Label>
+              <Textarea
+                value={saveDescription}
+                onChange={(e) => setSaveDescription(e.target.value)}
+                placeholder="Describe your park setup..."
+                rows={3}
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="public"
+                checked={saveAsPublic}
+                onChange={(e) => setSaveAsPublic(e.target.checked)}
+                className="w-4 h-4"
+              />
+              <Label htmlFor="public" className="cursor-pointer">
+                Make this project public (others can view and use it)
+              </Label>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowSaveDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSave}>
+              <Save className="w-4 h-4 mr-2" />
+              Save Project
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Load Dialog */}
+      <Dialog open={showLoadDialog} onOpenChange={setShowLoadDialog}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle>Load Fingerpark Project</DialogTitle>
+            <DialogDescription>
+              Select a saved project to load
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex-1 overflow-y-auto py-4">
+            {myProjects.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                No saved projects yet. Create your first park setup!
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {myProjects.map((project) => (
+                  <div
+                    key={project.id}
+                    className="border border-border rounded-lg p-4 hover:bg-secondary/50 transition-colors"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-foreground">{project.name}</h3>
+                        {project.description && (
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {project.description}
+                          </p>
+                        )}
+                        <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                          <span>{project.objects.length} obstacles</span>
+                          <span>
+                            Updated {new Date(project.updated_at).toLocaleDateString()}
+                          </span>
+                          {project.is_public && (
+                            <span className="text-blue-500">Public</span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          onClick={() => handleLoad(project.id)}
+                        >
+                          Load
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => handleDeleteProject(project.id)}
+                        >
+                          Delete
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Materials List Dialog */}
+      <Dialog open={showMaterialsDialog} onOpenChange={setShowMaterialsDialog}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Materials Estimate</DialogTitle>
+            <DialogDescription>
+              Estimated materials needed to build this park setup
+            </DialogDescription>
+          </DialogHeader>
+          {materials && (
+            <div className="space-y-4 py-4">
+              <div className="bg-secondary/30 rounded-lg p-4 space-y-3">
+                <div className="flex justify-between items-center border-b border-border pb-2">
+                  <div>
+                    <div className="font-semibold text-foreground">Plywood</div>
+                    <div className="text-sm text-muted-foreground">{materials.plywood.type}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-semibold">{materials.plywood.sheets} sheets</div>
+                    <div className="text-sm text-muted-foreground">
+                      ${materials.plywood.cost.toFixed(2)}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-center border-b border-border pb-2">
+                  <div>
+                    <div className="font-semibold text-foreground">Lumber</div>
+                    <div className="text-sm text-muted-foreground">{materials.lumber.type}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-semibold">{materials.lumber.boards} boards</div>
+                    <div className="text-sm text-muted-foreground">
+                      ${materials.lumber.cost.toFixed(2)}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-center border-b border-border pb-2">
+                  <div>
+                    <div className="font-semibold text-foreground">Screws</div>
+                    <div className="text-sm text-muted-foreground">{materials.screws.type}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-semibold">~{materials.screws.count} screws</div>
+                    <div className="text-sm text-muted-foreground">
+                      ${materials.screws.cost.toFixed(2)}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-center border-b border-border pb-2">
+                  <div>
+                    <div className="font-semibold text-foreground">Sandpaper</div>
+                    <div className="text-sm text-muted-foreground">120-220 grit</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-semibold">{materials.sandpaper.sheets} sheets</div>
+                    <div className="text-sm text-muted-foreground">
+                      ${materials.sandpaper.cost.toFixed(2)}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-center pt-2 border-t-2 border-border">
+                  <div className="font-bold text-lg text-foreground">Estimated Total</div>
+                  <div className="font-bold text-lg text-foreground">
+                    ${materials.total.toFixed(2)}
+                  </div>
+                </div>
+              </div>
+
+              <div className="text-xs text-muted-foreground bg-muted/50 rounded p-3">
+                <p className="font-semibold mb-1">Note:</p>
+                <p>
+                  Prices are estimates and may vary by location. This list includes basic
+                  materials. You may also need: wood glue, paint/stain, measuring tools,
+                  saw, drill, and safety equipment.
+                </p>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button onClick={() => setShowMaterialsDialog(false)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
