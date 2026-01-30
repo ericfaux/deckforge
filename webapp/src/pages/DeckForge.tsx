@@ -955,81 +955,172 @@ export default function DeckForge() {
                 </TooltipContent>
               </Tooltip>
 
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setIs3DGeneratorOpen(true)}
-                className="gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0"
-              >
-                <span className="text-sm font-bold">🖨️ 3D Print</span>
-                <span className="ml-1 text-[9px] bg-white/20 px-1 rounded">NEW</span>
-              </Button>
+              <Tooltip delayDuration={300}>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setIs3DGeneratorOpen(true)}
+                    className="gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0"
+                  >
+                    <span className="text-sm font-bold">🖨️ 3D Print</span>
+                    <span className="ml-1 text-[9px] bg-white/20 px-1 rounded">NEW</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <span className="font-semibold">3D Print Generator</span>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Create 3D-printable deck file
+                  </p>
+                </TooltipContent>
+              </Tooltip>
 
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setIsTemplateGalleryOpen(true)}
-                className="gap-2"
-              >
-                <Sparkles className="w-4 h-4" />
-                Templates
-                <span className="ml-1 text-[9px] text-primary">NEW</span>
-              </Button>
+              <Tooltip delayDuration={300}>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setIsTemplateGalleryOpen(true)}
+                    className="gap-2"
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    Templates
+                    <span className="ml-1 text-[9px] text-primary">NEW</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <span className="font-semibold">Design Templates</span>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Start from pre-made deck designs
+                  </p>
+                </TooltipContent>
+              </Tooltip>
 
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => navigate('/marketplace')}
-                className="gap-2"
-              >
-                <Sparkles className="w-4 h-4" />
-                Marketplace
-                <span className="ml-1 text-[9px] text-primary">NEW</span>
-              </Button>
+              <Tooltip delayDuration={300}>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => navigate('/marketplace')}
+                    className="gap-2"
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    Marketplace
+                    <span className="ml-1 text-[9px] text-primary">NEW</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <span className="font-semibold">Design Marketplace</span>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Browse community designs
+                  </p>
+                </TooltipContent>
+              </Tooltip>
 
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => navigate('/fingerpark')}
-                className="gap-2"
-              >
-                <Ruler className="w-4 h-4" />
-                Park Builder
-                <span className="ml-1 text-[9px] text-primary">NEW</span>
-              </Button>
+              <Tooltip delayDuration={300}>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => navigate('/fingerpark')}
+                    className="gap-2"
+                  >
+                    <Ruler className="w-4 h-4" />
+                    Park Builder
+                    <span className="ml-1 text-[9px] text-primary">NEW</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <span className="font-semibold">Fingerpark Builder</span>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Design your custom skatepark
+                  </p>
+                </TooltipContent>
+              </Tooltip>
 
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => navigate('/gallery')}
-                className="gap-2"
-              >
-                <Sparkles className="w-4 h-4" />
-                Gallery
-              </Button>
+              <Tooltip delayDuration={300}>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => navigate('/gallery')}
+                    className="gap-2"
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    Gallery
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <span className="font-semibold">Public Gallery</span>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Browse featured deck designs
+                  </p>
+                </TooltipContent>
+              </Tooltip>
 
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => navigate(isAuthenticated ? '/designs' : '/auth')}
-                className="gap-2"
-              >
-                <User className="w-4 h-4" />
-                {isAuthenticated ? 'My Designs' : 'Login'}
-              </Button>
+              <Tooltip delayDuration={300}>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => navigate(isAuthenticated ? '/designs' : '/auth')}
+                    className="gap-2"
+                  >
+                    <User className="w-4 h-4" />
+                    {isAuthenticated ? 'My Designs' : 'Login'}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <span className="font-semibold">{isAuthenticated ? 'My Designs' : 'Login'}</span>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {isAuthenticated ? 'View all your saved designs' : 'Sign in to save your work'}
+                  </p>
+                </TooltipContent>
+              </Tooltip>
 
-              <Button
-                size="sm"
-                variant={showRulers ? "default" : "ghost"}
-                onClick={() => {
-                  toggleRulers();
-                  toast.success(showRulers ? 'Rulers hidden' : 'Rulers visible');
-                }}
-                className="gap-2"
-                title="Toggle rulers (Ctrl+Shift+R)"
-              >
-                <Ruler className="w-4 h-4" />
-              </Button>
+              <Tooltip delayDuration={300}>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant={showRulers ? "default" : "ghost"}
+                    onClick={() => {
+                      toggleRulers();
+                      toast.success(showRulers ? 'Rulers hidden' : 'Rulers visible');
+                    }}
+                    className="gap-2"
+                  >
+                    <Ruler className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <div className="flex items-center gap-2">
+                    <span>Toggle Rulers</span>
+                    <kbd className="px-1.5 py-0.5 text-xs bg-muted border border-border rounded font-mono">Ctrl+Shift+R</kbd>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+
+              <Tooltip delayDuration={300}>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setIsShortcutsModalOpen(true)}
+                    className="gap-2"
+                  >
+                    <Menu className="w-3.5 h-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <div className="flex items-center gap-2">
+                    <span>Keyboard Shortcuts</span>
+                    <kbd className="px-1.5 py-0.5 text-xs bg-muted border border-border rounded font-mono">?</kbd>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    View all keyboard shortcuts
+                  </p>
+                </TooltipContent>
+              </Tooltip>
 
               <KeyboardShortcuts 
                 open={isShortcutsModalOpen}
