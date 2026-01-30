@@ -733,6 +733,212 @@ export function Inspector() {
                     className="h-8 text-xs font-mono bg-secondary border-border"
                   />
                 </div>
+
+                {/* Text Alignment */}
+                <div className="space-y-2">
+                  <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                    Alignment
+                  </Label>
+                  <div className="grid grid-cols-3 gap-1">
+                    {(['left', 'center', 'right'] as const).map(align => (
+                      <button
+                        key={align}
+                        onClick={() => updateWithHistory({ align })}
+                        className={`h-8 text-xs uppercase transition-colors ${
+                          (selectedObject.align || 'left') === align
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-secondary hover:bg-secondary/80'
+                        }`}
+                      >
+                        {align[0].toUpperCase()}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Font Weight & Style */}
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-2">
+                    <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                      Weight
+                    </Label>
+                    <select
+                      value={selectedObject.fontWeight || 'normal'}
+                      onChange={(e) => updateWithHistory({ fontWeight: e.target.value as any })}
+                      className="w-full h-8 text-xs bg-secondary border border-border px-2"
+                    >
+                      <option value="normal">Normal</option>
+                      <option value="bold">Bold</option>
+                      <option value="300">Light</option>
+                      <option value="600">Semi-Bold</option>
+                      <option value="800">Extra-Bold</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                      Style
+                    </Label>
+                    <select
+                      value={selectedObject.fontStyle || 'normal'}
+                      onChange={(e) => updateWithHistory({ fontStyle: e.target.value as any })}
+                      className="w-full h-8 text-xs bg-secondary border border-border px-2"
+                    >
+                      <option value="normal">Normal</option>
+                      <option value="italic">Italic</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Letter Spacing */}
+                <div className="space-y-2">
+                  <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                    Letter Spacing: {selectedObject.letterSpacing || 0}px
+                  </Label>
+                  <Slider
+                    value={[selectedObject.letterSpacing || 0]}
+                    onValueChange={([value]) => updateWithHistory({ letterSpacing: value })}
+                    max={20}
+                    min={-5}
+                    step={0.5}
+                    className="flex-1"
+                  />
+                </div>
+
+                {/* Line Height */}
+                <div className="space-y-2">
+                  <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                    Line Height: {(selectedObject.lineHeight || 1.2).toFixed(1)}
+                  </Label>
+                  <Slider
+                    value={[selectedObject.lineHeight || 1.2]}
+                    onValueChange={([value]) => updateWithHistory({ lineHeight: value })}
+                    max={3}
+                    min={0.5}
+                    step={0.1}
+                    className="flex-1"
+                  />
+                </div>
+
+                {/* Text Transform */}
+                <div className="space-y-2">
+                  <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                    Transform
+                  </Label>
+                  <select
+                    value={selectedObject.textTransform || 'none'}
+                    onChange={(e) => updateWithHistory({ textTransform: e.target.value as any })}
+                    className="w-full h-8 text-xs bg-secondary border border-border px-2"
+                  >
+                    <option value="none">None</option>
+                    <option value="uppercase">UPPERCASE</option>
+                    <option value="lowercase">lowercase</option>
+                    <option value="capitalize">Capitalize</option>
+                  </select>
+                </div>
+
+                {/* Text Decoration */}
+                <div className="space-y-2">
+                  <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                    Decoration
+                  </Label>
+                  <select
+                    value={selectedObject.textDecoration || 'none'}
+                    onChange={(e) => updateWithHistory({ textDecoration: e.target.value as any })}
+                    className="w-full h-8 text-xs bg-secondary border border-border px-2"
+                  >
+                    <option value="none">None</option>
+                    <option value="underline">Underline</option>
+                    <option value="line-through">Strike-through</option>
+                  </select>
+                </div>
+
+                {/* Text Shadow */}
+                <Accordion type="single" collapsible className="border-t border-border">
+                  <AccordionItem value="text-shadow">
+                    <AccordionTrigger className="text-[10px] uppercase tracking-widest text-muted-foreground py-2">
+                      Text Shadow {selectedObject.textShadow?.enabled && '✓'}
+                    </AccordionTrigger>
+                    <AccordionContent className="space-y-3 pt-2">
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={selectedObject.textShadow?.enabled || false}
+                          onChange={(e) => updateWithHistory({
+                            textShadow: {
+                              enabled: e.target.checked,
+                              offsetX: selectedObject.textShadow?.offsetX || 2,
+                              offsetY: selectedObject.textShadow?.offsetY || 2,
+                              blur: selectedObject.textShadow?.blur || 4,
+                              color: selectedObject.textShadow?.color || '#000000',
+                            }
+                          })}
+                          className="w-4 h-4"
+                        />
+                        <Label className="text-xs">Enable Shadow</Label>
+                      </div>
+
+                      {selectedObject.textShadow?.enabled && (
+                        <>
+                          <div className="space-y-2">
+                            <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                              Offset X: {selectedObject.textShadow?.offsetX || 0}px
+                            </Label>
+                            <Slider
+                              value={[selectedObject.textShadow?.offsetX || 2]}
+                              onValueChange={([value]) => updateWithHistory({
+                                textShadow: { ...selectedObject.textShadow!, offsetX: value }
+                              })}
+                              max={20}
+                              min={-20}
+                              step={1}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                              Offset Y: {selectedObject.textShadow?.offsetY || 0}px
+                            </Label>
+                            <Slider
+                              value={[selectedObject.textShadow?.offsetY || 2]}
+                              onValueChange={([value]) => updateWithHistory({
+                                textShadow: { ...selectedObject.textShadow!, offsetY: value }
+                              })}
+                              max={20}
+                              min={-20}
+                              step={1}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                              Blur: {selectedObject.textShadow?.blur || 0}px
+                            </Label>
+                            <Slider
+                              value={[selectedObject.textShadow?.blur || 4]}
+                              onValueChange={([value]) => updateWithHistory({
+                                textShadow: { ...selectedObject.textShadow!, blur: value }
+                              })}
+                              max={30}
+                              min={0}
+                              step={1}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                              Shadow Color
+                            </Label>
+                            <input
+                              type="color"
+                              value={selectedObject.textShadow?.color || '#000000'}
+                              onChange={(e) => updateWithHistory({
+                                textShadow: { ...selectedObject.textShadow!, color: e.target.value }
+                              })}
+                              className="w-full h-8 cursor-pointer"
+                            />
+                          </div>
+                        </>
+                      )}
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
               </>
             )}
 

@@ -287,6 +287,24 @@ function CanvasObjectItem({
     const gradientId = obj.gradientStops ? `gradient-${obj.id}` : null;
     const fillValue = gradientId ? `url(#${gradientId})` : (obj.colorize || obj.fill || '#ffffff');
     
+    // Apply text transform
+    let displayText = obj.text || 'Text';
+    if (obj.textTransform === 'uppercase') displayText = displayText.toUpperCase();
+    else if (obj.textTransform === 'lowercase') displayText = displayText.toLowerCase();
+    else if (obj.textTransform === 'capitalize') {
+      displayText = displayText.replace(/\b\w/g, char => char.toUpperCase());
+    }
+    
+    // Build text shadow
+    let textShadow = 'none';
+    if (obj.textShadow?.enabled) {
+      const { offsetX, offsetY, blur, color } = obj.textShadow;
+      textShadow = `${offsetX}px ${offsetY}px ${blur}px ${color}`;
+    }
+    
+    // Build text decoration (SVG doesn't support text-decoration directly, use tspan)
+    const textDecoration = obj.textDecoration || 'none';
+    
     const textEl = (
       <>
         {obj.gradientStops && (
@@ -303,11 +321,20 @@ function CanvasObjectItem({
           fill={fillValue}
           fontSize={obj.fontSize || 24}
           fontFamily={obj.fontFamily || 'Oswald, sans-serif'}
+          fontWeight={obj.fontWeight || 'normal'}
+          fontStyle={obj.fontStyle || 'normal'}
+          textAnchor={obj.align === 'center' ? 'middle' : obj.align === 'right' ? 'end' : 'start'}
           opacity={obj.opacity}
-          style={{ cursor, filter: filterStyle }}
+          letterSpacing={obj.letterSpacing || 0}
+          style={{ 
+            cursor, 
+            filter: filterStyle,
+            textShadow,
+            textDecoration: textDecoration === 'underline' ? 'underline' : textDecoration === 'line-through' ? 'line-through' : 'none'
+          }}
           onMouseDown={handleMouseDown}
         >
-          {obj.text || 'Text'}
+          {displayText}
         </text>
       </>
     );

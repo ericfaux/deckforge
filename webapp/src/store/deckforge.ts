@@ -49,6 +49,20 @@ export interface CanvasObject {
   fontSize?: number;
   fontFamily?: string;
   fill?: string;
+  align?: 'left' | 'center' | 'right';
+  letterSpacing?: number; // px
+  lineHeight?: number; // multiplier (1.0 = normal, 1.5 = 1.5x, etc.)
+  textTransform?: 'none' | 'uppercase' | 'lowercase' | 'capitalize';
+  textDecoration?: 'none' | 'underline' | 'line-through';
+  fontWeight?: 'normal' | 'bold' | '100' | '200' | '300' | '400' | '500' | '600' | '700' | '800' | '900';
+  fontStyle?: 'normal' | 'italic';
+  textShadow?: {
+    enabled: boolean;
+    offsetX: number;
+    offsetY: number;
+    blur: number;
+    color: string;
+  };
   // Gradient support
   fillType?: 'solid' | 'linear-gradient' | 'radial-gradient';
   gradientStops?: Array<{ offset: number; color: string }>; // e.g., [{offset: 0, color: '#ff0000'}, {offset: 1, color: '#0000ff'}]
