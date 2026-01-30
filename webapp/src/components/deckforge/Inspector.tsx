@@ -10,6 +10,7 @@ import { FontUploadModal } from './FontUploadModal';
 import { ObjectEffects } from './ObjectEffects';
 import { GradientPicker } from './GradientPicker';
 import { ColorPicker } from './ColorPicker';
+import { CollapsibleSection } from './CollapsibleSection';
 import { DECK_WIDTH, DECK_HEIGHT } from './WorkbenchStage';
 import { preloadUserFonts, Font, loadFont } from '@/lib/fonts';
 import { toast } from 'sonner';
@@ -76,7 +77,7 @@ export function Inspector() {
       {/* Properties panel */}
       <div className="flex-1 overflow-auto">
         {selectedObject ? (
-          <div className="p-3 space-y-4">
+          <div className="p-3 space-y-2">
             <div className="py-2 border-b border-border flex items-center justify-between">
               <span className="font-display text-[10px] uppercase tracking-widest text-muted-foreground">
                 Properties
@@ -104,6 +105,7 @@ export function Inspector() {
               </button>
             </div>
 
+            <CollapsibleSection title="Layer & Transform" defaultOpen={true}>
             {/* Layer Ordering */}
             <div className="space-y-2">
               <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
@@ -267,7 +269,9 @@ export function Inspector() {
                 </div>
               </div>
             </div>
+            </CollapsibleSection>
 
+            <CollapsibleSection title="Appearance" defaultOpen={true}>
             {/* Color (for text/shapes) */}
             {(selectedObject.type === 'text' || selectedObject.type === 'shape') && (
               <div className="space-y-2">
