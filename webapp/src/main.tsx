@@ -3,6 +3,7 @@ import App from "./App.js";
 import "./index.css";
 import "./styles/animations.css";
 import "./styles/focus.css";
+import "./styles/responsive.css";
 
 // Detect keyboard navigation (show focus rings only for keyboard users)
 function handleFirstTab(e: KeyboardEvent) {

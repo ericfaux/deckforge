@@ -1,0 +1,156 @@
+/* Responsive Design - Mobile-First Improvements */
+
+/* Touch-friendly tap targets (minimum 44x44px) */
+@media (pointer: coarse) {
+  button,
+  a,
+  input[type="checkbox"],
+  input[type="radio"],
+  select {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Larger padding for touch */
+  button:not(.icon-only) {
+    padding: 12px 20px;
+  }
+}
+
+/* Mobile viewport adjustments */
+@media (max-width: 768px) {
+  /* Reduce header padding on mobile */
+  header {
+    padding: 12px 16px;
+  }
+
+  /* Stack buttons vertically on mobile */
+  .button-group-mobile-stack {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .button-group-mobile-stack > * {
+    width: 100%;
+  }
+
+  /* Smaller font sizes on mobile */
+  h1 {
+    font-size: 1.5rem;
+  }
+
+  h2 {
+    font-size: 1.25rem;
+  }
+
+  /* Full-width modals on mobile */
+  [role="dialog"] {
+    max-width: 100vw;
+    max-height: 100vh;
+    margin: 0;
+    border-radius: 0;
+  }
+
+  /* Reduce padding in cards */
+  .card {
+    padding: 12px;
+  }
+
+  /* Hide secondary text on very small screens */
+  .hide-on-mobile {
+    display: none;
+  }
+}
+
+/* Tablet adjustments */
+@media (min-width: 768px) and (max-width: 1024px) {
+  /* 2-column grid instead of 4 */
+  .grid-responsive {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Desktop improvements */
+@media (min-width: 1024px) {
+  /* Show hover effects only on desktop */
+  .hover-desktop:hover {
+    transform: translateY(-2px);
+  }
+}
+
+/* Landscape mobile orientation */
+@media (max-width: 768px) and (orientation: landscape) {
+  /* Reduce vertical spacing in landscape */
+  .py-8 {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+  }
+
+  /* Shorter modals in landscape */
+  [role="dialog"] {
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+}
+
+/* Print styles */
+@media print {
+  /* Hide navigation and UI chrome */
+  header,
+  footer,
+  nav,
+  .no-print {
+    display: none !important;
+  }
+
+  /* Expand content */
+  main {
+    width: 100%;
+    max-width: none;
+  }
+
+  /* Prevent page breaks inside cards */
+  .card {
+    page-break-inside: avoid;
+  }
+}
+
+/* Reduced motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  /* Stronger borders in high contrast */
+  button,
+  input,
+  select,
+  textarea {
+    border-width: 2px;
+  }
+
+  /* No subtle colors */
+  .text-muted-foreground {
+    color: hsl(var(--foreground));
+  }
+}
+
+/* Dark mode specific adjustments */
+@media (prefers-color-scheme: dark) {
+  /* Reduce image brightness slightly */
+  img {
+    opacity: 0.9;
+  }
+
+  /* Softer shadows in dark mode */
+  .shadow-lg {
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+  }
+}
