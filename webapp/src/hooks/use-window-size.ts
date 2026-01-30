@@ -1,41 +1,48 @@
 import { useState, useEffect } from 'react';
 
-interface WindowSize {
+export interface WindowSize {
   width: number;
   height: number;
 }
 
 /**
- * Custom hook to get the current window size
- * Updates on window resize
- * @returns Object with width and height
+ * Get current window dimensions with automatic updates on resize
+ * 
+ * Usage:
+ * const { width, height } = useWindowSize();
+ * 
+ * if (width < 768) {
+ *   return <MobileView />;
+ * }
  */
 export function useWindowSize(): WindowSize {
-  const [windowSize, setWindowSize] = useState<WindowSize>({
-    width: typeof window !== 'undefined' ? window.innerWidth : 0,
-    height: typeof window !== 'undefined' ? window.innerHeight : 0,
+  const [windowSize, setWindowSize] = useState<WindowSize>(() => {
+    if (typeof window === 'undefined') {
+      return { width: 0, height: 0 };
+    }
+    return {
+      width: window.innerWidth,
+      height: window.innerHeight,
+    };
   });
 
   useEffect(() => {
-    // Return early if window is not available (SSR)
     if (typeof window === 'undefined') {
       return;
     }
 
-    function handleResize() {
+    const handleResize = () => {
       setWindowSize({
         width: window.innerWidth,
         height: window.innerHeight,
       });
-    }
+    };
 
-    // Add event listener
     window.addEventListener('resize', handleResize);
-
+    
     // Call handler right away so state gets updated with initial window size
     handleResize();
 
-    // Remove event listener on cleanup
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
