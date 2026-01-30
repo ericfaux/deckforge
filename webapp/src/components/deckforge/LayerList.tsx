@@ -223,14 +223,25 @@ export function LayerList() {
       </div>
       <ScrollArea className="h-48">
         {reversedObjects.length === 0 ? (
-          <div className="p-6 text-center space-y-2">
-            <LayersIcon className="w-8 h-8 mx-auto text-muted-foreground opacity-50" />
-            <div>
+          <div className="p-6 text-center space-y-3 animate-in fade-in-50 duration-500">
+            <div className="relative group inline-block">
+              {/* Subtle glow effect */}
+              <div className="absolute inset-0 rounded-full bg-primary/5 blur-xl group-hover:bg-primary/10 transition-all duration-500" />
+              
+              {/* Icon with gradient background */}
+              <div className="relative rounded-full bg-gradient-to-br from-muted/80 to-muted/40 p-3">
+                <LayersIcon className="w-8 h-8 text-muted-foreground/70 group-hover:text-primary/80 transition-colors duration-300" />
+              </div>
+            </div>
+            
+            <div className="space-y-1">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 No layers yet
               </p>
-              <p className="text-[10px] text-muted-foreground mt-1">
-                Add text, shapes, or images to see them here
+              <p className="text-[10px] text-muted-foreground/80 leading-relaxed">
+                Press <kbd className="px-1.5 py-0.5 text-[9px] font-mono bg-muted rounded border border-border">T</kbd> for text,{' '}
+                <kbd className="px-1.5 py-0.5 text-[9px] font-mono bg-muted rounded border border-border">S</kbd> for stickers, or{' '}
+                <kbd className="px-1.5 py-0.5 text-[9px] font-mono bg-muted rounded border border-border">U</kbd> to upload
               </p>
             </div>
           </div>
