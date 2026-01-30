@@ -17,7 +17,7 @@ import {
   AlignVerticalJustifyCenter,
   AlignHorizontalJustifyCenter,
 } from 'lucide-react';
-import { toast } from 'sonner';
+import { toastUtils } from '@/lib/toast-utils';
 
 /**
  * Quick Access Toolbar - Common actions for selected objects
@@ -66,7 +66,7 @@ export function QuickAccessToolbar() {
         useDeckForgeStore.getState().addObject(newObj);
       }
     });
-    toast.success(`Duplicated ${selectedIds.length} object(s)`);
+    toastUtils.success(`Duplicated ${selectedIds.length} object(s)`);
   };
 
   const handleDelete = () => {
@@ -74,14 +74,14 @@ export function QuickAccessToolbar() {
     
     saveToHistory();
     selectedIds.forEach((id) => deleteObject(id));
-    toast.success(`Deleted ${selectedIds.length} object(s)`);
+    toastUtils.success(`Deleted ${selectedIds.length} object(s)`);
   };
 
   const handleGroup = () => {
     if (selectedIds.length < 2) return;
     
     groupObjects(selectedIds);
-    toast.success('Objects grouped');
+    toastUtils.success('Objects grouped');
   };
 
   const handleToggleLock = () => {
@@ -92,7 +92,7 @@ export function QuickAccessToolbar() {
     selectedIds.forEach((id) => {
       updateObject(id, { locked: newLockState });
     });
-    toast.success(newLockState ? 'Locked' : 'Unlocked');
+    toastUtils.success(newLockState ? 'Locked' : 'Unlocked');
   };
 
   const handleToggleVisibility = () => {
@@ -103,14 +103,14 @@ export function QuickAccessToolbar() {
     selectedIds.forEach((id) => {
       updateObject(id, { hidden: newHiddenState });
     });
-    toast.success(newHiddenState ? 'Hidden' : 'Visible');
+    toastUtils.success(newHiddenState ? 'Hidden' : 'Visible');
   };
 
   const handleAlign = (alignment: 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom') => {
     if (selectedIds.length < 2) return;
     
     alignObjects(alignment);
-    toast.success(`Aligned ${alignment}`);
+    toastUtils.success(`Aligned ${alignment}`);
   };
 
   return (

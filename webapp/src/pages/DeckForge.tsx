@@ -42,7 +42,7 @@ import { QuickAccessToolbar } from '@/components/deckforge/QuickAccessToolbar';
 import { EditorLoadingSkeleton } from '@/components/deckforge/EditorLoadingSkeleton';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
-import { toast } from 'sonner';
+import { toastUtils } from '@/lib/toast-utils';
 
 export default function DeckForge() {
   const { selectedId, selectedIds, deleteObject, undo, redo, getCanvasState, currentDesignId, setDesignId, setSaving, isSaving, objects, designName, createVersion, past, future, updateObject, saveToHistory, addObject, selectObject, setActiveTool, stageScale, setStageScale, arrayDuplicate, showRulers, toggleRulers, groupObjects, ungroupObject } = useDeckForgeStore();
@@ -91,7 +91,7 @@ export default function DeckForge() {
         });
         setSaveStatus('Saved!');
         setHasUnsavedChanges(false);
-        toast.success('Design saved successfully');
+        toastUtils.success('Design saved successfully', 'Your changes have been saved to the cloud');
       } else {
         // Create new design
         const result = await designsAPI.create({
@@ -101,14 +101,14 @@ export default function DeckForge() {
         setDesignId(result.design.id);
         setSaveStatus('Saved!');
         setHasUnsavedChanges(false);
-        toast.success('Design created successfully');
+        toastUtils.success('Design created successfully', 'Your design has been saved');
       }
 
       setTimeout(() => setSaveStatus(''), 3000);
     } catch (err) {
       console.error('Save failed:', err);
       setSaveStatus('Save failed');
-      toast.error('Failed to save design. Please try again.');
+      toastUtils.error('Failed to save design', 'Please check your connection and try again');
       setTimeout(() => setSaveStatus(''), 2000);
     } finally {
       setSaving(false);
@@ -133,12 +133,12 @@ export default function DeckForge() {
       downloadBlob(blob, filename);
 
       setSaveStatus('Exported PNG!');
-      toast.success(`Exported as ${filename}`);
+      toastUtils.success(`Exported as ${filename}`, 'High-resolution PNG ready to print');
       setTimeout(() => setSaveStatus(''), 2000);
     } catch (err) {
       console.error('Export failed:', err);
       setSaveStatus('Export failed');
-      toast.error('Failed to export PNG. Please try again.');
+      toastUtils.error('Failed to export PNG', 'Please try again or check browser console for details');
       setTimeout(() => setSaveStatus(''), 2000);
     } finally {
       setIsExporting(false);
@@ -161,12 +161,12 @@ export default function DeckForge() {
       downloadBlob(blob, filename);
 
       setSaveStatus('Exported SVG!');
-      toast.success(`Exported vector as ${filename}`);
+      toastUtils.success(`Exported vector as ${filename}`, 'Scalable SVG file ready');
       setTimeout(() => setSaveStatus(''), 2000);
     } catch (err) {
       console.error('SVG export failed:', err);
       setSaveStatus('Export failed');
-      toast.error('Failed to export SVG. Please try again.');
+      toastUtils.error('Failed to export SVG', 'Please try again or check browser console for details');
       setTimeout(() => setSaveStatus(''), 2000);
     } finally {
       setIsExporting(false);
@@ -275,7 +275,7 @@ export default function DeckForge() {
             x: obj.x + 10,
             y: obj.y + 10,
           });
-          toast.success('Object duplicated');
+          toastUtils.success('Object duplicated', 'New copy created 20px offset');
         }
         return;
       }
@@ -369,7 +369,7 @@ export default function DeckForge() {
       if (ctrl && key === 'g' && !shift && selectedIds.length >= 2) {
         e.preventDefault();
         groupObjects(selectedIds);
-        toast.success(`Grouped ${selectedIds.length} objects`);
+        toastUtils.success(`Grouped ${selectedIds.length} objects`, 'Objects now move together');
         return;
       }
 
@@ -379,7 +379,7 @@ export default function DeckForge() {
         const obj = objects.find(o => o.id === selectedIds[0]);
         if (obj && obj.type === 'group') {
           ungroupObject(selectedIds[0]);
-          toast.success('Ungrouped objects');
+          toastUtils.success('Ungrouped objects', 'Objects are now independent');
         } else {
           toast.error('Selected object is not a group');
         }
@@ -484,7 +484,7 @@ export default function DeckForge() {
         if (obj) {
           // Store in sessionStorage (simple clipboard)
           sessionStorage.setItem('deckforge_clipboard', JSON.stringify(obj));
-          toast.success('Copied to clipboard');
+          toastUtils.success('Copied to clipboard', 'Press Ctrl+V to paste');
         }
         return;
       }
@@ -502,12 +502,12 @@ export default function DeckForge() {
               x: obj.x + 20,
               y: obj.y + 20,
             });
-            toast.success('Pasted from clipboard');
+            toastUtils.success('Pasted from clipboard');
           } catch (err) {
-            toast.error('Failed to paste');
+            toastUtils.error('Failed to paste', 'The clipboard data may be corrupted');
           }
         } else {
-          toast.error('Nothing to paste');
+          toastUtils.error('Nothing to paste', 'Copy an object first with Ctrl+C');
         }
         return;
       }
