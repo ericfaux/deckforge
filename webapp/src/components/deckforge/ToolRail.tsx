@@ -129,9 +129,9 @@ export function ToolRail() {
                     <button
                       onClick={() => setActiveTool(isActive ? null : tool.id)}
                       className={cn(
-                        'w-10 h-10 flex items-center justify-center border border-transparent',
-                        'hover:border-border hover:bg-secondary transition-colors duration-75',
-                        isActive && 'tool-active border-primary'
+                        'w-10 h-10 flex items-center justify-center border border-transparent rounded-md',
+                        'hover:border-border hover:bg-secondary hover:scale-105 transition-all duration-200 active:scale-95',
+                        isActive && 'tool-active border-primary bg-primary/10 scale-105'
                       )}
                     >
                       <Icon className="w-5 h-5" strokeWidth={1.5} />
@@ -171,8 +171,8 @@ export function ToolRail() {
                   key={tool.id}
                   onClick={() => setActiveTool(isActive ? null : tool.id)}
                   className={cn(
-                    'min-w-[64px] h-16 flex flex-col items-center justify-center gap-1 border border-transparent shrink-0',
-                    'active:bg-secondary/80 active:scale-95 transition-all duration-75 touch-manipulation',
+                    'min-w-[64px] h-16 flex flex-col items-center justify-center gap-1 border border-transparent shrink-0 rounded-md',
+                    'hover:bg-secondary/50 hover:border-border active:bg-secondary/80 active:scale-95 transition-all duration-200 touch-manipulation',
                     isActive && 'tool-active border-primary bg-primary/10'
                   )}
                 >

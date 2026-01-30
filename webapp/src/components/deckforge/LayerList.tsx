@@ -107,7 +107,7 @@ function LayerItem({
       onClick={onSelect}
       className={cn(
         'flex items-center gap-1.5 px-2 py-1.5 border-b border-border cursor-pointer group',
-        'hover:bg-secondary transition-colors',
+        'hover:bg-secondary hover:shadow-sm transition-all duration-200',
         isSelected && 'bg-primary/10 border-l-2 border-l-primary',
         obj.hidden && 'opacity-50'
       )}
@@ -123,7 +123,7 @@ function LayerItem({
         <TooltipTrigger asChild>
           <button
             onClick={toggleVisibility}
-            className="w-6 h-6 flex items-center justify-center hover:bg-secondary transition-colors rounded"
+            className="w-6 h-6 flex items-center justify-center hover:bg-secondary hover:scale-110 active:scale-95 transition-all duration-200 rounded"
             title={obj.hidden ? "Show layer" : "Hide layer"}
           >
             {obj.hidden ? (
@@ -143,7 +143,7 @@ function LayerItem({
         <TooltipTrigger asChild>
           <button
             onClick={toggleLock}
-            className="w-6 h-6 flex items-center justify-center hover:bg-secondary transition-colors rounded"
+            className="w-6 h-6 flex items-center justify-center hover:bg-secondary hover:scale-110 active:scale-95 transition-all duration-200 rounded"
             title={obj.locked ? "Unlock layer" : "Lock layer"}
           >
             {obj.locked ? (
@@ -171,7 +171,7 @@ function LayerItem({
                 duration: 2000,
               });
             }}
-            className="w-6 h-6 flex items-center justify-center hover:bg-destructive hover:text-destructive-foreground transition-colors rounded opacity-0 group-hover:opacity-100"
+            className="w-6 h-6 flex items-center justify-center hover:bg-destructive hover:text-destructive-foreground hover:scale-110 active:scale-95 transition-all duration-200 rounded opacity-0 group-hover:opacity-100"
             title="Delete layer"
           >
             <Trash2 className="w-3.5 h-3.5" />
