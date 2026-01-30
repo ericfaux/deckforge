@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { X, Search, Download, Star, ChevronLeft, ChevronRight } from 'lucide-react';
 import { CanvasObject } from '@/store/deckforge';
 import { useDeckForgeStore } from '@/store/deckforge';
@@ -860,6 +860,11 @@ export function TemplateGalleryModal({ isOpen, onClose }: TemplateGalleryModalPr
     { value: 'pro', label: 'Pro' },
   ];
 
+  // Reset to page 1 when search/filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedCategory]);
+
   // Filter and paginate templates
   const { filteredTemplates, paginatedTemplates, totalPages, startIndex, endIndex } = useMemo(() => {
     // Filter templates
@@ -885,17 +890,6 @@ export function TemplateGalleryModal({ isOpen, onClose }: TemplateGalleryModalPr
       endIndex: Math.min(end, filtered.length),
     };
   }, [searchQuery, selectedCategory, currentPage]);
-
-  // Reset to page 1 when search/filter changes
-  const handleSearchChange = (value: string) => {
-    setSearchQuery(value);
-    setCurrentPage(1);
-  };
-
-  const handleCategoryChange = (value: string) => {
-    setSelectedCategory(value);
-    setCurrentPage(1);
-  };
 
   const handleUseTemplate = (template: Template) => {
     // Deep clone objects to prevent reference issues
@@ -938,7 +932,7 @@ export function TemplateGalleryModal({ isOpen, onClose }: TemplateGalleryModalPr
               type="text"
               placeholder="Search templates..."
               value={searchQuery}
-              onChange={(e) => handleSearchChange(e.target.value)}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
@@ -948,7 +942,7 @@ export function TemplateGalleryModal({ isOpen, onClose }: TemplateGalleryModalPr
             {categories.map((cat) => (
               <button
                 key={cat.value}
-                onClick={() => handleCategoryChange(cat.value)}
+                onClick={() => setSelectedCategory(cat.value)}
                 className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                   selectedCategory === cat.value
                     ? 'bg-blue-500 text-white'
