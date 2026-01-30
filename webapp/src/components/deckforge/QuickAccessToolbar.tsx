@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { useDeckForgeStore } from '@/store/deckforge';
 import { Button } from '@/components/ui/button';
 import { EnhancedTooltip } from '@/components/ui/enhanced-tooltip';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import {
   Undo2,
   Redo2,
@@ -43,6 +45,8 @@ export function QuickAccessToolbar() {
   const hasSelection = selectedIds.length > 0;
   const multipleSelected = selectedIds.length > 1;
 
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
   const selectedObjects = objects.filter((obj) => selectedIds.includes(obj.id));
   const allLocked = selectedObjects.length > 0 && selectedObjects.every((obj) => obj.locked);
   const anyLocked = selectedObjects.some((obj) => obj.locked);
@@ -69,12 +73,17 @@ export function QuickAccessToolbar() {
     toastUtils.success(`Duplicated ${selectedIds.length} object(s)`);
   };
 
-  const handleDelete = () => {
+  const confirmDelete = () => {
     if (selectedIds.length === 0) return;
-    
     saveToHistory();
     selectedIds.forEach((id) => deleteObject(id));
     toastUtils.success(`Deleted ${selectedIds.length} object(s)`);
+    setShowDeleteConfirm(false);
+  };
+
+  const handleDelete = () => {
+    if (selectedIds.length === 0) return;
+    setShowDeleteConfirm(true);
   };
 
   const handleGroup = () => {
@@ -293,6 +302,18 @@ export function QuickAccessToolbar() {
           Select objects to see quick actions
         </p>
       )}
+
+      {/* Delete confirmation dialog */}
+      <ConfirmDialog
+        open={showDeleteConfirm}
+        onOpenChange={setShowDeleteConfirm}
+        onConfirm={confirmDelete}
+        title={`Delete ${selectedIds.length} object(s)?`}
+        description="This action cannot be undone. The objects will be permanently removed from your design."
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="destructive"
+      />
     </div>
   );
 }
