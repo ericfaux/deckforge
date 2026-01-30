@@ -452,3 +452,64 @@ Will extend with additional enhancements:
 **Commit:** `9e024a2` - "feat: enhanced empty states with animations and better visual hierarchy"
 **Deployed:** Pushing to production...
 
+
+## 2026-01-30 13:40 UTC - Toolbar Tooltips with Keyboard Shortcuts
+
+### ✅ Completed: Tooltips for All Toolbar Buttons (Quick Win #5 - Partial)
+**Professional tooltips with keyboard shortcuts and descriptions**
+
+**What I Added:**
+
+**Header Toolbar Tooltips** (pages/DeckForge.tsx)
+Wrapped all major buttons in Tooltip components with:
+
+1. **Undo/Redo** - Shows history count + Ctrl+Z / Ctrl+Shift+Z
+2. **Save** - Ctrl+S shortcut + "Save to cloud storage"
+3. **Export** - Ctrl+E shortcut + export options description
+4. **Brand Kits** - "Save and reuse color palettes"
+5. **Extract Colors** - "Extract palette from any image"
+6. **Custom Fonts** - "Upload your own font files"
+7. **Share** - "Get shareable link or embed code"
+8. **History** - "View and restore previous versions"
+9. **Preview** - "Animate deck in 3D rotation"
+
+**Tooltip Features:**
+- 300ms delay for smooth UX (delayDuration)
+- Keyboard shortcuts in styled `<kbd>` elements
+- Helpful descriptions below main label
+- Consistent formatting across all buttons
+- Muted foreground text for secondary info
+
+**Technical Implementation:**
+```tsx
+<Tooltip delayDuration={300}>
+  <TooltipTrigger asChild>
+    <Button>...</Button>
+  </TooltipTrigger>
+  <TooltipContent>
+    <div className="flex items-center gap-2">
+      <span>Save Design</span>
+      <kbd className="px-1.5 py-0.5 text-xs bg-muted border border-border rounded font-mono">
+        Ctrl+S
+      </kbd>
+    </div>
+    <p className="text-xs text-muted-foreground mt-1">
+      Save to cloud storage
+    </p>
+  </TooltipContent>
+</Tooltip>
+```
+
+**Remaining:**
+- 3D Print, Templates, Marketplace, Park Builder, Gallery, Login, Rulers, Shortcuts buttons
+- Mobile toolbar buttons
+- Inspector panel controls
+
+**Impact:**
+- Users can discover keyboard shortcuts
+- Clear action descriptions reduce confusion
+- Professional Figma-level polish
+
+**Commit:** `58ba134` - "feat: add tooltips to header toolbar buttons with keyboard shortcuts"
+**Deployed:** Pushing to production...
+
