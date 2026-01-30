@@ -174,6 +174,40 @@ export default function DeckForge() {
     }
   };
 
+  // Warn before leaving page with unsaved changes
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+        return e.returnValue;
+      }
+    };
+    
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [hasUnsavedChanges]);
+
+  // Close export menu when clicking outside
+  useEffect(() => {
+    if (!showExportMenu) return;
+
+    const handler = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      // Check if click is outside export menu and button
+      if (!target.closest('[data-export-menu]') && !target.closest('[data-export-button]')) {
+        setShowExportMenu(false);
+      }
+    };
+
+    // Add slight delay to prevent immediate closing
+    setTimeout(() => {
+      document.addEventListener('click', handler);
+    }, 10);
+
+    return () => document.removeEventListener('click', handler);
+  }, [showExportMenu]);
+
   // Preload user's custom fonts on mount
   // Initialize editor (preload fonts, set up canvas, etc.)
   useEffect(() => {
@@ -864,6 +898,7 @@ export default function DeckForge() {
                       onClick={() => setShowExportMenu(!showExportMenu)}
                       disabled={isExporting}
                       className="gap-2"
+                      data-export-button="true"
                     >
                       <Download className="w-4 h-4" />
                       {isExporting ? 'Exporting...' : 'Export'}
@@ -882,7 +917,10 @@ export default function DeckForge() {
                 </Tooltip>
 
                 {showExportMenu && !isExporting && (
-                  <div className="absolute top-full mt-1 right-0 z-50 bg-card border border-border shadow-lg min-w-[180px] rounded-lg overflow-hidden">
+                  <div 
+                    className="absolute top-full mt-1 right-0 z-50 bg-card border border-border shadow-lg min-w-[180px] rounded-lg overflow-hidden"
+                    data-export-menu="true"
+                  >
                     <button
                       onClick={() => {
                         setShowExportMenu(false);
