@@ -47,6 +47,17 @@
 - **0 stops** - building continuously per directive
 
 ### 🎯 Latest Update (Heartbeat):
+**Layer Locking & Visibility Controls (2026-01-30 00:00 UTC)**
+- Added Eye icon to toggle layer visibility (show/hide)
+- Added Lock icon to toggle layer protection
+- Hidden layers don't render on canvas
+- Locked layers can't be selected or edited
+- Visual feedback: dimmed hidden layers, orange lock icons
+- Click locked objects → error toast directs to Layers panel
+- Professional layer management (Photoshop/Figma-style)
+- **7 commits in 22 minutes** - continuous autonomous building
+- All features deployed
+
 **Color Palette Extractor - NEW TOOL (2026-01-29 23:55 UTC)**
 - Built k-means color quantization algorithm from scratch
 - Extract dominant colors from any uploaded image
