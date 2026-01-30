@@ -41,6 +41,7 @@ export interface CanvasObject {
   scaleX: number;
   scaleY: number;
   locked?: boolean; // Lock object to prevent moving/editing
+  hidden?: boolean; // Hide object from canvas (still in layers)
   // For groups
   children?: CanvasObject[]; // Child objects in a group
   // For text

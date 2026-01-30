@@ -1043,6 +1043,15 @@ export function WorkbenchStage() {
   }, [selectObject, activeTool]);
 
   const handleObjectSelect = useCallback((objId: string, e?: React.MouseEvent) => {
+    // Check if object is locked
+    const obj = objects.find(o => o.id === objId);
+    if (obj?.locked) {
+      toast.error('Layer is locked', {
+        description: 'Unlock it in the Layers panel to edit',
+      });
+      return;
+    }
+
     if (e?.shiftKey) {
       // Shift+click: toggle this object in multi-select
       toggleSelectObject(objId);
@@ -1050,7 +1059,7 @@ export function WorkbenchStage() {
       // Normal click: select only this object
       selectObject(objId);
     }
-  }, [selectObject, toggleSelectObject]);
+  }, [selectObject, toggleSelectObject, objects]);
 
   // Handle pen tool path completion
   const handlePenToolComplete = useCallback((pathData: string, strokeWidth: number, strokeColor: string, opacity: number, dashStyle: 'solid' | 'dashed' | 'dotted', mode: 'click' | 'draw') => {
@@ -1202,7 +1211,7 @@ export function WorkbenchStage() {
 
           {/* Render all objects inside the clip mask */}
           <g transform={`translate(${deckX}, ${deckY}) scale(${stageScale})`}>
-            {objects.map((obj) => (
+            {objects.filter(obj => !obj.hidden).map((obj) => (
               <CanvasObjectItem
                 key={obj.id}
                 obj={obj}

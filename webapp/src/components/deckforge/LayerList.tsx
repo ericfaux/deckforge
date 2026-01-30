@@ -1,4 +1,4 @@
-import { GripVertical, Eye, Trash2, Type, ImageIcon, Square, Circle, Star, Sticker, Minus, Pen, Mountain, Layers as LayersIcon, Info } from 'lucide-react';
+import { GripVertical, Eye, EyeOff, Lock, Unlock, Trash2, Type, ImageIcon, Square, Circle, Star, Sticker, Minus, Pen, Mountain, Layers as LayersIcon, Info } from 'lucide-react';
 import { useDeckForgeStore, CanvasObject } from '@/store/deckforge';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -88,14 +88,28 @@ function LayerItem({
   onDelete,
 }: LayerItemProps) {
   const Icon = getObjectIcon(obj);
+  const { updateObject } = useDeckForgeStore();
+
+  const toggleVisibility = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    updateObject(obj.id, { hidden: !obj.hidden });
+    toast.success(obj.hidden ? 'Layer visible' : 'Layer hidden');
+  };
+
+  const toggleLock = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    updateObject(obj.id, { locked: !obj.locked });
+    toast.success(obj.locked ? 'Layer unlocked' : 'Layer locked');
+  };
 
   return (
     <div
       onClick={onSelect}
       className={cn(
-        'flex items-center gap-2 px-2 py-1.5 border-b border-border cursor-pointer group',
+        'flex items-center gap-1.5 px-2 py-1.5 border-b border-border cursor-pointer group',
         'hover:bg-secondary transition-colors',
-        isSelected && 'bg-primary/10 border-l-2 border-l-primary'
+        isSelected && 'bg-primary/10 border-l-2 border-l-primary',
+        obj.hidden && 'opacity-50'
       )}
     >
       <GripVertical className="w-3 h-3 text-muted-foreground cursor-grab" />
@@ -103,6 +117,48 @@ function LayerItem({
       <span className="flex-1 text-xs truncate font-medium">
         {getObjectLabel(obj)}
       </span>
+      
+      {/* Visibility Toggle */}
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            onClick={toggleVisibility}
+            className="w-6 h-6 flex items-center justify-center hover:bg-secondary transition-colors rounded"
+            title={obj.hidden ? "Show layer" : "Hide layer"}
+          >
+            {obj.hidden ? (
+              <EyeOff className="w-3.5 h-3.5 text-muted-foreground" />
+            ) : (
+              <Eye className="w-3.5 h-3.5 text-muted-foreground" />
+            )}
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="left">
+          <p className="text-xs">{obj.hidden ? 'Show' : 'Hide'} layer</p>
+        </TooltipContent>
+      </Tooltip>
+
+      {/* Lock Toggle */}
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            onClick={toggleLock}
+            className="w-6 h-6 flex items-center justify-center hover:bg-secondary transition-colors rounded"
+            title={obj.locked ? "Unlock layer" : "Lock layer"}
+          >
+            {obj.locked ? (
+              <Lock className="w-3.5 h-3.5 text-orange-500" />
+            ) : (
+              <Unlock className="w-3.5 h-3.5 text-muted-foreground" />
+            )}
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="left">
+          <p className="text-xs">{obj.locked ? 'Unlock' : 'Lock'} layer</p>
+        </TooltipContent>
+      </Tooltip>
+
+      {/* Delete Button */}
       <Tooltip>
         <TooltipTrigger asChild>
           <button
