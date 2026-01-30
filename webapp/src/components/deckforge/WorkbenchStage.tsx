@@ -1241,10 +1241,14 @@ export function WorkbenchStage() {
             d={getDeckPath(0, 0)}
             transform={`translate(${deckX}, ${deckY}) scale(${stageScale})`}
             fill={backgroundColor}
+            style={{ transition: 'transform 0.15s cubic-bezier(0.4, 0, 0.2, 1)' }}
           />
 
           {/* Render all objects inside the clip mask */}
-          <g transform={`translate(${deckX}, ${deckY}) scale(${stageScale})`}>
+          <g 
+            transform={`translate(${deckX}, ${deckY}) scale(${stageScale})`}
+            style={{ transition: 'transform 0.15s cubic-bezier(0.4, 0, 0.2, 1)' }}
+          >
             {objects.filter(obj => !obj.hidden).map((obj) => {
               // Apply visual feedback classes
               const visualClasses = [
@@ -1369,6 +1373,7 @@ export function WorkbenchStage() {
           strokeWidth={2}
           fill="none"
           pointerEvents="none"
+          style={{ transition: 'transform 0.15s cubic-bezier(0.4, 0, 0.2, 1)' }}
         />
 
         {/* Hardware Guide Overlay - Visual only, not exported */}
