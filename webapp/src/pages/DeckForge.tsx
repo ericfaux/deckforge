@@ -49,6 +49,7 @@ export default function DeckForge() {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [saveStatus, setSaveStatus] = useState<string>('');
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [isVersionHistoryOpen, setIsVersionHistoryOpen] = useState(false);
@@ -87,6 +88,7 @@ export default function DeckForge() {
           name: canvasState.name,
         });
         setSaveStatus('Saved!');
+        setHasUnsavedChanges(false);
         toast.success('Design saved successfully');
       } else {
         // Create new design
@@ -96,10 +98,11 @@ export default function DeckForge() {
         });
         setDesignId(result.design.id);
         setSaveStatus('Saved!');
+        setHasUnsavedChanges(false);
         toast.success('Design created successfully');
       }
 
-      setTimeout(() => setSaveStatus(''), 2000);
+      setTimeout(() => setSaveStatus(''), 3000);
     } catch (err) {
       console.error('Save failed:', err);
       setSaveStatus('Save failed');
@@ -185,6 +188,13 @@ export default function DeckForge() {
 
     return () => clearInterval(interval);
   }, [objects.length, createVersion]);
+
+  // Track unsaved changes
+  useEffect(() => {
+    if (past.length > 0 && !isSaving) {
+      setHasUnsavedChanges(true);
+    }
+  }, [past.length, isSaving]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -686,8 +696,27 @@ export default function DeckForge() {
                 Fingerboard Graphics Editor
               </span>
               
+              {/* Auto-save indicator */}
               {saveStatus && (
-                <span className="text-xs text-primary">{saveStatus}</span>
+                <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-primary/10 border border-primary/20 animate-in fade-in-50 duration-300">
+                  {isSaving ? (
+                    <Loader2 className="w-3 h-3 text-primary animate-spin" />
+                  ) : saveStatus.includes('Saved') ? (
+                    <svg className="w-3 h-3 text-primary animate-in zoom-in-50 duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    </svg>
+                  ) : saveStatus.includes('failed') ? (
+                    <svg className="w-3 h-3 text-destructive" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  ) : null}
+                  <span className={cn(
+                    "text-[11px] font-medium",
+                    saveStatus.includes('failed') ? "text-destructive" : "text-primary"
+                  )}>
+                    {saveStatus}
+                  </span>
+                </div>
               )}
 
               {/* Undo/Redo with history indicator */}
@@ -746,20 +775,28 @@ export default function DeckForge() {
               
               <Tooltip delayDuration={300}>
                 <TooltipTrigger asChild>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={handleSave}
-                    disabled={isSaving}
-                    className="gap-2"
-                  >
-                    {isSaving ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Save className="w-4 h-4" />
+                  <div className="relative">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleSave}
+                      disabled={isSaving}
+                      className={cn(
+                        "gap-2",
+                        hasUnsavedChanges && !isSaving && "border-primary/50"
+                      )}
+                    >
+                      {isSaving ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Save className="w-4 h-4" />
+                      )}
+                      {isSaving ? 'Saving...' : 'Save'}
+                    </Button>
+                    {hasUnsavedChanges && !isSaving && (
+                      <div className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full animate-pulse" title="Unsaved changes" />
                     )}
-                    {isSaving ? 'Saving...' : 'Save'}
-                  </Button>
+                  </div>
                 </TooltipTrigger>
                 <TooltipContent>
                   <div className="flex items-center gap-2">
@@ -767,7 +804,7 @@ export default function DeckForge() {
                     <kbd className="px-1.5 py-0.5 text-xs bg-muted border border-border rounded font-mono">Ctrl+S</kbd>
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Save to cloud storage
+                    {hasUnsavedChanges ? 'You have unsaved changes' : 'Save to cloud storage'}
                   </p>
                 </TooltipContent>
               </Tooltip>
