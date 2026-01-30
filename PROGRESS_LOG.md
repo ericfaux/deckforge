@@ -4,7 +4,27 @@
 **Benchmark: Figma-level UI/UX**
 
 ### Latest Update (Heartbeat):
-**Creative Workflow Improvements - 2026-01-30 19:45 UTC**
+**URL → Image Feature - 2026-01-30 19:48 UTC**
+
+✅ **4. URL → Image Input (30 min)**
+- Input field in Upload panel
+- Paste any public image URL → Press Enter → Instant on canvas
+- Auto-fetch dimensions, smart sizing
+- Works with Google Images, Pinterest, any CDN
+- **Before:** Save image → Upload → Browse → Place
+- **After:** Copy URL → Paste → Enter (2 seconds)
+
+**Session Total: 4 Major Features (3.5 hours)**
+1. ✅ Clipboard paste (Ctrl+V)
+2. ✅ Right-click menu filters
+3. ✅ Visual drag & drop overlay
+4. ✅ URL → Image input
+
+**All builds passing. All deployments successful.**
+
+---
+
+**Previous: Creative Workflow Improvements - 2026-01-30 19:45 UTC**
 
 **Raising the bar on "idea → canvas" speed:**
 

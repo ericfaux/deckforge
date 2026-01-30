@@ -271,7 +271,7 @@ Show printable region overlay:
 ### Week 1: Instant Add
 1. ✅ Clipboard paste (Ctrl+V) - **DONE 2026-01-30**
 2. ✅ Enhanced drag & drop with preview - **DONE 2026-01-30** (visual overlay)
-3. ⏳ URL → Image
+3. ✅ URL → Image - **DONE 2026-01-30**
 4. ✅ Desktop file drag & drop (basic exists, enhanced)
 
 ### Week 2: Smart Processing
