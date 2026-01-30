@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { OptimizedImage } from '@/components/OptimizedImage';
 import { EmptyState } from '@/components/EmptyState';
 import { ErrorState } from '@/components/ErrorState';
 import { toast } from 'sonner';
@@ -226,10 +227,11 @@ function DesignCard({ design }: { design: MarketplaceDesign }) {
       {/* Thumbnail */}
       <div className="aspect-[3/8] bg-gradient-to-br from-muted to-muted/50 relative overflow-hidden">
         {design.thumbnail_url ? (
-          <img
+          <OptimizedImage
             src={design.thumbnail_url}
             alt={design.title}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            lazy={true}
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-6xl">
