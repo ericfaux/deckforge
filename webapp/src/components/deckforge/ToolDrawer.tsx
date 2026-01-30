@@ -1,15 +1,17 @@
-import { X, Skull, Flame, Zap, Sword, Radio, Disc3, Music2, Triangle, Hexagon, Circle, Square, Star, Heart, Crown, Anchor, Target, Eye, Hand, Rocket, Ghost, Bug, Cat, Dog, Fish, Bird, Leaf, Sun, Moon, Cloud, Sparkles, Upload, Trash2, Loader2, FileImage, Mountain, Waves, Pizza, Coffee, Gamepad2, Headphones, Camera, Feather, Compass, Crosshair, Swords, Shield, Award, Trophy, Medal, Laugh, Frown, Smile, Glasses, Watch, Lock, Key, Fingerprint, Bomb, Cherry, Dumbbell } from 'lucide-react';
+import { X, Skull, Flame, Zap, Sword, Radio, Disc3, Music2, Triangle, Hexagon, Circle, Square, Star, Heart, Crown, Anchor, Target, Eye, Hand, Rocket, Ghost, Bug, Cat, Dog, Fish, Bird, Leaf, Sun, Moon, Cloud, Sparkles, Upload, Trash2, Loader2, FileImage, Mountain, Waves, Pizza, Coffee, Gamepad2, Headphones, Camera, Feather, Compass, Crosshair, Swords, Shield, Award, Trophy, Medal, Laugh, Frown, Smile, Glasses, Watch, Lock, Key, Fingerprint, Bomb, Cherry, Dumbbell, Link } from 'lucide-react';
 import { useState, useRef } from 'react';
 import { useDeckForgeStore, ToolType, CanvasObject, TextureType } from '@/store/deckforge';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { DECK_WIDTH, DECK_HEIGHT } from './WorkbenchStage';
 import { Slider } from '@/components/ui/slider';
+import { Input } from '@/components/ui/input';
 import { assetsAPI } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 import { Button } from '@/components/ui/button';
 import { importSVG, validateSVGFile } from '@/lib/svg-import';
 import { toast } from 'sonner';
+import { toastUtils } from '@/lib/toast-utils';
 
 // ============ STICKER SYSTEM ============
 const stickerCategories = {
@@ -507,6 +509,7 @@ function UploadsContent({ onAddObject, deckCenterX, deckCenterY }: {
   const [assets, setAssets] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [imageUrl, setImageUrl] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { isAuthenticated } = useAuthStore();
 
@@ -634,6 +637,52 @@ function UploadsContent({ onAddObject, deckCenterX, deckCenterY }: {
     });
   };
 
+  const handleUrlSubmit = async () => {
+    if (!imageUrl.trim()) {
+      toastUtils.error('Enter an image URL', 'Paste a link to any public image');
+      return;
+    }
+
+    try {
+      setIsUploading(true);
+      toastUtils.info('Loading image...', 'Fetching from URL');
+
+      // Create a temporary image to get dimensions
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
+        img.src = imageUrl;
+      });
+
+      const maxDim = 120;
+      const scale = Math.min(maxDim / img.width, maxDim / img.height);
+
+      onAddObject({
+        type: 'image',
+        x: deckCenterX - (img.width * scale) / 2,
+        y: deckCenterY - (img.height * scale) / 2,
+        width: img.width,
+        height: img.height,
+        rotation: 0,
+        opacity: 1,
+        scaleX: scale,
+        scaleY: scale,
+        src: imageUrl,
+      });
+
+      toastUtils.success('Image added from URL!', 'Image loaded successfully');
+      setImageUrl('');
+    } catch (err) {
+      console.error('URL load failed:', err);
+      toastUtils.error('Failed to load image', 'Check URL and try again. Image must be publicly accessible.');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const deleteAsset = async (id: string) => {
     if (!confirm('Delete this asset?')) return;
     
@@ -687,10 +736,48 @@ function UploadsContent({ onAddObject, deckCenterX, deckCenterY }: {
               Upload Images
             </span>
             <span className="text-xs text-muted-foreground">
-              PNG, JPG, SVG
+              PNG, JPG, SVG or drag & drop
             </span>
           </>
         )}
+      </div>
+
+      {/* URL Input */}
+      <div className="space-y-2">
+        <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-muted-foreground">
+          <Link className="w-3 h-3" />
+          <span>Or paste image URL</span>
+        </div>
+        <div className="flex gap-2">
+          <Input
+            type="url"
+            placeholder="https://example.com/image.png"
+            value={imageUrl}
+            onChange={(e) => setImageUrl(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                handleUrlSubmit();
+              }
+            }}
+            className="h-9 text-xs"
+            disabled={isUploading}
+          />
+          <Button
+            size="sm"
+            onClick={handleUrlSubmit}
+            disabled={isUploading || !imageUrl.trim()}
+            className="px-3"
+          >
+            {isUploading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              'Add'
+            )}
+          </Button>
+        </div>
+        <p className="text-[9px] text-muted-foreground">
+          Works with any public image URL (Google Images, Pinterest, etc.)
+        </p>
       </div>
 
       {isLoading ? (
