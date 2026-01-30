@@ -171,16 +171,16 @@ Last updated: 2026-01-30 03:15 UTC
 ## 🎯 QUICK WINS (Do First)
 *High impact, low effort*
 
-1. ✅ Add loading spinners to all async actions
-2. ✅ Improve hover states on all buttons
-3. ✅ Add smooth transitions to panel toggles
-4. ✅ Better empty states with illustrations
-5. ✅ Tooltips for all toolbar buttons
-6. ✅ Command palette (Ctrl+K)
-7. ✅ Keyboard shortcut overlay (press ?)
-8. ✅ Better error messages
-9. ✅ Auto-save indicator
-10. ✅ Zoom shortcuts (Ctrl+1, Ctrl+2, Ctrl+0)
+1. ✅ Add loading spinners to all async actions (Save button spinner added, export/gallery already had spinners)
+2. [ ] Improve hover states on all buttons
+3. [ ] Add smooth transitions to panel toggles
+4. [ ] Better empty states with illustrations
+5. [ ] Tooltips for all toolbar buttons
+6. [ ] Command palette (Ctrl+K)
+7. [ ] Keyboard shortcut overlay (press ?)
+8. [ ] Better error messages
+9. [ ] Auto-save indicator
+10. [ ] Zoom shortcuts (Ctrl+1, Ctrl+2, Ctrl+0)
 
 ---
 
