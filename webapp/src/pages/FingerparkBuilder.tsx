@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Stage, Layer, Rect, Circle, Line, Group, Text } from 'react-konva';
+import { Stage, Layer, Rect, Circle, Line, Group, Text, Shape } from 'react-konva';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Download, Grid3X3, Ruler, Save, Share2, Trash2, RotateCcw, FolderOpen, ShoppingCart } from 'lucide-react';
 import { toast } from 'sonner';
 import Konva from 'konva';
+import { getShapeForObstacle } from '@/lib/park-shapes';
 import {
   Dialog,
   DialogContent,
@@ -46,6 +47,7 @@ const OBSTACLES = {
   ],
   ramps: [
     { id: 'quarter-pipe', name: 'Quarter Pipe', icon: '◜', defaultWidth: 12, defaultLength: 8, defaultHeight: 6 },
+    { id: 'half-pipe', name: 'Half Pipe', icon: '◠', defaultWidth: 16, defaultLength: 12, defaultHeight: 6 },
     { id: 'bank-ramp', name: 'Bank Ramp', icon: '◢', defaultWidth: 12, defaultLength: 8, defaultHeight: 4 },
     { id: 'launch-ramp', name: 'Launch Ramp', icon: '▲', defaultWidth: 10, defaultLength: 6, defaultHeight: 3 },
   ],
@@ -392,43 +394,65 @@ export default function FingerparkBuilder() {
                   )}
 
                   {/* Obstacles */}
-                  {objects.map((obj) => (
-                    <Group
-                      key={obj.id}
-                      x={obj.x}
-                      y={obj.y}
-                      rotation={obj.rotation}
-                      draggable
-                      onClick={() => setSelectedId(obj.id)}
-                      onDragEnd={(e) => {
-                        updateObject(obj.id, {
-                          x: e.target.x(),
-                          y: e.target.y(),
-                        });
-                      }}
-                    >
-                      <Rect
-                        width={obj.length}
-                        height={obj.width}
-                        fill={obj.color}
-                        stroke={selectedId === obj.id ? '#3b82f6' : '#666'}
-                        strokeWidth={selectedId === obj.id ? 3 : 1}
-                        shadowColor="black"
-                        shadowBlur={5}
-                        shadowOpacity={0.3}
-                        shadowOffsetY={2}
-                      />
-                      <Text
-                        text={`${(obj.length / GRID_SIZE).toFixed(1)}" × ${(obj.width / GRID_SIZE).toFixed(1)}"`}
-                        fontSize={10}
-                        fill="white"
-                        align="center"
-                        verticalAlign="middle"
-                        width={obj.length}
-                        height={obj.width}
-                      />
-                    </Group>
-                  ))}
+                  {objects.map((obj) => {
+                    // Get realistic shape geometry for this obstacle
+                    const shape = getShapeForObstacle(obj.subtype, obj.width, obj.height, obj.length);
+                    const isSelected = selectedId === obj.id;
+                    
+                    return (
+                      <Group
+                        key={obj.id}
+                        x={obj.x}
+                        y={obj.y}
+                        rotation={obj.rotation}
+                        draggable
+                        onClick={() => setSelectedId(obj.id)}
+                        onDragEnd={(e) => {
+                          updateObject(obj.id, {
+                            x: e.target.x(),
+                            y: e.target.y(),
+                          });
+                        }}
+                      >
+                        {shape && shape.type === 'polygon' && shape.points ? (
+                          // Render realistic shape with polygon
+                          <Line
+                            points={shape.points}
+                            closed
+                            fill={obj.color}
+                            stroke={isSelected ? '#3b82f6' : '#666'}
+                            strokeWidth={isSelected ? 3 : 1}
+                            shadowColor="black"
+                            shadowBlur={5}
+                            shadowOpacity={0.3}
+                            shadowOffsetY={2}
+                          />
+                        ) : (
+                          // Fallback to simple rectangle
+                          <Rect
+                            width={obj.length}
+                            height={obj.width}
+                            fill={obj.color}
+                            stroke={isSelected ? '#3b82f6' : '#666'}
+                            strokeWidth={isSelected ? 3 : 1}
+                            shadowColor="black"
+                            shadowBlur={5}
+                            shadowOpacity={0.3}
+                            shadowOffsetY={2}
+                          />
+                        )}
+                        <Text
+                          text={`${(obj.length / GRID_SIZE).toFixed(1)}" × ${(obj.width / GRID_SIZE).toFixed(1)}"`}
+                          fontSize={10}
+                          fill="white"
+                          align="center"
+                          verticalAlign="middle"
+                          width={obj.length}
+                          height={obj.width}
+                        />
+                      </Group>
+                    );
+                  })}
                 </Layer>
               </Stage>
             </div>
