@@ -948,6 +948,7 @@ export function WorkbenchStage() {
   const [snapGuides, setSnapGuides] = useState<Array<{ type: 'vertical' | 'horizontal'; position: number; label?: string }>>([]);
   const [isDraggingObject, setIsDraggingObject] = useState(false);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; objectId: string } | null>(null);
+  const [isDraggingFiles, setIsDraggingFiles] = useState(false);
 
   const {
     objects,
@@ -1038,6 +1039,8 @@ export function WorkbenchStage() {
   // Handle drop from drawer
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
+    setIsDraggingFiles(false);
+    
     const data = e.dataTransfer.getData('application/json');
     if (!data) return;
 
@@ -1071,6 +1074,14 @@ export function WorkbenchStage() {
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
+    setIsDraggingFiles(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    // Only clear if leaving the container itself, not child elements
+    if (e.currentTarget === e.target) {
+      setIsDraggingFiles(false);
+    }
   }, []);
 
   const handleStageClick = useCallback((e: React.MouseEvent) => {
@@ -1194,6 +1205,7 @@ export function WorkbenchStage() {
       ref={containerRef}
       onDrop={handleDrop}
       onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
       onClick={handleStageClick}
       onWheel={handleWheel}
       onTouchStart={handleTouchStart}
@@ -1201,6 +1213,23 @@ export function WorkbenchStage() {
       onTouchEnd={handleTouchEnd}
       tabIndex={-1}
     >
+      {/* Drag overlay */}
+      {isDraggingFiles && (
+        <div className="absolute inset-0 z-[9998] bg-primary/10 backdrop-blur-sm border-4 border-dashed border-primary animate-in fade-in duration-200 flex items-center justify-center">
+          <div className="text-center space-y-3 bg-card/90 rounded-lg p-8 shadow-2xl">
+            <div className="w-16 h-16 mx-auto rounded-full bg-primary/20 flex items-center justify-center animate-pulse">
+              <svg className="w-8 h-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-lg font-semibold text-foreground">Drop image here</p>
+              <p className="text-sm text-muted-foreground mt-1">Your image will be added to the canvas</p>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {/* Dot grid background */}
       <div className="absolute inset-0 dot-grid bg-background" />
 
