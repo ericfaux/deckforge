@@ -47,6 +47,15 @@
 - **0 stops** - building continuously per directive
 
 ### 🎯 Latest Update (Heartbeat):
+**Selection Box Multi-Select (2026-01-30 01:15 UTC)**
+- Drag-to-select with blue dashed selection box
+- Automatically selects all objects within dragged area
+- Figma/Sketch-style selection UX
+- Only activates when no tool is active
+- Integrates with existing multi-select system
+- **19 commits in 135 minutes** - continuous autonomous building
+- All deployed
+
 **Blend Modes & Layer Compositing (2026-01-30 00:50 UTC)**
 - Added 16 professional blend modes (multiply, screen, overlay, etc.)
 - Photoshop-style layer compositing
