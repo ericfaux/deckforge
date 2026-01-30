@@ -1,4 +1,4 @@
-import { X, Skull, Flame, Zap, Sword, Radio, Disc3, Music2, Triangle, Hexagon, Circle, Square, Star, Heart, Crown, Anchor, Target, Eye, Hand, Rocket, Ghost, Bug, Cat, Dog, Fish, Bird, Leaf, Sun, Moon, Cloud, Sparkles, Upload, Trash2, Loader2, FileImage, Mountain, Waves, Pizza, Coffee, Gamepad2, Headphones, Camera, Feather, Compass, Crosshair, Swords, Shield, Award, Trophy, Medal, Laugh, Frown, Smile, Glasses, Watch, Lock, Key, Fingerprint, Bomb, Cherry, Dumbbell, Link } from 'lucide-react';
+import { X, Skull, Flame, Zap, Sword, Radio, Disc3, Music2, Triangle, Hexagon, Circle, Square, Star, Heart, Crown, Anchor, Target, Eye, Hand, Rocket, Ghost, Bug, Cat, Dog, Fish, Bird, Leaf, Sun, Moon, Cloud, Sparkles, Upload, Trash2, Loader2, FileImage, Mountain, Waves, Pizza, Coffee, Gamepad2, Headphones, Camera, Feather, Compass, Crosshair, Swords, Shield, Award, Trophy, Medal, Laugh, Frown, Smile, Glasses, Watch, Lock, Key, Fingerprint, Bomb, Cherry, Dumbbell, Link, Bike, Footprints, Cigarette, Sprout, Drumstick, Wine, Beer, Gem, Zap as Lightning, Brain, Fingerprint as Print, Bandage, Siren, Gauge, Plane, Car, Bus, Train } from 'lucide-react';
 import { useState, useRef } from 'react';
 import { useDeckForgeStore, ToolType, CanvasObject, TextureType } from '@/store/deckforge';
 import { cn } from '@/lib/utils';
@@ -73,6 +73,25 @@ const stickerCategories = {
     { name: 'Key', icon: Key },
     { name: 'Fingerprint', icon: Fingerprint },
     { name: 'Compass', icon: Compass },
+    { name: 'Bike', icon: Bike },
+    { name: 'Footprints', icon: Footprints },
+    { name: 'Cigarette', icon: Cigarette },
+    { name: 'Drumstick', icon: Drumstick },
+    { name: 'Wine', icon: Wine },
+    { name: 'Beer', icon: Beer },
+    { name: 'Gem', icon: Gem },
+    { name: 'Brain', icon: Brain },
+    { name: 'Bandage', icon: Bandage },
+    { name: 'Sprout', icon: Sprout },
+  ],
+  urban: [
+    { name: 'Car', icon: Car },
+    { name: 'Bus', icon: Bus },
+    { name: 'Train', icon: Train },
+    { name: 'Plane', icon: Plane },
+    { name: 'Siren', icon: Siren },
+    { name: 'Gauge', icon: Gauge },
+    { name: 'Link', icon: Link },
   ],
   sports: [
     { name: 'Trophy', icon: Trophy },
@@ -132,6 +151,69 @@ const texturePreviewPatterns: Record<TextureType, string> = {
   'halftone-dots': `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'%3E%3Crect fill='%23222'/%3E%3Ccircle cx='10' cy='10' r='3' fill='%23444'/%3E%3Ccircle cx='30' cy='10' r='2' fill='%23444'/%3E%3Ccircle cx='50' cy='10' r='3' fill='%23444'/%3E%3Ccircle cx='20' cy='30' r='2.5' fill='%23444'/%3E%3Ccircle cx='40' cy='30' r='2' fill='%23444'/%3E%3Ccircle cx='10' cy='50' r='2' fill='%23444'/%3E%3Ccircle cx='30' cy='50' r='3' fill='%23444'/%3E%3Ccircle cx='50' cy='50' r='2.5' fill='%23444'/%3E%3C/svg%3E`,
 };
 
+// ============ GRAPHICS CONTENT ============
+function GraphicsContent({ onAddObject, deckCenterX, deckCenterY }: {
+  onAddObject: (obj: Omit<CanvasObject, 'id'>) => void;
+  deckCenterX: number;
+  deckCenterY: number;
+}) {
+  const [shapeColor, setShapeColor] = useState('#ffffff');
+
+  const addShape = (shapeType: 'rect' | 'circle' | 'star' | 'polygon', polygonSides?: number) => {
+    onAddObject({
+      type: 'shape',
+      x: deckCenterX - 15,
+      y: deckCenterY - 15,
+      width: 30,
+      height: 30,
+      rotation: 0,
+      opacity: 1,
+      scaleX: 1,
+      scaleY: 1,
+      shapeType,
+      fill: shapeColor,
+      ...(shapeType === 'polygon' && { polygonSides: polygonSides || 6 }),
+    });
+  };
+
+  return (
+    <div className="space-y-3">
+      {/* Color Picker */}
+      <div className="flex items-center gap-2 p-2 border border-border rounded">
+        <label className="text-[10px] uppercase tracking-wider text-muted-foreground">Color:</label>
+        <input
+          type="color"
+          value={shapeColor}
+          onChange={(e) => setShapeColor(e.target.value)}
+          className="w-8 h-8 border border-border rounded cursor-pointer"
+        />
+        <span className="text-[10px] font-mono">{shapeColor}</span>
+      </div>
+
+      <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
+        Click to add shapes
+      </span>
+      <div className="grid grid-cols-3 gap-2">
+        {graphicAssets.map((asset) => (
+          <button
+            key={asset.id}
+            onClick={() => addShape(asset.shapeType, asset.polygonSides)}
+            className="aspect-square border border-border bg-secondary hover:border-primary transition-colors flex items-center justify-center"
+          >
+            {asset.shapeType === 'circle' && <div className="w-8 h-8 rounded-full bg-white" />}
+            {asset.shapeType === 'rect' && <div className="w-8 h-8 bg-white" />}
+            {asset.shapeType === 'star' && <span className="text-white text-2xl">★</span>}
+            {asset.shapeType === 'polygon' && asset.polygonSides === 3 && <span className="text-white text-2xl">▲</span>}
+            {asset.shapeType === 'polygon' && asset.polygonSides === 5 && <span className="text-white text-2xl">⬟</span>}
+            {asset.shapeType === 'polygon' && asset.polygonSides === 6 && <span className="text-white text-2xl">⬡</span>}
+            {asset.shapeType === 'polygon' && asset.polygonSides === 8 && <span className="text-white text-2xl">⯄</span>}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ============ STICKERS CONTENT ============
 function StickersContent({ onAddObject, deckCenterX, deckCenterY }: {
   onAddObject: (obj: Omit<CanvasObject, 'id'>) => void;
@@ -139,6 +221,7 @@ function StickersContent({ onAddObject, deckCenterX, deckCenterY }: {
   deckCenterY: number;
 }) {
   const [activeCategory, setActiveCategory] = useState<keyof typeof stickerCategories>('edgy');
+  const [stickerColor, setStickerColor] = useState('#ffffff');
 
   const addSticker = (iconName: string) => {
     onAddObject({
@@ -153,7 +236,7 @@ function StickersContent({ onAddObject, deckCenterX, deckCenterY }: {
       scaleY: 1,
       iconName,
       strokeWidth: 3,
-      stroke: '#ffffff',
+      stroke: stickerColor,
       solidFill: false,
     });
   };
@@ -163,6 +246,18 @@ function StickersContent({ onAddObject, deckCenterX, deckCenterY }: {
       <p className="text-[10px] text-muted-foreground">
         Vector stickers from Lucide icons. Click to add as large decals.
       </p>
+
+      {/* Color Picker */}
+      <div className="flex items-center gap-2 p-2 border border-border rounded">
+        <label className="text-[10px] uppercase tracking-wider text-muted-foreground">Color:</label>
+        <input
+          type="color"
+          value={stickerColor}
+          onChange={(e) => setStickerColor(e.target.value)}
+          className="w-8 h-8 border border-border rounded cursor-pointer"
+        />
+        <span className="text-[10px] font-mono">{stickerColor}</span>
+      </div>
 
       {/* Category tabs */}
       <div className="flex flex-wrap gap-1">
@@ -992,39 +1087,7 @@ function DrawerContent({ tool, onAddObject, deckCenterX, deckCenterY }: DrawerCo
   }
 
   if (tool === 'graphics') {
-    return (
-      <div className="space-y-3">
-        <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
-          Click to add or drag to canvas
-        </span>
-        <div className="grid grid-cols-3 gap-2">
-          {graphicAssets.map((asset) => (
-            <button
-              key={asset.id}
-              draggable
-              onDragStart={(e) => handleDragStart(e, {
-                type: 'shape',
-                shapeType: asset.shapeType,
-                width: 30,
-                height: 30,
-                fill: '#ffffff',
-                ...(asset.shapeType === 'polygon' && { polygonSides: asset.polygonSides }),
-              })}
-              onClick={() => addShape(asset.shapeType, asset.polygonSides)}
-              className="aspect-square border border-border bg-secondary hover:border-primary transition-colors flex items-center justify-center cursor-grab active:cursor-grabbing"
-            >
-              {asset.shapeType === 'circle' && <div className="w-8 h-8 rounded-full bg-white" />}
-              {asset.shapeType === 'rect' && <div className="w-8 h-8 bg-white" />}
-              {asset.shapeType === 'star' && <span className="text-white text-2xl">★</span>}
-              {asset.shapeType === 'polygon' && asset.polygonSides === 3 && <span className="text-white text-2xl">▲</span>}
-              {asset.shapeType === 'polygon' && asset.polygonSides === 5 && <span className="text-white text-2xl">⬟</span>}
-              {asset.shapeType === 'polygon' && asset.polygonSides === 6 && <span className="text-white text-2xl">⬡</span>}
-              {asset.shapeType === 'polygon' && asset.polygonSides === 8 && <span className="text-white text-2xl">⯄</span>}
-            </button>
-          ))}
-        </div>
-      </div>
-    );
+    return <GraphicsContent onAddObject={onAddObject} deckCenterX={deckCenterX} deckCenterY={deckCenterY} />;
   }
 
   if (tool === 'pen') {
