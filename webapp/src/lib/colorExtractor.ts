@@ -78,7 +78,7 @@ export async function extractColorsFromImage(
         }
         
         // Simple k-means clustering to find dominant colors
-        let clusters: RGB[] = [];
+        const clusters: RGB[] = [];
         
         // Initialize clusters with random samples
         for (let i = 0; i < numColors; i++) {
