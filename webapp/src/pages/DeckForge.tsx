@@ -55,6 +55,7 @@ export default function DeckForge() {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
+  const [loadingModal, setLoadingModal] = useState<string | null>(null);
   const [isVersionHistoryOpen, setIsVersionHistoryOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isAnimationPreviewOpen, setIsAnimationPreviewOpen] = useState(false);
@@ -71,6 +72,16 @@ export default function DeckForge() {
   const [mobileInspectorOpen, setMobileInspectorOpen] = useState(false);
   const [mobileLayersOpen, setMobileLayersOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
+  // Helper to open modals with loading state
+  const openModal = (modalName: string, setterFn: (open: boolean) => void) => {
+    setLoadingModal(modalName);
+    // Use setTimeout to ensure spinner shows before lazy load
+    setTimeout(() => {
+      setterFn(true);
+      setLoadingModal(null);
+    }, 10);
+  };
 
   const handleSave = async () => {
     if (!isAuthenticated) {
@@ -924,21 +935,30 @@ export default function DeckForge() {
                     <button
                       onClick={() => {
                         setShowExportMenu(false);
-                        setIsExportPresetsOpen(true);
+                        openModal('exportPresets', setIsExportPresetsOpen);
                       }}
-                      className="w-full px-4 py-2.5 text-left text-sm hover:bg-secondary transition-colors font-medium flex items-center gap-2"
+                      disabled={loadingModal === 'exportPresets'}
+                      className="w-full px-4 py-2.5 text-left text-sm hover:bg-secondary transition-colors font-medium flex items-center gap-2 disabled:opacity-50"
                     >
-                      <Sparkles className="w-4 h-4 text-primary" />
+                      {loadingModal === 'exportPresets' ? (
+                        <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                      ) : (
+                        <Sparkles className="w-4 h-4 text-primary" />
+                      )}
                       Quick Export
                       <span className="ml-auto text-[9px] text-primary">NEW</span>
                     </button>
                     <button
                       onClick={() => {
                         setShowExportMenu(false);
-                        setIsExportPreviewOpen(true);
+                        openModal('exportPreview', setIsExportPreviewOpen);
                       }}
-                      className="w-full px-4 py-2 text-left text-sm hover:bg-secondary transition-colors border-t border-border"
+                      disabled={loadingModal === 'exportPreview'}
+                      className="w-full px-4 py-2 text-left text-sm hover:bg-secondary transition-colors border-t border-border disabled:opacity-50 flex items-center gap-2"
                     >
+                      {loadingModal === 'exportPreview' ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : null}
                       PNG (High-Res)
                       <span className="ml-2 text-[9px] text-muted-foreground">Preview first</span>
                     </button>
@@ -958,10 +978,15 @@ export default function DeckForge() {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => setIsBrandKitModalOpen(true)}
+                    onClick={() => openModal('brandKit', setIsBrandKitModalOpen)}
+                    disabled={loadingModal === 'brandKit'}
                     className="gap-2"
                   >
-                    <Palette className="w-4 h-4" />
+                    {loadingModal === 'brandKit' ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Palette className="w-4 h-4" />
+                    )}
                     Brand Kits
                     <span className="ml-1 text-[9px] text-accent">PRO</span>
                   </Button>
@@ -979,10 +1004,15 @@ export default function DeckForge() {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => setIsColorExtractorOpen(true)}
+                    onClick={() => openModal('colorExtractor', setIsColorExtractorOpen)}
+                    disabled={loadingModal === 'colorExtractor'}
                     className="gap-2"
                   >
-                    <Palette className="w-4 h-4" />
+                    {loadingModal === 'colorExtractor' ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Palette className="w-4 h-4" />
+                    )}
                     Extract Colors
                   </Button>
                 </TooltipTrigger>
@@ -999,10 +1029,15 @@ export default function DeckForge() {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => setIsFontUploadModalOpen(true)}
+                    onClick={() => openModal('fontUpload', setIsFontUploadModalOpen)}
+                    disabled={loadingModal === 'fontUpload'}
                     className="gap-2"
                   >
-                    <Type className="w-4 h-4" />
+                    {loadingModal === 'fontUpload' ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Type className="w-4 h-4" />
+                    )}
                     Custom Fonts
                   </Button>
                 </TooltipTrigger>
@@ -1020,10 +1055,15 @@ export default function DeckForge() {
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => setIsShareModalOpen(true)}
+                      onClick={() => openModal('share', setIsShareModalOpen)}
+                      disabled={loadingModal === 'share'}
                       className="gap-2"
                     >
-                      <Share2 className="w-4 h-4" />
+                      {loadingModal === 'share' ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Share2 className="w-4 h-4" />
+                      )}
                       Share
                     </Button>
                   </TooltipTrigger>
@@ -1041,10 +1081,15 @@ export default function DeckForge() {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => setIsVersionHistoryOpen(true)}
+                    onClick={() => openModal('history', setIsVersionHistoryOpen)}
+                    disabled={loadingModal === 'history'}
                     className="gap-2"
                   >
-                    <Clock className="w-4 h-4" />
+                    {loadingModal === 'history' ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Clock className="w-4 h-4" />
+                    )}
                     History
                   </Button>
                 </TooltipTrigger>
@@ -1061,10 +1106,15 @@ export default function DeckForge() {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => setIsAnimationPreviewOpen(true)}
+                    onClick={() => openModal('preview', setIsAnimationPreviewOpen)}
+                    disabled={loadingModal === 'preview'}
                     className="gap-2"
                   >
-                    <Play className="w-4 h-4" />
+                    {loadingModal === 'preview' ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Play className="w-4 h-4" />
+                    )}
                     Preview
                   </Button>
                 </TooltipTrigger>
@@ -1081,11 +1131,18 @@ export default function DeckForge() {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => setIs3DGeneratorOpen(true)}
+                    onClick={() => openModal('3dPrint', setIs3DGeneratorOpen)}
+                    disabled={loadingModal === '3dPrint'}
                     className="gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0"
                   >
-                    <span className="text-sm font-bold">🖨️ 3D Print</span>
-                    <span className="ml-1 text-[9px] bg-white/20 px-1 rounded">NEW</span>
+                    {loadingModal === '3dPrint' ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <span className="text-sm font-bold">🖨️ 3D Print</span>
+                    )}
+                    {loadingModal !== '3dPrint' && (
+                      <span className="ml-1 text-[9px] bg-white/20 px-1 rounded">NEW</span>
+                    )}
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -1101,10 +1158,15 @@ export default function DeckForge() {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => setIsTemplateGalleryOpen(true)}
+                    onClick={() => openModal('templates', setIsTemplateGalleryOpen)}
+                    disabled={loadingModal === 'templates'}
                     className="gap-2"
                   >
-                    <Sparkles className="w-4 h-4" />
+                    {loadingModal === 'templates' ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Sparkles className="w-4 h-4" />
+                    )}
                     Templates
                     <span className="ml-1 text-[9px] text-primary">NEW</span>
                   </Button>
