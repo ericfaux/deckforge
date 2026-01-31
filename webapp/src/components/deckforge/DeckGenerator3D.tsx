@@ -102,10 +102,8 @@ function generateDeckGeometry(params: DeckParams): THREE.BufferGeometry {
     }
     
     // 2. Apply CONCAVE relative to centerline (cross-sectional U-shape)
-    // From side view, edges stay at centerline height
-    // From end view, center dips down creating concave
-    const distanceFromEdge = Math.abs(normalizedZ - 0.5) / 0.5; // 0 at center, 1 at edges
-    const concaveOffset = -concaveDepth * (1 - Math.pow(distanceFromEdge, 2)); // -concaveDepth at center, 0 at edges
+    // TESTING: Disable concave to see if basic shape is correct
+    const concaveOffset = 0; // Temporarily disabled
     
     return centerlineY + concaveOffset;
   };
