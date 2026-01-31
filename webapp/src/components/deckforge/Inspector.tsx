@@ -2,6 +2,7 @@ import { Download, Grid3X3, RotateCcw, ChevronDown, Type, Lock, Unlock, ArrowUp,
 import { useState, useEffect, memo, useMemo, useRef } from 'react';
 import { usePanelResize } from '@/hooks/use-panel-resize';
 import { useDeckForgeStore, CanvasObject } from '@/store/deckforge';
+import { cn } from '@/lib/utils';
 import { Slider } from '@/components/ui/slider';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
