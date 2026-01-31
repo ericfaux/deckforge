@@ -44,9 +44,9 @@ export function ZoomControls() {
         <button
           onClick={handleUndo}
           disabled={past.length === 0}
-          className="w-10 h-10 md:w-8 md:h-8 flex items-center justify-center hover:bg-secondary active:bg-secondary/80 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed transition-all touch-manipulation rounded"
+          className="w-12 h-12 md:w-11 md:h-11 flex items-center justify-center hover:bg-secondary active:bg-secondary/80 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed transition-all touch-manipulation rounded touch-target"
         >
-          <Undo className="w-5 h-5 md:w-4 md:h-4" />
+          <Undo className="w-5 h-5" />
         </button>
       </EnhancedTooltip>
 
@@ -54,20 +54,20 @@ export function ZoomControls() {
         <button
           onClick={handleRedo}
           disabled={future.length === 0}
-          className="w-10 h-10 md:w-8 md:h-8 flex items-center justify-center hover:bg-secondary active:bg-secondary/80 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed transition-all touch-manipulation rounded"
+          className="w-12 h-12 md:w-11 md:h-11 flex items-center justify-center hover:bg-secondary active:bg-secondary/80 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed transition-all touch-manipulation rounded touch-target"
         >
-          <Redo className="w-5 h-5 md:w-4 md:h-4" />
+          <Redo className="w-5 h-5" />
         </button>
       </EnhancedTooltip>
 
-      <div className="w-px h-8 md:h-6 bg-border mx-1" />
+      <div className="w-px h-10 md:h-8 bg-border mx-1" />
 
       <EnhancedTooltip content="Zoom Out" shortcut="Ctrl+-" side="top">
         <button
           onClick={zoomOut}
-          className="w-10 h-10 md:w-8 md:h-8 flex items-center justify-center hover:bg-secondary active:bg-secondary/80 active:scale-95 transition-all touch-manipulation rounded"
+          className="w-12 h-12 md:w-11 md:h-11 flex items-center justify-center hover:bg-secondary active:bg-secondary/80 active:scale-95 transition-all touch-manipulation rounded touch-target"
         >
-          <ZoomOut className="w-5 h-5 md:w-4 md:h-4" />
+          <ZoomOut className="w-5 h-5" />
         </button>
       </EnhancedTooltip>
 
@@ -78,13 +78,13 @@ export function ZoomControls() {
       <EnhancedTooltip content="Zoom In" shortcut="Ctrl+=" side="top">
         <button
           onClick={zoomIn}
-          className="w-10 h-10 md:w-8 md:h-8 flex items-center justify-center hover:bg-secondary active:bg-secondary/80 active:scale-95 transition-all touch-manipulation rounded"
+          className="w-12 h-12 md:w-11 md:h-11 flex items-center justify-center hover:bg-secondary active:bg-secondary/80 active:scale-95 transition-all touch-manipulation rounded touch-target"
         >
-          <ZoomIn className="w-5 h-5 md:w-4 md:h-4" />
+          <ZoomIn className="w-5 h-5" />
         </button>
       </EnhancedTooltip>
 
-      <div className="w-px h-8 md:h-6 bg-border mx-1" />
+      <div className="w-px h-10 md:h-8 bg-border mx-1" />
 
       <EnhancedTooltip 
         content={showHardwareGuide ? "Hide Hardware Guide" : "Show Hardware Guide"} 
@@ -93,13 +93,13 @@ export function ZoomControls() {
         <button
           onClick={handleToggleGuide}
           className={cn(
-            "w-10 h-10 md:w-8 md:h-8 flex items-center justify-center transition-all active:scale-95 touch-manipulation rounded",
+            "w-12 h-12 md:w-11 md:h-11 flex items-center justify-center transition-all active:scale-95 touch-manipulation rounded touch-target",
             showHardwareGuide
               ? "bg-accent text-accent-foreground"
               : "hover:bg-secondary active:bg-secondary/80"
           )}
         >
-          <Wrench className="w-5 h-5 md:w-4 md:h-4" />
+          <Wrench className="w-5 h-5" />
         </button>
       </EnhancedTooltip>
     </div>

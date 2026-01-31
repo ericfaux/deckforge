@@ -594,3 +594,33 @@ body.keyboard-nav select:focus-visible {
 .icon-warning {
   color: hsl(38 92% 50%);
 }
+
+/* Mobile touch targets - 44x44px minimum (WCAG 2.1 Level AAA) */
+.touch-target {
+  min-width: 2.75rem; /* 44px */
+  min-height: 2.75rem;
+}
+
+.touch-target-sm {
+  min-width: 2.5rem; /* 40px - barely acceptable */
+  min-height: 2.5rem;
+}
+
+/* Responsive touch targets - larger on mobile */
+@media (max-width: 768px) {
+  .md-touch-target {
+    min-width: 2.75rem !important; /* 44px on mobile */
+    min-height: 2.75rem !important;
+    padding: 0.5rem !important;
+  }
+  
+  .md-touch-target-icon {
+    min-width: 3rem !important; /* 48px on mobile for better UX */
+    min-height: 3rem !important;
+  }
+  
+  /* Increase spacing between touch targets */
+  .md-touch-spacing {
+    gap: 0.5rem !important;
+  }
+}

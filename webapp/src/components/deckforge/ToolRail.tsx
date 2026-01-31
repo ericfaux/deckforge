@@ -112,7 +112,7 @@ export function ToolRail() {
   return (
     <>
       {/* Desktop: Vertical rail */}
-      <div className="hidden md:flex flex-col w-14 bg-card border-r border-border h-full">
+      <div className="hidden md:flex flex-col w-16 bg-card border-r border-border h-full">
         <div className="py-4 px-2 border-b border-border">
           <span className="font-display text-[10px] uppercase tracking-widest text-muted-foreground block text-center">
             Tools
@@ -129,8 +129,8 @@ export function ToolRail() {
                     <button
                       onClick={() => setActiveTool(isActive ? null : tool.id)}
                       className={cn(
-                        'relative w-10 h-10 flex items-center justify-center rounded-md transition-all duration-200',
-                        'border-2 border-transparent',
+                        'relative w-11 h-11 flex items-center justify-center rounded-md transition-all duration-200',
+                        'border-2 border-transparent touch-target',
                         'hover:border-border hover:bg-secondary hover:scale-105 active:scale-95',
                         isActive 
                           ? 'tool-active border-primary bg-primary/10 scale-105 shadow-lg shadow-primary/20' 
