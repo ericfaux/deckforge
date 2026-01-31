@@ -62,10 +62,11 @@ export function DeckSizeSelector() {
                     onClick={() => {
                       setDeckSize(size.id);
                       setIsOpen(false);
-                      toastUtils.success(
-                        `Deck size changed to ${size.name}`,
-                        `${size.width}mm × ${size.length}mm • ${size.recommended}`
-                      );
+                      // TEMPORARY: Disabled toast to test if it's causing crash
+                      // toastUtils.success(
+                      //   `Deck size changed to ${size.name}`,
+                      //   `${size.width}mm × ${size.length}mm • ${size.recommended}`
+                      // );
                     }}
                     className={`w-full p-4 text-left hover:bg-secondary transition-colors border-b border-border last:border-b-0 ${
                       isSelected ? 'bg-secondary/50' : ''
