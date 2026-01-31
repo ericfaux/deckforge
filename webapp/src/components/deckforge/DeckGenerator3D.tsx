@@ -71,36 +71,48 @@ const DECK_PRESETS = {
 function generateDeckGeometry(params: DeckParams): THREE.BufferGeometry {
   const { length, width, concaveDepth, noseKick, tailKick, thickness, wheelbase, truckHoleSpacing, holeSize } = params;
   
-  const widthSegments = 60;  // Increased for smoother curves
-  const lengthSegments = 100;
+  const widthSegments = 30;  // Enough for smooth concave
+  const lengthSegments = 50;  // Enough for smooth kicks, not too many (causes ripples)
   
   const noseKickRad = (noseKick * Math.PI) / 180;
   const tailKickRad = (tailKick * Math.PI) / 180;
   
   // Helper: Calculate Y position with concave and kicks
+  // KEY: Concave and kicks are INDEPENDENT - no interaction
   const getYPosition = (normalizedX: number, normalizedZ: number, isTop: boolean): number => {
-    // Concave (parabolic curve across width)
-    // Center (z=0.5) is lowest (0), edges (z=0 or z=1) are highest (concaveDepth)
-    const concave = concaveDepth * Math.pow(2 * normalizedZ - 1, 2);
-    
-    // Nose and tail kicks (REALISTIC geometry)
-    // Real fingerboards: kicks start ~15-20mm from ends, height ~3-5mm
-    const kickLength = 18; // mm - length of kick transition
-    let kickY = 0;
-    
-    if (normalizedX < 0.15) {
-      // Tail kick (smooth exponential curve)
-      const t = normalizedX / 0.15;
-      const kickHeight = kickLength * Math.tan(tailKickRad); // realistic height
-      kickY = kickHeight * (1 - Math.cos(t * Math.PI / 2));
-    } else if (normalizedX > 0.85) {
-      // Nose kick (smooth exponential curve)
-      const t = (normalizedX - 0.85) / 0.15;
-      const kickHeight = kickLength * Math.tan(noseKickRad);
-      kickY = kickHeight * Math.sin(t * Math.PI / 2);
+    if (!isTop) {
+      return -thickness; // Bottom surface is flat
     }
     
-    return isTop ? (concave + kickY) : -thickness;
+    let y = 0; // Start at zero
+    
+    // 1. CONCAVE (only varies across WIDTH, constant along LENGTH)
+    // Makes a U-shape across the width: edges at baseline, center dips DOWN
+    const zFromCenter = Math.abs(normalizedZ - 0.5); // 0 at center, 0.5 at edges
+    const edgeToCenter = 1 - (zFromCenter / 0.5); // 1 at center, 0 at edges (inverted)
+    const concaveY = -concaveDepth * Math.pow(edgeToCenter, 2); // Dips down at center: 0 at edges, -concaveDepth at center
+    y += concaveY;
+    
+    // 2. KICKS (only varies along LENGTH, constant across WIDTH)
+    // Simple upward curve at nose and tail
+    const kickTransition = 0.15; // 15% of length for kick curve
+    let kickY = 0;
+    
+    if (normalizedX < kickTransition) {
+      // Tail kick: smooth curve from 0 to kickHeight
+      const t = normalizedX / kickTransition; // 0 to 1
+      const tailKickHeight = 15 * Math.tan(tailKickRad); // Max height at end
+      kickY = tailKickHeight * (1 - Math.cos(t * Math.PI / 2)); // Smooth S-curve
+    } else if (normalizedX > (1 - kickTransition)) {
+      // Nose kick: smooth curve from 0 to kickHeight
+      const t = (normalizedX - (1 - kickTransition)) / kickTransition; // 0 to 1
+      const noseKickHeight = 15 * Math.tan(noseKickRad);
+      kickY = noseKickHeight * Math.sin(t * Math.PI / 2); // Smooth S-curve
+    }
+    
+    y += kickY;
+    
+    return y;
   };
   
   // Calculate truck hole positions
