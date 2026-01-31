@@ -80,7 +80,8 @@ function generateDeckGeometry(params: DeckParams): THREE.BufferGeometry {
   // Helper: Calculate Y position with concave and kicks
   const getYPosition = (normalizedX: number, normalizedZ: number, isTop: boolean): number => {
     // Concave (parabolic curve across width)
-    const concave = -concaveDepth * (1 - Math.pow(2 * normalizedZ - 1, 2));
+    // Center (z=0.5) is lowest (0), edges (z=0 or z=1) are highest (concaveDepth)
+    const concave = concaveDepth * Math.pow(2 * normalizedZ - 1, 2);
     
     // Nose and tail kicks (REALISTIC geometry)
     // Real fingerboards: kicks start ~15-20mm from ends, height ~3-5mm
@@ -380,33 +381,44 @@ function FingerboardDeck({ params, textureUrl }: { params: DeckParams; textureUr
 function Scene({ params, textureUrl }: { params: DeckParams; textureUrl: string | null }) {
   return (
     <>
-      <PerspectiveCamera makeDefault position={[120, 80, 120]} fov={35} />
+      {/* Camera positioned for 96mm object - much closer and angled nicely */}
+      <PerspectiveCamera makeDefault position={[80, 50, 80]} fov={40} />
       <OrbitControls
+        target={[0, 0, 0]}  // Center on the deck
         enableDamping
         dampingFactor={0.05}
-        minDistance={50}
-        maxDistance={300}
+        minDistance={30}
+        maxDistance={150}
+        maxPolarAngle={Math.PI * 0.9}  // Prevent flipping under
         autoRotate
-        autoRotateSpeed={0.5}
+        autoRotateSpeed={1}
+        enablePan={true}  // Allow panning
+        panSpeed={0.5}
       />
 
-      <ambientLight intensity={0.6} />
+      {/* Better lighting for deck visibility */}
+      <ambientLight intensity={0.8} />
       <directionalLight
-        position={[50, 50, 50]}
-        intensity={1.2}
+        position={[40, 60, 40]}
+        intensity={1.5}
         castShadow
         shadow-mapSize-width={2048}
         shadow-mapSize-height={2048}
+        shadow-camera-left={-60}
+        shadow-camera-right={60}
+        shadow-camera-top={60}
+        shadow-camera-bottom={-60}
       />
-      <directionalLight position={[-50, 30, -50]} intensity={0.4} />
-      <pointLight position={[0, 50, 0]} intensity={0.3} color="#ffffff" />
+      <directionalLight position={[-40, 30, -40]} intensity={0.6} />
+      <pointLight position={[0, 40, 0]} intensity={0.5} color="#ffffff" />
 
       <FingerboardDeck params={params} textureUrl={textureUrl} />
 
-      <gridHelper args={[300, 30, '#444444', '#2a2a2a']} position={[0, -10, 0]} />
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -10, 0]} receiveShadow>
-        <planeGeometry args={[300, 300]} />
-        <shadowMaterial opacity={0.3} />
+      {/* Smaller grid scaled for deck size */}
+      <gridHelper args={[200, 20, '#555555', '#333333']} position={[0, -params.thickness - 2, 0]} />
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -params.thickness - 2, 0]} receiveShadow>
+        <planeGeometry args={[200, 200]} />
+        <shadowMaterial opacity={0.4} />
       </mesh>
     </>
   );
@@ -539,8 +551,10 @@ export default function DeckGenerator3D({ objects, onClose }: DeckGenerator3DPro
         </button>
       </div>
 
-      <div className="flex-1 flex">
-        <div className="w-80 bg-gray-900 border-r border-gray-700 p-6 overflow-y-auto">
+      <div className="flex-1 flex overflow-hidden">
+        {/* Left sidebar with explicit scroll container */}
+        <div className="w-80 bg-gray-900 border-r border-gray-700 flex flex-col overflow-hidden">
+          <div className="flex-1 overflow-y-auto overflow-x-hidden p-6">
           <div className="space-y-6">
             {/* Updated Info Banner */}
             <div className="bg-gradient-to-r from-green-900/50 to-blue-900/50 border border-green-700/50 rounded-lg p-4">
@@ -777,9 +791,22 @@ export default function DeckGenerator3D({ objects, onClose }: DeckGenerator3DPro
               Validated watertight mesh with truck mounting holes
             </p>
           </div>
+          {/* End scrollable content */}
+        </div>
+        {/* End sidebar */}
         </div>
 
-        <div className="flex-1 bg-black">
+        {/* 3D Viewport */}
+        <div className="flex-1 bg-black relative">
+          {/* Navigation hint overlay */}
+          <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-sm border border-gray-600 rounded-lg p-3 text-xs text-gray-300 z-10">
+            <div className="font-bold mb-1">🖱️ 3D Controls</div>
+            <div>• Drag to rotate</div>
+            <div>• Scroll to zoom</div>
+            <div>• Right-click to pan</div>
+            <div className="text-gray-400 mt-1">Auto-rotating...</div>
+          </div>
+          
           <Canvas shadows>
             <Scene params={params} textureUrl={textureUrl} />
           </Canvas>
