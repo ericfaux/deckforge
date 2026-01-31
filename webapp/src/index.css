@@ -624,3 +624,40 @@ body.keyboard-nav select:focus-visible {
     gap: 0.5rem !important;
   }
 }
+
+/* Swipe gesture feedback animations */
+@keyframes swipe-undo-feedback {
+  0% {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 0;
+  }
+}
+
+@keyframes swipe-redo-feedback {
+  0% {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 0;
+  }
+}
+
+.swipe-undo-feedback {
+  animation: swipe-undo-feedback 0.4s ease-out;
+}
+
+.swipe-redo-feedback {
+  animation: swipe-redo-feedback 0.4s ease-out;
+}

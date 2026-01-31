@@ -8,9 +8,10 @@ import { RulerOverlay } from './RulerOverlay';
 import { ContextMenu } from './ContextMenu';
 import { SelectionBox } from './SelectionBox';
 import type { LucideIcon } from 'lucide-react';
-import { Skull, Flame, Zap, Sword, Ghost, Bug, Eye, Target, Radio, Disc3, Music2, Rocket, Crown, Anchor, Sun, Moon, Triangle, Hexagon, Circle, Square, Star, Heart, Sparkles, Hand, Cat, Dog, Fish, Bird, Leaf, Cloud } from 'lucide-react';
+import { Skull, Flame, Zap, Sword, Ghost, Bug, Eye, Target, Radio, Disc3, Music2, Rocket, Crown, Anchor, Sun, Moon, Triangle, Hexagon, Circle, Square, Star, Heart, Sparkles, Hand, Cat, Dog, Fish, Bird, Leaf, Cloud, Undo2, Redo2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { getDeckSize } from '@/lib/deck-sizes';
+import { useSwipeGesture } from '@/hooks/use-swipe-gesture';
 
 // Legacy deck dimensions (kept for backward compatibility - DO NOT USE)
 // Use useDeckDimensions() hook instead for dynamic sizing
@@ -964,6 +965,7 @@ export function WorkbenchStage() {
   const [isDraggingObject, setIsDraggingObject] = useState(false);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; objectId: string } | null>(null);
   const [isDraggingFiles, setIsDraggingFiles] = useState(false);
+  const [swipeFeedback, setSwipeFeedback] = useState<'undo' | 'redo' | null>(null);
 
   const {
     objects,
@@ -986,6 +988,10 @@ export function WorkbenchStage() {
     pastedObjectId,
     undoRedoChangedIds,
     deckSizeId,
+    undo,
+    redo,
+    past,
+    future,
   } = useDeckForgeStore();
 
   // Get current deck dimensions based on selected size
@@ -1039,6 +1045,56 @@ export function WorkbenchStage() {
   const deckY = useMemo(() => {
     return containerSize.height / 2 - (deckHeight * stageScale) / 2;
   }, [containerSize.height, deckHeight, stageScale]);
+
+  // Mobile swipe gesture callbacks
+  const handleSwipeUndo = useCallback(() => {
+    if (past.length === 0) return;
+    
+    // Haptic feedback
+    if ('vibrate' in navigator) {
+      navigator.vibrate(10);
+    }
+    
+    // Visual feedback
+    setSwipeFeedback('undo');
+    setTimeout(() => setSwipeFeedback(null), 400);
+    
+    // Perform undo
+    undo();
+    console.log('[WorkbenchStage] Swipe undo triggered');
+  }, [past.length, undo]);
+
+  const handleSwipeRedo = useCallback(() => {
+    if (future.length === 0) return;
+    
+    // Haptic feedback
+    if ('vibrate' in navigator) {
+      navigator.vibrate(10);
+    }
+    
+    // Visual feedback
+    setSwipeFeedback('redo');
+    setTimeout(() => setSwipeFeedback(null), 400);
+    
+    // Perform redo
+    redo();
+    console.log('[WorkbenchStage] Swipe redo triggered');
+  }, [future.length, redo]);
+
+  // Add swipe gesture support (3-finger swipes for undo/redo)
+  const swipeRef = useSwipeGesture<HTMLDivElement>({
+    onSwipeRight: handleSwipeUndo,
+    onSwipeLeft: handleSwipeRedo,
+    minFingers: 3, // Require 3 fingers to avoid conflicts with pan/zoom
+    minDistance: 80, // Require substantial swipe
+  });
+
+  // Merge refs (containerRef and swipeRef)
+  useEffect(() => {
+    if (containerRef.current && swipeRef.current !== containerRef.current) {
+      swipeRef.current = containerRef.current;
+    }
+  }, [swipeRef]);
 
   // Handle wheel zoom
   const handleWheel = useCallback((e: React.WheelEvent) => {
@@ -1274,6 +1330,19 @@ export function WorkbenchStage() {
               <p className="text-lg font-semibold text-foreground">Drop image here</p>
               <p className="text-sm text-muted-foreground mt-1">Your image will be added to the canvas</p>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Swipe gesture feedback */}
+      {swipeFeedback && (
+        <div className={`absolute inset-0 z-[9997] pointer-events-none flex items-center justify-center ${swipeFeedback === 'undo' ? 'swipe-undo-feedback' : 'swipe-redo-feedback'}`}>
+          <div className="bg-card/90 rounded-full p-6 shadow-2xl border-2 border-primary">
+            {swipeFeedback === 'undo' ? (
+              <Undo2 className="w-12 h-12 text-primary" />
+            ) : (
+              <Redo2 className="w-12 h-12 text-primary" />
+            )}
           </div>
         </div>
       )}
