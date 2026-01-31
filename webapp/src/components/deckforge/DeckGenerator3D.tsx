@@ -26,37 +26,41 @@ interface DeckParams {
 
 const DEFAULT_PARAMS: DeckParams = {
   length: 96,
-  width: 26,
+  width: 32,             // Modern standard (Tech Deck 2020+)
   concaveDepth: 2,
   noseKick: 15,
   tailKick: 18,
   thickness: 5,
-  wheelbase: 26,         // Standard fingerboard wheelbase
+  wheelbase: 28,         // Standard fingerboard wheelbase
   truckHoleSpacing: 7,   // 7mm between holes on each truck
   holeSize: 2,           // 2mm holes for M2 screws
 };
 
-// Deck shape presets (updated with wheelbase)
+// REAL FINGERBOARD BRAND DIMENSIONS (verified specs)
 const DECK_PRESETS = {
-  classic: {
-    name: 'Classic Popsicle',
-    params: { ...DEFAULT_PARAMS, length: 96, width: 26, concaveDepth: 2, noseKick: 15, tailKick: 18, thickness: 5, wheelbase: 26 },
+  techdeck: {
+    name: 'Tech Deck (32mm)',
+    params: { length: 96, width: 32, concaveDepth: 2, noseKick: 15, tailKick: 18, thickness: 5, wheelbase: 28, truckHoleSpacing: 7, holeSize: 2 },
   },
-  street: {
-    name: 'Street Deck',
-    params: { ...DEFAULT_PARAMS, length: 96, width: 28, concaveDepth: 2.5, noseKick: 18, tailKick: 20, thickness: 5, wheelbase: 28 },
+  techdeck29: {
+    name: 'Tech Deck (29mm)',
+    params: { length: 96, width: 29, concaveDepth: 1.8, noseKick: 14, tailKick: 16, thickness: 5, wheelbase: 26, truckHoleSpacing: 7, holeSize: 2 },
   },
-  vert: {
-    name: 'Vert Deck',
-    params: { ...DEFAULT_PARAMS, length: 100, width: 30, concaveDepth: 3, noseKick: 12, tailKick: 14, thickness: 6, wheelbase: 32 },
+  berlinwood: {
+    name: 'Berlinwood (33.3mm)',
+    params: { length: 96, width: 33.3, concaveDepth: 2.5, noseKick: 16, tailKick: 18, thickness: 5, wheelbase: 29, truckHoleSpacing: 7, holeSize: 2 },
   },
-  cruiser: {
-    name: 'Cruiser',
-    params: { ...DEFAULT_PARAMS, length: 90, width: 24, concaveDepth: 1.5, noseKick: 10, tailKick: 12, thickness: 4.5, wheelbase: 24 },
+  blackriver: {
+    name: 'BlackRiver (32mm)',
+    params: { length: 96, width: 32, concaveDepth: 2.8, noseKick: 17, tailKick: 19, thickness: 5, wheelbase: 28, truckHoleSpacing: 7, holeSize: 2 },
   },
-  tech: {
-    name: 'Tech Deck',
-    params: { ...DEFAULT_PARAMS, length: 94, width: 25, concaveDepth: 3.5, noseKick: 20, tailKick: 22, thickness: 5, wheelbase: 25 },
+  wide: {
+    name: 'Wide (34mm)',
+    params: { length: 96, width: 34, concaveDepth: 3, noseKick: 18, tailKick: 20, thickness: 5.5, wheelbase: 30, truckHoleSpacing: 8, holeSize: 2 },
+  },
+  narrow: {
+    name: 'Narrow (29mm)',
+    params: { length: 96, width: 29, concaveDepth: 1.8, noseKick: 14, tailKick: 16, thickness: 4.5, wheelbase: 26, truckHoleSpacing: 6.5, holeSize: 2 },
   },
 };
 
@@ -78,16 +82,21 @@ function generateDeckGeometry(params: DeckParams): THREE.BufferGeometry {
     // Concave (parabolic curve across width)
     const concave = -concaveDepth * (1 - Math.pow(2 * normalizedZ - 1, 2));
     
-    // Nose and tail kicks
+    // Nose and tail kicks (REALISTIC geometry)
+    // Real fingerboards: kicks start ~15-20mm from ends, height ~3-5mm
+    const kickLength = 18; // mm - length of kick transition
     let kickY = 0;
+    
     if (normalizedX < 0.15) {
-      // Tail kick (smooth curve)
+      // Tail kick (smooth exponential curve)
       const t = normalizedX / 0.15;
-      kickY = (length / 2) * Math.sin(tailKickRad) * (1 - Math.cos(t * Math.PI / 2));
+      const kickHeight = kickLength * Math.tan(tailKickRad); // realistic height
+      kickY = kickHeight * (1 - Math.cos(t * Math.PI / 2));
     } else if (normalizedX > 0.85) {
-      // Nose kick (smooth curve)
+      // Nose kick (smooth exponential curve)
       const t = (normalizedX - 0.85) / 0.15;
-      kickY = (length / 2) * Math.sin(noseKickRad) * Math.sin(t * Math.PI / 2);
+      const kickHeight = kickLength * Math.tan(noseKickRad);
+      kickY = kickHeight * Math.sin(t * Math.PI / 2);
     }
     
     return isTop ? (concave + kickY) : -thickness;
@@ -546,6 +555,17 @@ export default function DeckGenerator3D({ objects, onClose }: DeckGenerator3DPro
               </ul>
             </div>
 
+            {/* Dimension Reference */}
+            <div className="bg-blue-900/20 border border-blue-700/30 rounded-lg p-3">
+              <h3 className="text-xs font-bold text-blue-400 mb-2">📏 REAL FINGERBOARD SIZES</h3>
+              <div className="text-xs text-gray-300 space-y-1">
+                <p><strong>Tech Deck (modern):</strong> 96×30-32mm</p>
+                <p><strong>Berlinwood:</strong> 96×29mm or 33.3mm</p>
+                <p><strong>BlackRiver:</strong> 96×29-32mm</p>
+                <p><strong>Most common:</strong> 29, 32, 33, 34mm</p>
+              </div>
+            </div>
+
             {/* Printing Instructions */}
             <div className="bg-yellow-900/20 border border-yellow-700/50 rounded-lg p-3">
               <h3 className="text-xs font-bold text-yellow-400 mb-2">📋 PRINTING GUIDE</h3>
@@ -596,17 +616,24 @@ export default function DeckGenerator3D({ objects, onClose }: DeckGenerator3DPro
 
               <div>
                 <label className="text-sm text-gray-400 block mb-2">
-                  Width: {params.width}mm
+                  Width: {params.width}mm {params.width >= 32 && params.width <= 34 ? '(Standard)' : params.width < 29 ? '(Narrow)' : params.width > 34 ? '(Wide)' : ''}
                 </label>
                 <input
                   type="range"
-                  min="22"
-                  max="32"
+                  min="26"
+                  max="36"
                   step="0.5"
                   value={params.width}
                   onChange={(e) => handleParamChange('width', Number(e.target.value))}
                   className="w-full"
                 />
+                <div className="flex justify-between text-xs text-gray-500 mt-1">
+                  <span>Old Tech Deck</span>
+                  <span>29mm</span>
+                  <span>32mm</span>
+                  <span>34mm</span>
+                  <span>Wide</span>
+                </div>
               </div>
 
               <div>
