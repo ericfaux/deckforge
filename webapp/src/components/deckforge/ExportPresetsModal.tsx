@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Download, Instagram, MessageCircle, Printer, FileImage, Loader2, Crown, Sparkles, FileText } from 'lucide-react';
 import { exportToPNG, exportToPDF } from '@/lib/export';
 import { useDeckForgeStore } from '@/store/deckforge';
-import { toast } from 'sonner';
+import toast from 'react-hot-toast';
 
 interface ExportPreset {
   id: string;

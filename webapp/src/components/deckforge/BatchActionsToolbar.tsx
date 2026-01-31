@@ -1,7 +1,7 @@
 import { AlignLeft, AlignCenter, AlignRight, AlignVerticalJustifyStart, AlignVerticalJustifyCenter, AlignVerticalJustifyEnd, AlignHorizontalDistributeCenter, AlignVerticalDistributeCenter, Group, Ungroup } from 'lucide-react';
 import { useDeckForgeStore } from '@/store/deckforge';
 import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
+import toast from 'react-hot-toast';
 
 export function BatchActionsToolbar() {
   const { selectedIds, objects, alignObjects, distributeObjects, groupObjects, ungroupObject } = useDeckForgeStore();

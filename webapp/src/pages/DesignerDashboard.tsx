@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { marketplaceAPI, MarketplaceDesign, DesignerProfile } from '@/lib/marketplace';
 import { DollarSign, Download, Eye, Heart, Edit, Trash2, Plus, TrendingUp, Package, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
+import toast from 'react-hot-toast';
 import { useAuthStore } from '@/store/auth';
 
 export default function DesignerDashboard() {

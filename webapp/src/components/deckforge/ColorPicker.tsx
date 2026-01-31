@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Pipette, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useDeckForgeStore } from '@/store/deckforge';
-import { toast } from 'sonner';
+import toast from 'react-hot-toast';
 import {
   Popover,
   PopoverContent,

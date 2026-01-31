@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { extractColorsFromImage } from '@/lib/colorExtractor';
 import { Button } from '@/components/ui/button';
 import { Upload, Palette, Copy, Check } from 'lucide-react';
-import { toast } from 'sonner';
+import toast from 'react-hot-toast';
 
 interface ColorPaletteExtractorProps {
   onColorSelect?: (color: string) => void;

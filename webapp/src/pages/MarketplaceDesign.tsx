@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { marketplaceAPI, MarketplaceDesign } from '@/lib/marketplace';
 import { Heart, Download, DollarSign, ExternalLink, ShoppingCart, Loader2, Star, Eye, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
+import toast from 'react-hot-toast';
 import { useAuthStore } from '@/store/auth';
 
 export default function MarketplaceDesignPage() {

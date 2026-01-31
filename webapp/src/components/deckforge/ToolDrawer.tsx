@@ -10,7 +10,7 @@ import { assetsAPI } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 import { Button } from '@/components/ui/button';
 import { importSVG, validateSVGFile } from '@/lib/svg-import';
-import { toast } from 'sonner';
+import toast from 'react-hot-toast';
 import { toastUtils } from '@/lib/toast-utils';
 
 // ============ STICKER SYSTEM ============

@@ -9,7 +9,7 @@ import { ContextMenu } from './ContextMenu';
 import { SelectionBox } from './SelectionBox';
 import type { LucideIcon } from 'lucide-react';
 import { Skull, Flame, Zap, Sword, Ghost, Bug, Eye, Target, Radio, Disc3, Music2, Rocket, Crown, Anchor, Sun, Moon, Triangle, Hexagon, Circle, Square, Star, Heart, Sparkles, Hand, Cat, Dog, Fish, Bird, Leaf, Cloud, Undo2, Redo2 } from 'lucide-react';
-import { toast } from 'sonner';
+import toast from 'react-hot-toast';
 import { getDeckSize } from '@/lib/deck-sizes';
 import { useSwipeGesture } from '@/hooks/use-swipe-gesture';
 import { useLongPress } from '@/hooks/use-long-press';

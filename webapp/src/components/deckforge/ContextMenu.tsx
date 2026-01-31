@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Copy, Scissors, Clipboard, Trash2, Lock, Unlock, Eye, EyeOff, ChevronUp, ChevronDown, ChevronsUp, ChevronsDown, Group, Ungroup, Wand2, Palette, ImageIcon, RotateCcw } from 'lucide-react';
 import { useDeckForgeStore, CanvasObject } from '@/store/deckforge';
-import { toast } from 'sonner';
+import toast from 'react-hot-toast';
 import { toastUtils } from '@/lib/toast-utils';
 
 interface ContextMenuProps {

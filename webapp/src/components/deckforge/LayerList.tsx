@@ -3,7 +3,7 @@ import { useDeckForgeStore, CanvasObject } from '@/store/deckforge';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
-import { toast } from 'sonner';
+import toast from 'react-hot-toast';
 import { useState } from 'react';
 import {
   Tooltip,

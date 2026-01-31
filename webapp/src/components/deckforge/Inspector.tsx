@@ -14,7 +14,7 @@ import { GradientPicker } from './GradientPicker';
 import { ColorPicker } from './ColorPicker';
 import { useDeckDimensions } from './WorkbenchStage';
 import { preloadUserFonts, Font, loadFont } from '@/lib/fonts';
-import { toast } from 'sonner';
+import toast from 'react-hot-toast';
 import {
   Accordion,
   AccordionContent,

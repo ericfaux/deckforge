@@ -1,5 +1,4 @@
 import { Toaster } from "@/components/ui/toaster";
-import { Toaster as HotToaster } from 'react-hot-toast';
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
@@ -33,16 +32,6 @@ const App = () => (
       <KeyboardNavigationManager />
       <TooltipProvider>
         <Toaster />
-        <HotToaster 
-          position="bottom-right"
-          toastOptions={{
-            style: {
-              background: 'hsl(var(--card))',
-              color: 'hsl(var(--foreground))',
-              border: '1px solid hsl(var(--border))',
-            },
-          }}
-        />
         <ShortcutDebugPanel />
         <BrowserRouter>
           <Breadcrumb />

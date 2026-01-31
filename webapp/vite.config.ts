@@ -25,7 +25,7 @@ export default defineConfig(({ mode }) => ({
         manualChunks: {
           // Core React and UI libraries
           'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-          'vendor-ui': ['lucide-react', 'sonner'],
+          'vendor-ui': ['lucide-react', 'react-hot-toast'],
           
           // Heavy libraries
           'vendor-supabase': ['@supabase/supabase-js'],

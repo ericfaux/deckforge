@@ -1,7 +1,7 @@
 import { useDeckForgeStore, CanvasObject } from '@/store/deckforge';
 import { Button } from '@/components/ui/button';
 import { AlignLeft, AlignRight, AlignCenterHorizontal, AlignVerticalJustifyStart, AlignVerticalJustifyEnd, AlignCenterVertical, ArrowRightLeft, ArrowUpDown, Maximize2 } from 'lucide-react';
-import { toast } from 'sonner';
+import toast from 'react-hot-toast';
 
 export function AlignmentTools() {
   const { selectedIds, objects, updateObject, saveToHistory } = useDeckForgeStore();

@@ -10,7 +10,7 @@ import { OptimizedImage } from '@/components/OptimizedImage';
 import { BackToTop } from '@/components/BackToTop';
 import { EmptyState } from '@/components/EmptyState';
 import { ErrorState } from '@/components/ErrorState';
-import { toast } from 'sonner';
+import toast from 'react-hot-toast';
 
 export default function Marketplace() {
   const navigate = useNavigate();

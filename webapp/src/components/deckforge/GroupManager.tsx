@@ -1,7 +1,7 @@
 import { useDeckForgeStore } from '@/store/deckforge';
 import { Button } from '@/components/ui/button';
 import { Group, Ungroup } from 'lucide-react';
-import { toast } from 'sonner';
+import toast from 'react-hot-toast';
 
 export function GroupManager() {
   const { selectedIds, objects, groupObjects, ungroupObject } = useDeckForgeStore();

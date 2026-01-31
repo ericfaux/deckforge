@@ -1,6 +1,6 @@
 import { ColorPaletteExtractor } from './ColorPaletteExtractor';
 import { useDeckForgeStore } from '@/store/deckforge';
-import { toast } from 'sonner';
+import toast from 'react-hot-toast';
 import { X } from 'lucide-react';
 
 interface ColorExtractorModalProps {

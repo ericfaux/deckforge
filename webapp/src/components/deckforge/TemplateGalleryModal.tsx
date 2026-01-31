@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { X, Search, Download, Star, ChevronLeft, ChevronRight } from 'lucide-react';
 import { CanvasObject } from '@/store/deckforge';
 import { useDeckForgeStore } from '@/store/deckforge';
-import { toast } from 'sonner';
+import toast from 'react-hot-toast';
 
 interface Template {
   id: string;

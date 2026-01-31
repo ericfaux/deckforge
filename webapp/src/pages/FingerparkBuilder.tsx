@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Download, Grid3X3, Ruler, Save, Share2, Trash2, RotateCcw, FolderOpen, ShoppingCart, HelpCircle } from 'lucide-react';
-import { toast } from 'sonner';
+import toast from 'react-hot-toast';
 import Konva from 'konva';
 import { getShapeForObstacle } from '@/lib/park-shapes';
 import {
