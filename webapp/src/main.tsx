@@ -5,6 +5,13 @@ import "./styles/animations.css";
 import "./styles/focus.css";
 import "./styles/responsive.css";
 
+// Validate keyboard shortcuts in development
+if (import.meta.env.DEV) {
+  import('./lib/shortcut-validator').then(({ logShortcutConflicts }) => {
+    logShortcutConflicts();
+  });
+}
+
 // Detect keyboard navigation (show focus rings only for keyboard users)
 function handleFirstTab(e: KeyboardEvent) {
   if (e.key === 'Tab') {

@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { useKeyboardNavigation } from "@/hooks/use-keyboard-navigation";
+import { ShortcutDebugPanel } from "@/components/debug/ShortcutDebug";
 import DeckForge from "./pages/DeckForge";
 import Auth from "./pages/Auth";
 import Designs from "./pages/Designs";
@@ -33,6 +34,7 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <Sonner />
+        <ShortcutDebugPanel />
         <BrowserRouter>
           <Breadcrumb />
           <Routes>
