@@ -1009,6 +1009,18 @@ export function WorkbenchStage() {
     return () => window.removeEventListener('resize', updateSize);
   }, []);
 
+  // Force re-center when deck size changes
+  useEffect(() => {
+    console.log('[DeckForge] Deck size changed:', deckSizeId, `→ ${deckWidth}x${deckHeight}px`);
+    // Trigger re-calculation of deck position by forcing container size update
+    if (containerRef.current) {
+      setContainerSize({
+        width: containerRef.current.offsetWidth,
+        height: containerRef.current.offsetHeight,
+      });
+    }
+  }, [deckSizeId, deckWidth, deckHeight]);
+
   // Memoize visible objects (filter only when objects change)
   const visibleObjects = useMemo(() => {
     return objects.filter(obj => !obj.hidden);

@@ -4,6 +4,7 @@ import { useDeckForgeStore } from '@/store/deckforge';
 import { DECK_SIZES, getDeckSize } from '@/lib/deck-sizes';
 import { Button } from '@/components/ui/button';
 import { EnhancedTooltip } from '@/components/ui/enhanced-tooltip';
+import { toastUtils } from '@/lib/toast-utils';
 
 export function DeckSizeSelector() {
   const { deckSizeId, setDeckSize } = useDeckForgeStore();
@@ -61,6 +62,10 @@ export function DeckSizeSelector() {
                     onClick={() => {
                       setDeckSize(size.id);
                       setIsOpen(false);
+                      toastUtils.success(
+                        `Deck size changed to ${size.name}`,
+                        `${size.width}mm × ${size.length}mm • ${size.recommended}`
+                      );
                     }}
                     className={`w-full p-4 text-left hover:bg-secondary transition-colors border-b border-border last:border-b-0 ${
                       isSelected ? 'bg-secondary/50' : ''
