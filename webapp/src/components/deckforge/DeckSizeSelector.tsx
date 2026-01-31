@@ -11,6 +11,8 @@ export function DeckSizeSelector() {
   const [isOpen, setIsOpen] = useState(false);
   
   const currentSize = getDeckSize(deckSizeId);
+  
+  console.log('[DeckSizeSelector] Render - isOpen:', isOpen, 'currentSize:', currentSize.name);
 
   return (
     <div className="relative">
@@ -18,7 +20,10 @@ export function DeckSizeSelector() {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => setIsOpen(!isOpen)}
+          onClick={() => {
+            console.log('[DeckSizeSelector] Button clicked, isOpen:', isOpen);
+            setIsOpen(!isOpen);
+          }}
           className="gap-2 border-primary/30 hover:border-primary relative"
         >
           <Ruler className="w-4 h-4 text-primary" />
@@ -34,12 +39,15 @@ export function DeckSizeSelector() {
         <>
           {/* Backdrop */}
           <div
-            className="fixed inset-0 z-40"
-            onClick={() => setIsOpen(false)}
+            className="fixed inset-0 z-40 bg-black/20"
+            onClick={() => {
+              console.log('[DeckSizeSelector] Backdrop clicked');
+              setIsOpen(false);
+            }}
           />
 
           {/* Dropdown menu */}
-          <div className="absolute right-0 top-full mt-2 bg-card border border-border shadow-lg z-50 w-80">
+          <div className="absolute right-0 top-full mt-2 bg-card border-2 border-primary shadow-2xl z-50 w-80">
             {/* Header */}
             <div className="p-4 border-b border-border">
               <div className="flex items-center gap-2 mb-1">
@@ -60,8 +68,10 @@ export function DeckSizeSelector() {
                   <button
                     key={size.id}
                     onClick={() => {
+                      console.log('[DeckSizeSelector] Size clicked:', size.id);
                       setDeckSize(size.id);
                       setIsOpen(false);
+                      console.log('[DeckSizeSelector] Deck size changed to:', size.name);
                       // TEMPORARY: Disabled toast to test if it's causing crash
                       // toastUtils.success(
                       //   `Deck size changed to ${size.name}`,
