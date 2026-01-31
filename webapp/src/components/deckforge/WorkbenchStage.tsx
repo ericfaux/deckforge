@@ -12,9 +12,23 @@ import { Skull, Flame, Zap, Sword, Ghost, Bug, Eye, Target, Radio, Disc3, Music2
 import { toast } from 'sonner';
 import { getDeckSize } from '@/lib/deck-sizes';
 
-// Legacy deck dimensions (kept for backward compatibility)
+// Legacy deck dimensions (kept for backward compatibility - DO NOT USE)
+// Use useDeckDimensions() hook instead for dynamic sizing
 export const DECK_WIDTH = 96;
 export const DECK_HEIGHT = 294;
+
+/**
+ * Hook to get current deck dimensions based on selected size
+ * Use this instead of DECK_WIDTH/DECK_HEIGHT constants
+ */
+export function useDeckDimensions() {
+  const deckSizeId = useDeckForgeStore(state => state.deckSizeId);
+  const currentDeckSize = getDeckSize(deckSizeId);
+  return {
+    width: currentDeckSize.canvasWidth,
+    height: currentDeckSize.canvasHeight,
+  };
+}
 
 // Map icon names to Lucide components
 const iconMap: Record<string, LucideIcon> = {
@@ -1336,7 +1350,7 @@ export function WorkbenchStage() {
                     onDragMove={(draggedObj) => {
                       // Calculate snap guides
                       const otherObjects = objects.filter(o => o.id !== draggedObj.id);
-                      const guides = calculateSnapGuides(draggedObj, otherObjects, 5);
+                      const guides = calculateSnapGuides(draggedObj, otherObjects, 5, deckWidth, deckHeight);
                       setSnapGuides(guides);
                     }}
                     onDragEnd={() => {

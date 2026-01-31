@@ -1,5 +1,8 @@
 import { CanvasObject } from '@/store/deckforge';
-import { width, DECK_HEIGHT } from '@/components/deckforge/WorkbenchStage';
+
+// Default deck dimensions (32mm standard size)
+const DEFAULT_DECK_WIDTH = 96;
+const DEFAULT_DECK_HEIGHT = 294;
 
 /**
  * Export canvas to high-resolution PNG
@@ -12,8 +15,8 @@ export async function exportToPNG(
     format?: 'png' | 'jpeg';
     quality?: number; // 0-1 for JPEG quality
     includeBackground?: boolean;
-    width?: number; // Custom deck width (defaults to DECK_WIDTH)
-    height?: number; // Custom deck height (defaults to height)
+    width?: number; // Custom deck width
+    height?: number; // Custom deck height
   } = {}
 ): Promise<Blob> {
   const {
@@ -21,8 +24,8 @@ export async function exportToPNG(
     format = 'png',
     quality = 0.95,
     includeBackground = true,
-    width = width,
-    height = DECK_HEIGHT,
+    width = DEFAULT_DECK_WIDTH,
+    height = DEFAULT_DECK_HEIGHT,
   } = options;
 
   // Create offscreen canvas at high resolution
@@ -34,8 +37,8 @@ export async function exportToPNG(
   }
 
   // Set canvas size (deck dimensions * scale for high DPI)
-  canvas.width = DECK_WIDTH * scale;
-  canvas.height = DECK_HEIGHT * scale;
+  canvas.width = width * scale;
+  canvas.height = height * scale;
 
   // Scale context for high DPI
   ctx.scale(scale, scale);
@@ -446,8 +449,8 @@ export async function exportToSVG(
 ): Promise<Blob> {
   const {
     includeBackground = true,
-    width = DECK_WIDTH,
-    height = height,
+    width = DEFAULT_DECK_WIDTH,
+    height = DEFAULT_DECK_HEIGHT,
   } = options;
 
   // Create SVG document

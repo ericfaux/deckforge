@@ -25,7 +25,7 @@ const DeckGenerator3D = lazy(() => import('@/components/deckforge/DeckGenerator3
 import { MobileDrawer } from '@/components/deckforge/MobileDrawer';
 import { LayerList } from '@/components/deckforge/LayerList';
 import { ComponentErrorBoundary } from '@/components/ComponentErrorBoundary';
-import { DECK_WIDTH, DECK_HEIGHT } from '@/components/deckforge/WorkbenchStage';
+import { useDeckDimensions } from '@/components/deckforge/WorkbenchStage';
 import { getDeckSize } from '@/lib/deck-sizes';
 import { useDeckForgeStore, CanvasObject } from '@/store/deckforge';
 import { useAuthStore } from '@/store/auth';
@@ -51,10 +51,8 @@ import { toastUtils } from '@/lib/toast-utils';
 export default function DeckForge() {
   const { selectedId, selectedIds, deleteObject, undo, redo, getCanvasState, currentDesignId, setDesignId, setSaving, isSaving, objects, designName, createVersion, past, future, updateObject, saveToHistory, addObject, selectObject, setActiveTool, stageScale, setStageScale, arrayDuplicate, showRulers, toggleRulers, groupObjects, ungroupObject, flashCopiedObject, flashPastedObject, lastAction, undoRedoChangedIds, deckSizeId } = useDeckForgeStore();
   
-  // Get current deck dimensions
-  const currentDeckSize = getDeckSize(deckSizeId);
-  const deckWidth = currentDeckSize.canvasWidth;
-  const deckHeight = currentDeckSize.canvasHeight;
+  // Get current deck dimensions (dynamic based on selected size)
+  const { width: deckWidth, height: deckHeight } = useDeckDimensions();
   const { isAuthenticated } = useAuthStore();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -347,10 +345,10 @@ export default function DeckForge() {
             const newObj: CanvasObject = {
               id: crypto.randomUUID(),
               type: 'image',
-              x: DECK_WIDTH / 2,
-              y: DECK_HEIGHT / 2,
-              width: Math.min(result.width, DECK_WIDTH * 0.6),
-              height: Math.min(result.height, DECK_HEIGHT * 0.6),
+              x: deckWidth / 2,
+              y: deckHeight / 2,
+              width: Math.min(result.width, deckWidth * 0.6),
+              height: Math.min(result.height, deckHeight * 0.6),
               src: result.url,
               opacity: 1,
               rotation: 0,
@@ -800,8 +798,8 @@ export default function DeckForge() {
         const obj = objects.find(o => o.id === selectedId);
         if (!obj) return;
 
-        const centerX = (DECK_WIDTH - obj.width * obj.scaleX) / 2;
-        const centerY = (DECK_HEIGHT - obj.height * obj.scaleY) / 2;
+        const centerX = (deckWidth - obj.width * obj.scaleX) / 2;
+        const centerY = (deckHeight - obj.height * obj.scaleY) / 2;
 
         // Align left (Alt+L)
         if (key === 'l') {
@@ -814,7 +812,7 @@ export default function DeckForge() {
         // Align right (Alt+R)
         if (key === 'r') {
           e.preventDefault();
-          updateObject(selectedId, { x: DECK_WIDTH - obj.width * obj.scaleX });
+          updateObject(selectedId, { x: deckWidth - obj.width * obj.scaleX });
           toast.success('Aligned right');
           return;
         }
@@ -838,7 +836,7 @@ export default function DeckForge() {
         // Align bottom (Alt+B)
         if (key === 'b') {
           e.preventDefault();
-          updateObject(selectedId, { y: DECK_HEIGHT - obj.height * obj.scaleY });
+          updateObject(selectedId, { y: deckHeight - obj.height * obj.scaleY });
           toast.success('Aligned bottom');
           return;
         }

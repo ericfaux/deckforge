@@ -3,7 +3,7 @@ import { useState, useRef } from 'react';
 import { useDeckForgeStore, ToolType, CanvasObject, TextureType } from '@/store/deckforge';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { DECK_WIDTH, DECK_HEIGHT } from './WorkbenchStage';
+import { useDeckDimensions } from './WorkbenchStage';
 import { Slider } from '@/components/ui/slider';
 import { Input } from '@/components/ui/input';
 import { assetsAPI } from '@/lib/api';
@@ -1262,6 +1262,9 @@ const toolLabels: Record<ToolType, string> = {
 
 export function ToolDrawer() {
   const { activeTool, drawerOpen, toggleDrawer, addObject } = useDeckForgeStore();
+  
+  // Get current deck dimensions (dynamic based on selected size)
+  const { width: DECK_WIDTH, height: DECK_HEIGHT } = useDeckDimensions();
 
   // Hide drawer for pen tool (uses overlay interface instead)
   if (!drawerOpen || !activeTool || activeTool === 'pen') return null;

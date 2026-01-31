@@ -1,4 +1,4 @@
-import { DECK_WIDTH, DECK_HEIGHT } from './WorkbenchStage';
+import { useDeckDimensions } from './WorkbenchStage';
 
 interface SnapGuide {
   type: 'vertical' | 'horizontal' | 'spacing';
@@ -170,7 +170,9 @@ export function SnapGuides({ guides, deckX, deckY, stageScale }: SnapGuidesProps
 export function calculateSnapGuides(
   draggedObject: { x: number; y: number; width: number; height: number; scaleX: number; scaleY: number },
   otherObjects: Array<{ id: string; x: number; y: number; width: number; height: number; scaleX: number; scaleY: number }>,
-  snapThreshold: number = 5
+  snapThreshold: number = 5,
+  deckWidth: number = 96,  // Default to legacy value for backward compatibility
+  deckHeight: number = 294 // Default to legacy value for backward compatibility
 ): SnapGuide[] {
   const guides: SnapGuide[] = [];
   
@@ -182,8 +184,8 @@ export function calculateSnapGuides(
   const draggedBottom = draggedObject.y + draggedHeight;
 
   // Check alignment with deck center
-  const deckCenterX = DECK_WIDTH / 2;
-  const deckCenterY = DECK_HEIGHT / 2;
+  const deckCenterX = deckWidth / 2;
+  const deckCenterY = deckHeight / 2;
 
   if (Math.abs(draggedCenterX - deckCenterX) < snapThreshold) {
     guides.push({

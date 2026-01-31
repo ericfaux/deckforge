@@ -10,7 +10,7 @@ import { FontUploadModal } from './FontUploadModal';
 import { ObjectEffects } from './ObjectEffects';
 import { GradientPicker } from './GradientPicker';
 import { ColorPicker } from './ColorPicker';
-import { DECK_WIDTH, DECK_HEIGHT } from './WorkbenchStage';
+import { useDeckDimensions } from './WorkbenchStage';
 import { preloadUserFonts, Font, loadFont } from '@/lib/fonts';
 import { toast } from 'sonner';
 import {
@@ -22,6 +22,9 @@ import {
 
 export function Inspector() {
   const { objects, selectedId, updateObject, saveToHistory, generatePattern, moveLayer, bringToFront, sendToBack } = useDeckForgeStore();
+  
+  // Get current deck dimensions (dynamic based on selected size)
+  const { width: DECK_WIDTH, height: DECK_HEIGHT } = useDeckDimensions();
   
   // Memoize selected object lookup to avoid recalculating on every render
   const selectedObject = useMemo(() => {

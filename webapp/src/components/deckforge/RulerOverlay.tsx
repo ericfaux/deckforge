@@ -1,4 +1,4 @@
-import { DECK_WIDTH, DECK_HEIGHT } from './WorkbenchStage';
+import { useDeckDimensions } from './WorkbenchStage';
 
 interface RulerOverlayProps {
   deckX: number;
@@ -9,6 +9,9 @@ interface RulerOverlayProps {
 
 export function RulerOverlay({ deckX, deckY, stageScale, enabled }: RulerOverlayProps) {
   if (!enabled) return null;
+
+  // Get current deck dimensions (dynamic based on selected size)
+  const { width: DECK_WIDTH, height: DECK_HEIGHT } = useDeckDimensions();
 
   const rulerThickness = 20 / stageScale;
   const tickSpacing = 10; // Major tick every 10px
