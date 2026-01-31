@@ -39,7 +39,7 @@ export function DeckSizeSelector() {
         <>
           {/* Backdrop */}
           <div
-            className="fixed inset-0 z-40 bg-black/20"
+            className="fixed inset-0 z-[9998] bg-black/20"
             onClick={() => {
               console.log('[DeckSizeSelector] Backdrop clicked');
               setIsOpen(false);
@@ -47,7 +47,7 @@ export function DeckSizeSelector() {
           />
 
           {/* Dropdown menu */}
-          <div className="absolute right-0 top-full mt-2 bg-card border-2 border-primary shadow-2xl z-50 w-80">
+          <div className="fixed right-4 top-20 bg-card border-2 border-primary shadow-2xl z-[9999] w-80 max-h-[80vh] overflow-hidden">
             {/* Header */}
             <div className="p-4 border-b border-border">
               <div className="flex items-center gap-2 mb-1">
