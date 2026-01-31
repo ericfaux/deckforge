@@ -1,3 +1,4 @@
+import React from 'react';
 import { toast } from 'sonner';
 import { CheckCircle2, XCircle, AlertTriangle, Info, Loader2 } from 'lucide-react';
 
@@ -12,7 +13,7 @@ export const toastUtils = {
   success(message: string, description?: string) {
     return toast.success(message, {
       description,
-      icon: CheckCircle2,
+      icon: <CheckCircle2 className="w-4 h-4" />,
       duration: 3000,
     });
   },
@@ -23,7 +24,7 @@ export const toastUtils = {
   error(message: string, description?: string) {
     return toast.error(message, {
       description,
-      icon: XCircle,
+      icon: <XCircle className="w-4 h-4" />,
       duration: 5000, // Longer for errors
     });
   },
@@ -34,7 +35,7 @@ export const toastUtils = {
   warning(message: string, description?: string) {
     return toast.warning(message, {
       description,
-      icon: AlertTriangle,
+      icon: <AlertTriangle className="w-4 h-4" />,
       duration: 4000,
     });
   },
@@ -45,7 +46,7 @@ export const toastUtils = {
   info(message: string, description?: string) {
     return toast.info(message, {
       description,
-      icon: Info,
+      icon: <Info className="w-4 h-4" />,
       duration: 3000,
     });
   },
@@ -56,7 +57,7 @@ export const toastUtils = {
   loading(message: string, description?: string) {
     const id = toast.loading(message, {
       description,
-      icon: Loader2,
+      icon: <Loader2 className="w-4 h-4 animate-spin" />,
     });
     
     return {
@@ -66,14 +67,14 @@ export const toastUtils = {
         toast.success(successMessage, {
           id,
           description: successDescription,
-          icon: CheckCircle2,
+          icon: <CheckCircle2 className="w-4 h-4" />,
         });
       },
       error: (errorMessage: string, errorDescription?: string) => {
         toast.error(errorMessage, {
           id,
           description: errorDescription,
-          icon: XCircle,
+          icon: <XCircle className="w-4 h-4" />,
         });
       },
     };
