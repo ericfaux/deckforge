@@ -1,5 +1,6 @@
-import { Download, Grid3X3, RotateCcw, ChevronDown, Type, Lock, Unlock, ArrowUp, ArrowDown, ChevronsUp, ChevronsDown } from 'lucide-react';
+import { Download, Grid3X3, RotateCcw, ChevronDown, Type, Lock, Unlock, ArrowUp, ArrowDown, ChevronsUp, ChevronsDown, GripVertical } from 'lucide-react';
 import { useState, useEffect, memo, useMemo, useRef } from 'react';
+import { usePanelResize } from '@/hooks/use-panel-resize';
 import { useDeckForgeStore, CanvasObject } from '@/store/deckforge';
 import { Slider } from '@/components/ui/slider';
 import { Input } from '@/components/ui/input';
@@ -25,6 +26,9 @@ export function Inspector() {
   
   // Get current deck dimensions (dynamic based on selected size)
   const { width: DECK_WIDTH, height: DECK_HEIGHT } = useDeckDimensions();
+  
+  // Resizable panel
+  const { width: panelWidth, isResizing, startResize } = usePanelResize(320, 256, 600);
   
   // Memoize selected object lookup to avoid recalculating on every render
   const selectedObject = useMemo(() => {
@@ -86,7 +90,22 @@ export function Inspector() {
   const { backgroundColor, setBackgroundColor } = useDeckForgeStore();
 
   return (
-    <div className="w-64 bg-card border-l border-border h-full flex flex-col">
+    <div 
+      className="bg-card border-l border-border h-full flex flex-col relative" 
+      style={{ width: `${panelWidth}px` }}
+    >
+      {/* Resize Handle */}
+      <div
+        className={cn(
+          "absolute left-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary transition-colors group",
+          isResizing && "bg-primary"
+        )}
+        onMouseDown={startResize}
+      >
+        <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <GripVertical className="w-4 h-4 text-primary" />
+        </div>
+      </div>
       {/* Export button */}
       <div className="p-3 border-b border-border">
         <button

@@ -880,7 +880,7 @@ export default function DeckForge() {
       {/* Header */}
       <header className={cn(
         "border-b border-border flex items-center px-4 bg-card shrink-0",
-        isMobile ? "h-12" : "h-14"
+        isMobile ? "h-12" : "h-16"
       )}>
         <h1 className={cn(
           "font-display uppercase tracking-widest text-foreground",
@@ -895,7 +895,7 @@ export default function DeckForge() {
           </div>
         )}
 
-        <div className="ml-auto flex items-center gap-3 overflow-x-auto overflow-y-hidden scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent pr-2 py-1">
+        <div className="ml-auto flex items-center gap-3 overflow-x-auto overflow-y-hidden scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent pr-2 py-2 min-w-0 flex-shrink">
           {!isMobile && (
             <>
               <span className="text-[10px] text-muted-foreground uppercase tracking-widest hidden md:block mr-4">
