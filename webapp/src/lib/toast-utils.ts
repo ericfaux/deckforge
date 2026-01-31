@@ -11,72 +11,56 @@ export const toastUtils = {
    * Success toast with checkmark icon
    */
   success(message: string, description?: string) {
-    return toast.success(message, {
-      description,
-      icon: <CheckCircle2 className="w-4 h-4" />,
-      duration: 3000,
-    });
+    // TEMPORARY: Disabled all toasts to test
+    console.log('[toastUtils.success]', message, description);
+    return;
+    // return toast.success(message, {
+    //   description,
+    //   icon: <CheckCircle2 className="w-4 h-4" />,
+    //   duration: 3000,
+    // });
   },
 
   /**
    * Error toast with X icon
    */
   error(message: string, description?: string) {
-    return toast.error(message, {
-      description,
-      icon: <XCircle className="w-4 h-4" />,
-      duration: 5000, // Longer for errors
-    });
+    // TEMPORARY: Disabled all toasts to test
+    console.log('[toastUtils.error]', message, description);
+    return;
+    // return toast.error(message, {
+    //   description,
+    //   icon: <XCircle className="w-4 h-4" />,
+    //   duration: 5000, // Longer for errors
+    // });
   },
 
   /**
    * Warning toast
    */
   warning(message: string, description?: string) {
-    return toast.warning(message, {
-      description,
-      icon: <AlertTriangle className="w-4 h-4" />,
-      duration: 4000,
-    });
+    console.log('[toastUtils.warning]', message, description);
+    return;
   },
 
   /**
    * Info toast
    */
   info(message: string, description?: string) {
-    return toast.info(message, {
-      description,
-      icon: <Info className="w-4 h-4" />,
-      duration: 3000,
-    });
+    console.log('[toastUtils.info]', message, description);
+    return;
   },
 
   /**
    * Loading toast that returns a dismiss function
    */
   loading(message: string, description?: string) {
-    const id = toast.loading(message, {
-      description,
-      icon: <Loader2 className="w-4 h-4 animate-spin" />,
-    });
-    
+    console.log('[toastUtils.loading]', message, description);
     return {
-      id,
-      dismiss: () => toast.dismiss(id),
-      success: (successMessage: string, successDescription?: string) => {
-        toast.success(successMessage, {
-          id,
-          description: successDescription,
-          icon: <CheckCircle2 className="w-4 h-4" />,
-        });
-      },
-      error: (errorMessage: string, errorDescription?: string) => {
-        toast.error(errorMessage, {
-          id,
-          description: errorDescription,
-          icon: <XCircle className="w-4 h-4" />,
-        });
-      },
+      id: 'disabled',
+      dismiss: () => {},
+      success: (successMessage: string, successDescription?: string) => {},
+      error: (errorMessage: string, errorDescription?: string) => {},
     };
   },
 
