@@ -12,6 +12,7 @@ import { Skull, Flame, Zap, Sword, Ghost, Bug, Eye, Target, Radio, Disc3, Music2
 import { toast } from 'sonner';
 import { getDeckSize } from '@/lib/deck-sizes';
 import { useSwipeGesture } from '@/hooks/use-swipe-gesture';
+import { useLongPress } from '@/hooks/use-long-press';
 
 // Legacy deck dimensions (kept for backward compatibility - DO NOT USE)
 // Use useDeckDimensions() hook instead for dynamic sizing
@@ -153,6 +154,59 @@ const CanvasObjectItem = memo(function CanvasObjectItem({
 }) {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ objX: 0, objY: 0, clientX: 0, clientY: 0 });
+  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const touchStartPosRef = useRef<{ x: number; y: number } | null>(null);
+
+  // Mobile long-press handler for context menu
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    touchStartPosRef.current = { x: touch.clientX, y: touch.clientY };
+    
+    // Start long-press timer (500ms)
+    longPressTimerRef.current = setTimeout(() => {
+      // Trigger context menu at touch position
+      if (onContextMenu && touchStartPosRef.current) {
+        const syntheticEvent = {
+          preventDefault: () => {},
+          stopPropagation: () => {},
+          clientX: touchStartPosRef.current.x,
+          clientY: touchStartPosRef.current.y,
+        } as React.MouseEvent;
+        
+        onContextMenu(syntheticEvent, obj.id);
+        
+        // Haptic feedback
+        if ('vibrate' in navigator) {
+          navigator.vibrate([10, 50, 10]); // Double vibration
+        }
+      }
+    }, 500); // 500ms long press
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    // Cancel long-press if finger moves
+    if (touchStartPosRef.current && longPressTimerRef.current) {
+      const touch = e.touches[0];
+      const distance = Math.hypot(
+        touch.clientX - touchStartPosRef.current.x,
+        touch.clientY - touchStartPosRef.current.y
+      );
+      
+      if (distance > 10) { // 10px threshold
+        clearTimeout(longPressTimerRef.current);
+        longPressTimerRef.current = null;
+      }
+    }
+  };
+
+  const handleTouchEnd = () => {
+    // Clear long-press timer
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+    touchStartPosRef.current = null;
+  };
 
   const handleMouseDown = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -260,6 +314,9 @@ const CanvasObjectItem = memo(function CanvasObjectItem({
         }}
         onMouseDown={handleMouseDown}
         onContextMenu={handleRightClick}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
       >
         {/* Render all children */}
         {obj.children.map((child) => (

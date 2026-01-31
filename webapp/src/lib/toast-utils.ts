@@ -1,66 +1,101 @@
-import React from 'react';
-import { toast } from 'sonner';
-import { CheckCircle2, XCircle, AlertTriangle, Info, Loader2 } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 /**
- * Enhanced toast utilities with consistent styling and icons
+ * Enhanced toast utilities with consistent styling
+ * Using react-hot-toast (simpler, more stable than Sonner)
  */
 
 export const toastUtils = {
   /**
-   * Success toast with checkmark icon
+   * Success toast
    */
   success(message: string, description?: string) {
-    // TEMPORARY: Disabled all toasts to test
-    console.log('[toastUtils.success]', message, description);
-    return;
-    // return toast.success(message, {
-    //   description,
-    //   icon: <CheckCircle2 className="w-4 h-4" />,
-    //   duration: 3000,
-    // });
+    const content = description ? `${message}\n${description}` : message;
+    return toast.success(content, {
+      duration: 3000,
+      style: {
+        background: 'hsl(var(--card))',
+        color: 'hsl(var(--foreground))',
+        border: '1px solid hsl(var(--border))',
+      },
+    });
   },
 
   /**
-   * Error toast with X icon
+   * Error toast
    */
   error(message: string, description?: string) {
-    // TEMPORARY: Disabled all toasts to test
-    console.log('[toastUtils.error]', message, description);
-    return;
-    // return toast.error(message, {
-    //   description,
-    //   icon: <XCircle className="w-4 h-4" />,
-    //   duration: 5000, // Longer for errors
-    // });
+    const content = description ? `${message}\n${description}` : message;
+    return toast.error(content, {
+      duration: 5000,
+      style: {
+        background: 'hsl(var(--card))',
+        color: 'hsl(var(--foreground))',
+        border: '1px solid hsl(var(--destructive))',
+      },
+    });
   },
 
   /**
-   * Warning toast
+   * Warning toast (custom styling)
    */
   warning(message: string, description?: string) {
-    console.log('[toastUtils.warning]', message, description);
-    return;
+    const content = description ? `${message}\n${description}` : message;
+    return toast(content, {
+      icon: '⚠️',
+      duration: 4000,
+      style: {
+        background: 'hsl(var(--card))',
+        color: 'hsl(var(--foreground))',
+        border: '1px solid hsl(38 92% 50%)',
+      },
+    });
   },
 
   /**
    * Info toast
    */
   info(message: string, description?: string) {
-    console.log('[toastUtils.info]', message, description);
-    return;
+    const content = description ? `${message}\n${description}` : message;
+    return toast(content, {
+      icon: 'ℹ️',
+      duration: 3000,
+      style: {
+        background: 'hsl(var(--card))',
+        color: 'hsl(var(--foreground))',
+        border: '1px solid hsl(var(--border))',
+      },
+    });
   },
 
   /**
    * Loading toast that returns a dismiss function
    */
   loading(message: string, description?: string) {
-    console.log('[toastUtils.loading]', message, description);
+    const content = description ? `${message}\n${description}` : message;
+    const id = toast.loading(content, {
+      style: {
+        background: 'hsl(var(--card))',
+        color: 'hsl(var(--foreground))',
+        border: '1px solid hsl(var(--border))',
+      },
+    });
+    
     return {
-      id: 'disabled',
-      dismiss: () => {},
-      success: (successMessage: string, successDescription?: string) => {},
-      error: (errorMessage: string, errorDescription?: string) => {},
+      id,
+      dismiss: () => toast.dismiss(id),
+      success: (successMessage: string, successDescription?: string) => {
+        const successContent = successDescription 
+          ? `${successMessage}\n${successDescription}` 
+          : successMessage;
+        toast.success(successContent, { id });
+      },
+      error: (errorMessage: string, errorDescription?: string) => {
+        const errorContent = errorDescription 
+          ? `${errorMessage}\n${errorDescription}` 
+          : errorMessage;
+        toast.error(errorContent, { id });
+      },
     };
   },
 
