@@ -148,6 +148,13 @@ export const DEFAULT_FONTS: Font[] = [
 
 // Preload all user fonts
 export async function preloadUserFonts() {
+  // Check if user is authenticated before making API call
+  const token = localStorage.getItem('token');
+  if (!token) {
+    // Not authenticated - return system fonts only
+    return DEFAULT_FONTS;
+  }
+
   try {
     const fonts = await fontsApi.list();
     await Promise.all(fonts.map(loadFont));

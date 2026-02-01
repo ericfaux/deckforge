@@ -2,6 +2,7 @@ import { Download, Grid3X3, RotateCcw, ChevronDown, Type, Lock, Unlock, ArrowUp,
 import { useState, useEffect, memo, useMemo, useRef } from 'react';
 import { usePanelResize } from '@/hooks/use-panel-resize';
 import { useDeckForgeStore, CanvasObject } from '@/store/deckforge';
+import { useAuthStore } from '@/store/auth';
 import { cn } from '@/lib/utils';
 import { Slider } from '@/components/ui/slider';
 import { Input } from '@/components/ui/input';
@@ -24,6 +25,7 @@ import {
 
 export function Inspector() {
   const { objects, selectedId, updateObject, saveToHistory, generatePattern, moveLayer, bringToFront, sendToBack } = useDeckForgeStore();
+  const { isAuthenticated } = useAuthStore();
   
   // Get current deck dimensions (dynamic based on selected size)
   const { width: DECK_WIDTH, height: DECK_HEIGHT } = useDeckDimensions();
@@ -72,10 +74,12 @@ export function Inspector() {
     }
   }, [selectedObject?.type, selectedObject?.id]);
 
-  // Load user fonts on mount
+  // Load user fonts on mount (only if authenticated)
   useEffect(() => {
-    preloadUserFonts().then(setUserFonts);
-  }, []);
+    if (isAuthenticated) {
+      preloadUserFonts().then(setUserFonts);
+    }
+  }, [isAuthenticated]);
 
   const handleExport = () => {
     // Export functionality - placeholder for now
