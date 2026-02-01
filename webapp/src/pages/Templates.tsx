@@ -1,20 +1,50 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDeckForgeStore } from '@/store/deckforge';
-import { templates, searchTemplates } from '@/lib/templates';
+import { templates, searchTemplates, Template } from '@/lib/templates';
+import { generateThumbnail } from '@/lib/generateTemplateThumbnails';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Search, Sparkles } from 'lucide-react';
 
 export default function Templates() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [templatesWithThumbnails, setTemplatesWithThumbnails] = useState<Template[]>(templates);
   const { loadDesign } = useDeckForgeStore();
   const navigate = useNavigate();
+  
+  // Generate thumbnails on mount
+  useEffect(() => {
+    const generateThumbnails = () => {
+      const updated = templates.map(template => {
+        if (!template.thumbnail) {
+          return {
+            ...template,
+            thumbnail: generateThumbnail(template),
+          };
+        }
+        return template;
+      });
+      setTemplatesWithThumbnails(updated);
+    };
+    
+    // Small delay to ensure DOM is ready
+    setTimeout(generateThumbnails, 100);
+  }, []);
 
-  const filteredTemplates = searchTemplates(searchQuery);
+  const filteredTemplates = useMemo(() => {
+    if (!searchQuery) return templatesWithThumbnails;
+    
+    const lowerQuery = searchQuery.toLowerCase();
+    return templatesWithThumbnails.filter(t => 
+      t.name.toLowerCase().includes(lowerQuery) ||
+      t.description.toLowerCase().includes(lowerQuery) ||
+      t.tags.some(tag => tag.toLowerCase().includes(lowerQuery))
+    );
+  }, [searchQuery, templatesWithThumbnails]);
 
   const useTemplate = (templateId: string) => {
-    const template = templates.find(t => t.id === templateId);
+    const template = templatesWithThumbnails.find(t => t.id === templateId);
     if (!template) return;
 
     loadDesign({
