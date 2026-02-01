@@ -77,15 +77,61 @@ function generateDeckGeometry(params: DeckParams): THREE.BufferGeometry {
   const noseKickRad = (noseKick * Math.PI) / 180;
   const tailKickRad = (tailKick * Math.PI) / 180;
   
+  // Helper: Check if point is inside deck outline (popsicle shape with rounded nose/tail)
+  const isInsideDeckOutline = (normalizedX: number, normalizedZ: number): boolean => {
+    // Center section (middle 70%) is full width rectangular
+    if (normalizedX >= 0.15 && normalizedX <= 0.85) {
+      return true; // Full width in center
+    }
+    
+    // Nose (last 15%) - rounded semicircle
+    if (normalizedX > 0.85) {
+      const noseProgress = (normalizedX - 0.85) / 0.15; // 0 to 1
+      const maxWidth = 1 - noseProgress; // Tapers from full width to 0
+      const zFromCenter = Math.abs(normalizedZ - 0.5) * 2; // 0 at center, 1 at edges
+      return zFromCenter <= maxWidth; // Inside the tapered region
+    }
+    
+    // Tail (first 15%) - rounded semicircle
+    if (normalizedX < 0.15) {
+      const tailProgress = normalizedX / 0.15; // 0 to 1
+      const maxWidth = tailProgress; // Tapers from 0 to full width
+      const zFromCenter = Math.abs(normalizedZ - 0.5) * 2;
+      return zFromCenter <= maxWidth;
+    }
+    
+    return false;
+  };
+  
   // Helper: Calculate Y position with concave and kicks
-  // TESTING: COMPLETELY FLAT - no kicks, no concave
   const getYPosition = (normalizedX: number, normalizedZ: number, isTop: boolean): number => {
     if (!isTop) {
       return -thickness; // Bottom surface is flat
     }
     
-    // Top surface is also FLAT for testing
-    return 0;
+    let y = 0; // Start at zero
+    
+    // 1. Kicks at nose and tail
+    const kickTransition = 0.15; // 15% of length for kick curve
+    
+    if (normalizedX < kickTransition) {
+      // Tail kick: smooth curve from 0 to kickHeight
+      const t = normalizedX / kickTransition; // 0 to 1
+      const tailKickHeight = 15 * Math.tan(tailKickRad); // Max height at end
+      y = tailKickHeight * (1 - Math.cos(t * Math.PI / 2)); // Smooth S-curve
+    } else if (normalizedX > (1 - kickTransition)) {
+      // Nose kick: smooth curve from 0 to kickHeight
+      const t = (normalizedX - (1 - kickTransition)) / kickTransition; // 0 to 1
+      const noseKickHeight = 15 * Math.tan(noseKickRad);
+      y = noseKickHeight * Math.sin(t * Math.PI / 2); // Smooth S-curve
+    }
+    
+    // 2. Concave (subtle U-shape across width)
+    const distanceFromEdge = Math.abs(normalizedZ - 0.5) / 0.5; // 0 at center, 1 at edges
+    const concaveOffset = -concaveDepth * (1 - Math.pow(distanceFromEdge, 2)); // -concaveDepth at center, 0 at edges
+    y += concaveOffset;
+    
+    return y;
   };
   
   // Calculate truck hole positions
@@ -131,11 +177,20 @@ function generateDeckGeometry(params: DeckParams): THREE.BufferGeometry {
     return vertexIndex++;
   };
   
-  // 1. TOP SURFACE (with holes)
+  // 1. TOP SURFACE (with popsicle outline and holes)
   const topGrid: (number | null)[][] = [];
   for (let i = 0; i <= lengthSegments; i++) {
     topGrid[i] = [];
     for (let j = 0; j <= widthSegments; j++) {
+      const normalizedX = i / lengthSegments;
+      const normalizedZ = j / widthSegments;
+      
+      // Skip vertices outside popsicle outline (rounded nose/tail)
+      if (!isInsideDeckOutline(normalizedX, normalizedZ)) {
+        topGrid[i][j] = null;
+        continue;
+      }
+      
       const x = (i / lengthSegments) * length - length / 2;
       const z = (j / widthSegments) * width - width / 2;
       
@@ -145,8 +200,6 @@ function generateDeckGeometry(params: DeckParams): THREE.BufferGeometry {
         continue;
       }
       
-      const normalizedX = i / lengthSegments;
-      const normalizedZ = j / widthSegments;
       const y = getYPosition(normalizedX, normalizedZ, true);
       
       topGrid[i][j] = addVertex(x, y, z);
@@ -168,11 +221,20 @@ function generateDeckGeometry(params: DeckParams): THREE.BufferGeometry {
     }
   }
   
-  // 2. BOTTOM SURFACE (with holes)
+  // 2. BOTTOM SURFACE (with popsicle outline and holes)
   const bottomGrid: (number | null)[][] = [];
   for (let i = 0; i <= lengthSegments; i++) {
     bottomGrid[i] = [];
     for (let j = 0; j <= widthSegments; j++) {
+      const normalizedX = i / lengthSegments;
+      const normalizedZ = j / widthSegments;
+      
+      // Skip vertices outside popsicle outline
+      if (!isInsideDeckOutline(normalizedX, normalizedZ)) {
+        bottomGrid[i][j] = null;
+        continue;
+      }
+      
       const x = (i / lengthSegments) * length - length / 2;
       const z = (j / widthSegments) * width - width / 2;
       
@@ -353,10 +415,9 @@ function FingerboardDeck({ params, textureUrl }: { params: DeckParams; textureUr
   return (
     <mesh ref={meshRef} geometry={geometry} castShadow receiveShadow>
       <meshStandardMaterial
-        // TESTING: Disable texture to see if ripples are from texture or geometry
-        // map={texture}
+        map={texture}
         side={THREE.DoubleSide}
-        color='#ccaa88' // Solid wood color for testing
+        color={texture ? '#ffffff' : '#ccaa88'}
         roughness={0.6}
         metalness={0.05}
       />
