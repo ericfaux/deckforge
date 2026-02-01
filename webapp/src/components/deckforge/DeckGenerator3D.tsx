@@ -78,34 +78,14 @@ function generateDeckGeometry(params: DeckParams): THREE.BufferGeometry {
   const tailKickRad = (tailKick * Math.PI) / 180;
   
   // Helper: Calculate Y position with concave and kicks
-  // KEY: Deck centerline defines the side profile, concave is RELATIVE to that
+  // TESTING: COMPLETELY FLAT - no kicks, no concave
   const getYPosition = (normalizedX: number, normalizedZ: number, isTop: boolean): number => {
     if (!isTop) {
       return -thickness; // Bottom surface is flat
     }
     
-    // 1. Calculate CENTERLINE height (side profile = flat + kicks)
-    // This is what you see from the side view
-    let centerlineY = 0;
-    const kickTransition = 0.15; // 15% of length for kick curve
-    
-    if (normalizedX < kickTransition) {
-      // Tail kick: smooth curve from 0 to kickHeight
-      const t = normalizedX / kickTransition; // 0 to 1
-      const tailKickHeight = 15 * Math.tan(tailKickRad); // Max height at end
-      centerlineY = tailKickHeight * (1 - Math.cos(t * Math.PI / 2)); // Smooth S-curve
-    } else if (normalizedX > (1 - kickTransition)) {
-      // Nose kick: smooth curve from 0 to kickHeight
-      const t = (normalizedX - (1 - kickTransition)) / kickTransition; // 0 to 1
-      const noseKickHeight = 15 * Math.tan(noseKickRad);
-      centerlineY = noseKickHeight * Math.sin(t * Math.PI / 2); // Smooth S-curve
-    }
-    
-    // 2. Apply CONCAVE relative to centerline (cross-sectional U-shape)
-    // TESTING: Disable concave to see if basic shape is correct
-    const concaveOffset = 0; // Temporarily disabled
-    
-    return centerlineY + concaveOffset;
+    // Top surface is also FLAT for testing
+    return 0;
   };
   
   // Calculate truck hole positions
