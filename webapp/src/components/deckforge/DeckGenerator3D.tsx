@@ -353,11 +353,12 @@ function FingerboardDeck({ params, textureUrl }: { params: DeckParams; textureUr
   return (
     <mesh ref={meshRef} geometry={geometry} castShadow receiveShadow>
       <meshStandardMaterial
-        map={texture}
+        // TESTING: Disable texture to see if ripples are from texture or geometry
+        // map={texture}
         side={THREE.DoubleSide}
-        color={texture ? '#ffffff' : '#8b7355'}
-        roughness={0.8}
-        metalness={0.1}
+        color='#ccaa88' // Solid wood color for testing
+        roughness={0.6}
+        metalness={0.05}
       />
     </mesh>
   );
