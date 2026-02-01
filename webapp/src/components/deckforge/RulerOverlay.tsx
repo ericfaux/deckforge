@@ -1,4 +1,6 @@
 import { useDeckDimensions } from './WorkbenchStage';
+import { useDeckForgeStore } from '@/store/deckforge';
+import { getDeckSize } from '@/lib/deck-sizes';
 
 interface RulerOverlayProps {
   deckX: number;
@@ -12,13 +14,21 @@ export function RulerOverlay({ deckX, deckY, stageScale, enabled }: RulerOverlay
 
   // Get current deck dimensions (dynamic based on selected size)
   const { width: DECK_WIDTH, height: DECK_HEIGHT } = useDeckDimensions();
+  
+  // Get deck size info for mm conversions
+  const deckSizeId = useDeckForgeStore(state => state.deckSizeId);
+  const deckSize = getDeckSize(deckSizeId);
+  
+  // Calculate mm per pixel ratio
+  const mmPerPixelWidth = deckSize.width / DECK_WIDTH;
+  const mmPerPixelHeight = deckSize.length / DECK_HEIGHT;
 
   const rulerThickness = 20 / stageScale;
   const tickSpacing = 10; // Major tick every 10px
   const minorTickSpacing = 5; // Minor tick every 5px
   const fontSize = 8 / stageScale;
 
-  // Generate horizontal ruler (top)
+  // Generate horizontal ruler (top) - showing mm measurements
   const horizontalTicks = [];
   for (let x = 0; x <= DECK_WIDTH; x += minorTickSpacing) {
     const isMajor = x % tickSpacing === 0;
@@ -36,8 +46,9 @@ export function RulerOverlay({ deckX, deckY, stageScale, enabled }: RulerOverlay
       />
     );
 
-    // Add labels for major ticks
+    // Add labels for major ticks - convert pixels to mm
     if (isMajor && x % 20 === 0) {
+      const mmValue = (x * mmPerPixelWidth).toFixed(1);
       horizontalTicks.push(
         <text
           key={`h-label-${x}`}
@@ -48,13 +59,13 @@ export function RulerOverlay({ deckX, deckY, stageScale, enabled }: RulerOverlay
           fontSize={fontSize}
           fontFamily="monospace"
         >
-          {x}
+          {mmValue}
         </text>
       );
     }
   }
 
-  // Generate vertical ruler (left)
+  // Generate vertical ruler (left) - showing mm measurements
   const verticalTicks = [];
   for (let y = 0; y <= DECK_HEIGHT; y += minorTickSpacing) {
     const isMajor = y % tickSpacing === 0;
@@ -72,8 +83,9 @@ export function RulerOverlay({ deckX, deckY, stageScale, enabled }: RulerOverlay
       />
     );
 
-    // Add labels for major ticks
+    // Add labels for major ticks - convert pixels to mm
     if (isMajor && y % 20 === 0) {
+      const mmValue = (y * mmPerPixelHeight).toFixed(1);
       verticalTicks.push(
         <text
           key={`v-label-${y}`}
@@ -84,7 +96,7 @@ export function RulerOverlay({ deckX, deckY, stageScale, enabled }: RulerOverlay
           fontSize={fontSize}
           fontFamily="monospace"
         >
-          {y}
+          {mmValue}
         </text>
       );
     }
@@ -136,7 +148,7 @@ export function RulerOverlay({ deckX, deckY, stageScale, enabled }: RulerOverlay
         fontSize={fontSize}
         fontFamily="monospace"
       >
-        px
+        mm
       </text>
     </g>
   );
