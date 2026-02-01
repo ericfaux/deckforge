@@ -392,8 +392,8 @@ export const useDeckForgeStore = create<DeckForgeState>((set, get) => ({
     if (selectedIds.length === 1) {
       const obj = selectedObjects[0];
       const deckSize = getDeckSize(deckSizeId);
-      const DECK_WIDTH = deckSize.widthPx;
-      const DECK_HEIGHT = deckSize.lengthPx;
+      const DECK_WIDTH = deckSize.canvasWidth;
+      const DECK_HEIGHT = deckSize.canvasHeight;
       
       if (alignment === 'center') {
         state.updateObject(obj.id, { x: (DECK_WIDTH - obj.width * obj.scaleX) / 2 });
