@@ -38,8 +38,9 @@ export function ColorPicker({ value, onChange, label, showEyedropper = true }: C
   };
 
   const presetColors = [
-    '#000000', '#ffffff', '#ccff00', '#ff6600', 
-    '#00ffff', '#ff00ff', '#ff0000', '#00ff00',
+    '#000000', '#ffffff', '#dbdbdb', '#ccff00', 
+    '#ff6600', '#00ffff', '#ff00ff', '#ff0000', 
+    '#00ff00',
   ];
 
   return (

@@ -297,7 +297,7 @@ export const useDeckForgeStore = create<DeckForgeState>((set, get) => ({
   textureOverlays: defaultTextureOverlays,
   showHardwareGuide: false,
   showRulers: false,
-  backgroundColor: '#ffffff',
+  backgroundColor: '#dbdbdb',
   currentDesignId: null,
   designName: 'Untitled Design',
   isSaving: false,
