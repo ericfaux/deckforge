@@ -1658,7 +1658,9 @@ export function WorkbenchStage() {
               textAnchor="middle"
               fontSize={16 / stageScale}
               fontFamily="Oswald, sans-serif"
-              fill="#ccff00"
+              fill="#ffffff"
+              stroke="#333333"
+              strokeWidth={0.5 / stageScale}
               fontWeight="bold"
             >
               Welcome to DeckForge
@@ -1684,9 +1686,9 @@ export function WorkbenchStage() {
                   y={0}
                   width={35}
                   height={35}
-                  fill="rgba(204, 255, 0, 0.1)"
-                  stroke="#ccff00"
-                  strokeWidth={1 / stageScale}
+                  fill="rgba(255, 255, 255, 0.1)"
+                  stroke="#ffffff"
+                  strokeWidth={1.5 / stageScale}
                   rx={3 / stageScale}
                 />
                 <text
@@ -1694,7 +1696,8 @@ export function WorkbenchStage() {
                   y={23}
                   textAnchor="middle"
                   fontSize={20 / stageScale}
-                  fill="#ccff00"
+                  fill="#ffffff"
+                  fontWeight="bold"
                 >
                   T
                 </text>
@@ -1707,9 +1710,9 @@ export function WorkbenchStage() {
                   y={0}
                   width={35}
                   height={35}
-                  fill="rgba(204, 255, 0, 0.1)"
-                  stroke="#ccff00"
-                  strokeWidth={1 / stageScale}
+                  fill="rgba(255, 255, 255, 0.1)"
+                  stroke="#ffffff"
+                  strokeWidth={1.5 / stageScale}
                   rx={3 / stageScale}
                 />
                 <text
@@ -1717,7 +1720,8 @@ export function WorkbenchStage() {
                   y={23}
                   textAnchor="middle"
                   fontSize={20 / stageScale}
-                  fill="#ccff00"
+                  fill="#ffffff"
+                  fontWeight="bold"
                 >
                   S
                 </text>
@@ -1730,9 +1734,9 @@ export function WorkbenchStage() {
                   y={0}
                   width={35}
                   height={35}
-                  fill="rgba(204, 255, 0, 0.1)"
-                  stroke="#ccff00"
-                  strokeWidth={1 / stageScale}
+                  fill="rgba(255, 255, 255, 0.1)"
+                  stroke="#ffffff"
+                  strokeWidth={1.5 / stageScale}
                   rx={3 / stageScale}
                 />
                 <text
@@ -1740,7 +1744,8 @@ export function WorkbenchStage() {
                   y={23}
                   textAnchor="middle"
                   fontSize={20 / stageScale}
-                  fill="#ccff00"
+                  fill="#ffffff"
+                  fontWeight="bold"
                 >
                   U
                 </text>
@@ -1774,17 +1779,17 @@ export function WorkbenchStage() {
             <g transform={`translate(-10, ${deckHeight / 2})`}>
               <path
                 d="M 0 0 L -15 -5 L -15 5 Z"
-                fill="#ccff00"
-                opacity={0.6}
+                fill="#ffffff"
+                opacity={0.7}
               />
               <line
                 x1={-15}
                 y1={0}
                 x2={-30}
                 y2={0}
-                stroke="#ccff00"
+                stroke="#ffffff"
                 strokeWidth={2 / stageScale}
-                opacity={0.6}
+                opacity={0.7}
               />
             </g>
           </g>
