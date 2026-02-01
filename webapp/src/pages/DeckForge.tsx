@@ -47,6 +47,7 @@ import { EditorLoadingSkeleton } from '@/components/deckforge/EditorLoadingSkele
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import { toastUtils } from '@/lib/toast-utils';
+import toast from 'react-hot-toast';
 
 export default function DeckForge() {
   const { selectedId, selectedIds, deleteObject, undo, redo, getCanvasState, currentDesignId, setDesignId, setSaving, isSaving, objects, designName, createVersion, past, future, updateObject, saveToHistory, addObject, selectObject, setActiveTool, stageScale, setStageScale, arrayDuplicate, showRulers, toggleRulers, groupObjects, ungroupObject, flashCopiedObject, flashPastedObject, lastAction, undoRedoChangedIds, deckSizeId } = useDeckForgeStore();
