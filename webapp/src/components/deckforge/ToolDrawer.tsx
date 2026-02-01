@@ -133,15 +133,30 @@ const textureQueries = [
   { id: 'splatter', name: 'Paint Splatter', query: 'paint splatter drips' },
 ];
 
-// Legacy assets
+// Legacy assets - ENHANCED with more cool graphics for deck design
 const graphicAssets = [
+  // Basic Shapes
   { id: 'g1', label: 'Circle', shapeType: 'circle' as const },
   { id: 'g2', label: 'Square', shapeType: 'rect' as const },
   { id: 'g4', label: 'Star', shapeType: 'star' as const },
+  
+  // Polygons
   { id: 'g5', label: 'Triangle', shapeType: 'polygon' as const, polygonSides: 3 },
   { id: 'g6', label: 'Pentagon', shapeType: 'polygon' as const, polygonSides: 5 },
   { id: 'g7', label: 'Hexagon', shapeType: 'polygon' as const, polygonSides: 6 },
   { id: 'g8', label: 'Octagon', shapeType: 'polygon' as const, polygonSides: 8 },
+  { id: 'g9', label: 'Heptagon', shapeType: 'polygon' as const, polygonSides: 7 },
+  { id: 'g10', label: 'Nonagon', shapeType: 'polygon' as const, polygonSides: 9 },
+  { id: 'g11', label: 'Decagon', shapeType: 'polygon' as const, polygonSides: 10 },
+  { id: 'g12', label: 'Dodecagon', shapeType: 'polygon' as const, polygonSides: 12 },
+  
+  // Skate Culture Shapes
+  { id: 'g13', label: '4-Point Star', shapeType: 'star' as const, starPoints: 4 },
+  { id: 'g14', label: '6-Point Star', shapeType: 'star' as const, starPoints: 6 },
+  { id: 'g15', label: '8-Point Star', shapeType: 'star' as const, starPoints: 8 },
+  
+  // More Variations
+  { id: 'g16', label: 'Diamond', shapeType: 'polygon' as const, polygonSides: 4, rotation: 45 },
 ];
 
 // Texture preview thumbnails for finishes
@@ -159,20 +174,21 @@ function GraphicsContent({ onAddObject, deckCenterX, deckCenterY }: {
 }) {
   const [shapeColor, setShapeColor] = useState('#ffffff');
 
-  const addShape = (shapeType: 'rect' | 'circle' | 'star' | 'polygon', polygonSides?: number) => {
+  const addShape = (asset: typeof graphicAssets[0]) => {
     onAddObject({
       type: 'shape',
       x: deckCenterX - 15,
       y: deckCenterY - 15,
       width: 30,
       height: 30,
-      rotation: 0,
+      rotation: asset.rotation || 0,
       opacity: 1,
       scaleX: 1,
       scaleY: 1,
-      shapeType,
+      shapeType: asset.shapeType,
       fill: shapeColor,
-      ...(shapeType === 'polygon' && { polygonSides: polygonSides || 6 }),
+      ...(asset.shapeType === 'polygon' && { polygonSides: asset.polygonSides || 6 }),
+      ...(asset.shapeType === 'star' && asset.starPoints && { starPoints: asset.starPoints }),
     });
   };
 
@@ -193,23 +209,48 @@ function GraphicsContent({ onAddObject, deckCenterX, deckCenterY }: {
       <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
         Click to add shapes
       </span>
-      <div className="grid grid-cols-3 gap-2">
-        {graphicAssets.map((asset) => (
-          <button
-            key={asset.id}
-            onClick={() => addShape(asset.shapeType, asset.polygonSides)}
-            className="aspect-square border border-border bg-secondary hover:border-primary transition-colors flex items-center justify-center"
-          >
-            {asset.shapeType === 'circle' && <div className="w-8 h-8 rounded-full bg-white" />}
-            {asset.shapeType === 'rect' && <div className="w-8 h-8 bg-white" />}
-            {asset.shapeType === 'star' && <span className="text-white text-2xl">★</span>}
-            {asset.shapeType === 'polygon' && asset.polygonSides === 3 && <span className="text-white text-2xl">▲</span>}
-            {asset.shapeType === 'polygon' && asset.polygonSides === 5 && <span className="text-white text-2xl">⬟</span>}
-            {asset.shapeType === 'polygon' && asset.polygonSides === 6 && <span className="text-white text-2xl">⬡</span>}
-            {asset.shapeType === 'polygon' && asset.polygonSides === 8 && <span className="text-white text-2xl">⯄</span>}
-          </button>
-        ))}
-      </div>
+      <ScrollArea className="h-96">
+        <div className="grid grid-cols-3 gap-2 pr-4">
+          {graphicAssets.map((asset) => (
+            <button
+              key={asset.id}
+              onClick={() => addShape(asset)}
+              className="aspect-square border border-border bg-secondary hover:border-primary transition-colors flex flex-col items-center justify-center gap-1 p-2"
+              title={asset.label}
+            >
+              {/* Visual preview */}
+              <div className="flex items-center justify-center flex-1">
+                {asset.shapeType === 'circle' && (
+                  <div className="w-6 h-6 rounded-full bg-white" />
+                )}
+                {asset.shapeType === 'rect' && (
+                  <div className="w-6 h-6 bg-white" />
+                )}
+                {asset.shapeType === 'star' && (
+                  <span className="text-white text-xl">★</span>
+                )}
+                {asset.shapeType === 'polygon' && (
+                  <span className="text-white text-lg">
+                    {asset.polygonSides === 3 && '▲'}
+                    {asset.polygonSides === 4 && asset.rotation === 45 && '◆'}
+                    {asset.polygonSides === 5 && '⬟'}
+                    {asset.polygonSides === 6 && '⬡'}
+                    {asset.polygonSides === 7 && '⬢'}
+                    {asset.polygonSides === 8 && '⯄'}
+                    {asset.polygonSides === 9 && '⯃'}
+                    {asset.polygonSides === 10 && '⬢'}
+                    {asset.polygonSides === 12 && '⬢'}
+                  </span>
+                )}
+              </div>
+              {/* Label */}
+              <span className="text-[8px] text-muted-foreground text-center leading-tight">
+                {asset.label}
+              </span>
+            </button>
+          ))}
+        </div>
+      </ScrollArea>
     </div>
   );
 }

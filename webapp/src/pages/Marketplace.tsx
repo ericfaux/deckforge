@@ -51,7 +51,14 @@ export default function Marketplace() {
       setDesigns(data);
     } catch (error: any) {
       console.error('Failed to load designs:', error);
-      setError(error.message || 'Failed to load marketplace designs');
+      
+      // If the marketplace table doesn't exist yet, show empty state instead of error
+      if (error.message?.includes('marketplace_designs') || error.message?.includes('schema cache')) {
+        console.log('Marketplace feature coming soon - database table not yet created');
+        setDesigns([]);
+      } else {
+        setError(error.message || 'Failed to load marketplace designs');
+      }
     } finally {
       setLoading(false);
     }
