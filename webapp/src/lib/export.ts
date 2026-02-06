@@ -1,4 +1,5 @@
 import { CanvasObject } from '@/store/deckforge';
+import { generateArcPath, generateWarpPath, pathPointsToSvgPath, hasTextWarp } from '@/lib/text-warp';
 
 // Default deck dimensions (32mm standard size)
 const DEFAULT_DECK_WIDTH = 96;
@@ -118,7 +119,7 @@ export async function exportToPNG(
     if (obj.type === 'image' && obj.src) {
       await renderImage(ctx, obj.src, x, y, width, height, obj);
     } else if (obj.type === 'text' && obj.text) {
-      renderText(ctx, obj.text, x, y, width, height, obj);
+      renderText(ctx, obj.text, x, y, width, height, obj, objects);
     } else if (obj.type === 'shape') {
       renderShape(ctx, x, y, width, height, obj);
     } else if (obj.type === 'line') {
@@ -180,6 +181,35 @@ async function renderImage(
   });
 }
 
+/**
+ * Sample points along an SVG path string for character placement.
+ * Uses an offscreen SVG path element to get point positions.
+ */
+function samplePathPoints(pathData: string, numSamples: number): Array<{ x: number; y: number; angle: number }> {
+  const svgNs = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(svgNs, 'svg');
+  const pathEl = document.createElementNS(svgNs, 'path');
+  pathEl.setAttribute('d', pathData);
+  svg.appendChild(pathEl);
+  document.body.appendChild(svg);
+
+  const totalLen = pathEl.getTotalLength();
+  const points: Array<{ x: number; y: number; angle: number }> = [];
+
+  for (let i = 0; i < numSamples; i++) {
+    const dist = (i / Math.max(numSamples - 1, 1)) * totalLen;
+    const pt = pathEl.getPointAtLength(dist);
+    // Get tangent angle by sampling a nearby point
+    const delta = 0.5;
+    const ptNext = pathEl.getPointAtLength(Math.min(dist + delta, totalLen));
+    const angle = Math.atan2(ptNext.y - pt.y, ptNext.x - pt.x);
+    points.push({ x: pt.x, y: pt.y, angle });
+  }
+
+  document.body.removeChild(svg);
+  return points;
+}
+
 function renderText(
   ctx: CanvasRenderingContext2D,
   text: string,
@@ -187,13 +217,15 @@ function renderText(
   y: number,
   width: number,
   height: number,
-  obj: CanvasObject
+  obj: CanvasObject,
+  allObjects: CanvasObject[] = []
 ) {
   const fontSize = obj.fontSize || 20;
   const fontFamily = obj.fontFamily || 'Arial';
+  const fontWeight = obj.fontWeight || 'normal';
+  const fontStyle = obj.fontStyle || 'normal';
 
-  ctx.font = `${fontSize}px ${fontFamily}`;
-  ctx.textAlign = 'center';
+  ctx.font = `${fontStyle} ${fontWeight} ${fontSize}px ${fontFamily}`;
   ctx.textBaseline = 'middle';
 
   // Apply gradient or solid fill
@@ -205,7 +237,7 @@ function renderText(
     const y1 = centerY - Math.sin(angle) * height / 2;
     const x2 = centerX + Math.cos(angle) * width / 2;
     const y2 = centerY + Math.sin(angle) * height / 2;
-    
+
     const gradient = ctx.createLinearGradient(x1, y1, x2, y2);
     obj.gradientStops.forEach(stop => {
       gradient.addColorStop(stop.offset, stop.color);
@@ -215,7 +247,7 @@ function renderText(
     const centerX = x + width / 2;
     const centerY = y + height / 2;
     const radius = Math.max(width, height) / 2;
-    
+
     const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius);
     obj.gradientStops.forEach(stop => {
       gradient.addColorStop(stop.offset, stop.color);
@@ -238,21 +270,126 @@ function renderText(
     ctx.filter = buildFilterString(obj);
   }
 
-  // Apply glow effect
-  if (obj.glow?.enabled) {
-    const glowIterations = 3;
-    for (let i = 0; i < glowIterations; i++) {
-      ctx.save();
-      ctx.shadowColor = `${obj.glow.color}${Math.round(obj.glow.intensity * 255).toString(16).padStart(2, '0')}`;
-      ctx.shadowBlur = obj.glow.radius * (i + 1);
-      ctx.globalCompositeOperation = 'lighter';
-      ctx.fillText(text, x + width / 2, y + height / 2);
-      ctx.restore();
+  // Check if text has warp
+  const isWarped = hasTextWarp(obj);
+
+  if (isWarped) {
+    // Render warped text by placing individual characters along a path
+    let pathData = '';
+
+    if (obj.textPathId) {
+      // Look up path from the objects list passed to this function
+      const pathObj = allObjects.find((o: CanvasObject) => o.id === obj.textPathId);
+      if (pathObj?.pathPoints) {
+        pathData = pathPointsToSvgPath(pathObj.pathPoints, 0, 0);
+      }
+    } else if (obj.warpType && obj.warpType !== 'none') {
+      if ((obj.warpType === 'arc-up' || obj.warpType === 'arc-down') && obj.arcAngle) {
+        const direction = obj.warpType === 'arc-up'
+          ? (obj.arcDirection || 'convex')
+          : (obj.arcDirection === 'convex' ? 'concave' : 'convex');
+        pathData = generateArcPath({
+          width,
+          height,
+          radius: obj.arcRadius,
+          angle: obj.arcAngle,
+          direction,
+        });
+      } else {
+        pathData = generateWarpPath({
+          warpType: obj.warpType,
+          width,
+          height,
+          intensity: obj.warpIntensity ?? 50,
+        });
+      }
     }
+
+    if (pathData) {
+      // Measure each character width
+      const chars = text.split('');
+      const charWidths = chars.map(ch => ctx.measureText(ch).width);
+      const totalTextWidth = charWidths.reduce((sum, w) => sum + w, 0);
+
+      // Sample enough points along the path
+      const pathPoints = samplePathPoints(pathData, 200);
+      if (pathPoints.length < 2) {
+        // Fallback to flat text
+        ctx.textAlign = 'center';
+        ctx.fillText(text, x + width / 2, y + height / 2);
+      } else {
+        // Calculate path total length from samples
+        let pathTotalLen = 0;
+        for (let i = 1; i < pathPoints.length; i++) {
+          const dx = pathPoints[i].x - pathPoints[i - 1].x;
+          const dy = pathPoints[i].y - pathPoints[i - 1].y;
+          pathTotalLen += Math.sqrt(dx * dx + dy * dy);
+        }
+
+        // Calculate start offset based on alignment
+        let startDist = 0;
+        if (obj.align === 'center') startDist = (pathTotalLen - totalTextWidth) / 2;
+        else if (obj.align === 'right') startDist = pathTotalLen - totalTextWidth;
+        startDist = Math.max(0, startDist);
+
+        // Place each character
+        let currentDist = startDist;
+        ctx.textAlign = 'center';
+
+        for (let i = 0; i < chars.length; i++) {
+          const charCenter = currentDist + charWidths[i] / 2;
+
+          // Find the point on the path at this distance
+          let accDist = 0;
+          let ptIdx = 0;
+          for (let j = 1; j < pathPoints.length; j++) {
+            const dx = pathPoints[j].x - pathPoints[j - 1].x;
+            const dy = pathPoints[j].y - pathPoints[j - 1].y;
+            const segLen = Math.sqrt(dx * dx + dy * dy);
+            if (accDist + segLen >= charCenter) {
+              ptIdx = j - 1;
+              break;
+            }
+            accDist += segLen;
+            ptIdx = j - 1;
+          }
+
+          const pt = pathPoints[Math.min(ptIdx, pathPoints.length - 1)];
+
+          ctx.save();
+          ctx.translate(x + pt.x, y + pt.y);
+          ctx.rotate(pt.angle);
+          ctx.fillText(chars[i], 0, 0);
+          ctx.restore();
+
+          currentDist += charWidths[i];
+        }
+      }
+    } else {
+      // No valid path, fallback to flat
+      ctx.textAlign = 'center';
+      ctx.fillText(text, x + width / 2, y + height / 2);
+    }
+  } else {
+    // Standard flat text rendering
+    ctx.textAlign = 'center';
+
+    // Apply glow effect
+    if (obj.glow?.enabled) {
+      const glowIterations = 3;
+      for (let i = 0; i < glowIterations; i++) {
+        ctx.save();
+        ctx.shadowColor = `${obj.glow.color}${Math.round(obj.glow.intensity * 255).toString(16).padStart(2, '0')}`;
+        ctx.shadowBlur = obj.glow.radius * (i + 1);
+        ctx.globalCompositeOperation = 'lighter';
+        ctx.fillText(text, x + width / 2, y + height / 2);
+        ctx.restore();
+      }
+    }
+
+    ctx.fillText(text, x + width / 2, y + height / 2);
   }
 
-  ctx.fillText(text, x + width / 2, y + height / 2);
-  
   // Reset shadow and filter
   ctx.shadowOffsetX = 0;
   ctx.shadowOffsetY = 0;

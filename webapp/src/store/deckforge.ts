@@ -188,6 +188,13 @@ export interface CanvasObject {
     blur: number;
     color: string;
   };
+  // Text warp / curved text
+  warpType?: 'none' | 'arc-up' | 'arc-down' | 'bridge' | 'valley' | 'flag' | 'bulge' | 'fish-eye' | 'rise' | 'wave' | 'inflate';
+  warpIntensity?: number; // 0-100, default 50
+  arcRadius?: number; // Radius for arc (auto-calculated if not set)
+  arcAngle?: number; // 0-360, how much of the circle the text covers
+  arcDirection?: 'convex' | 'concave'; // convex = smile, concave = frown
+  textPathId?: string; // ID of a path object to attach text to
 }
 
 interface HistoryState {

@@ -1446,6 +1446,137 @@ export function Inspector() {
                   </select>
                 </div>
 
+                {/* Text Warp / Curved Text */}
+                <Accordion type="single" collapsible className="border-t border-border">
+                  <AccordionItem value="text-warp">
+                    <AccordionTrigger className="text-[10px] uppercase tracking-widest text-muted-foreground py-2">
+                      Text Warp {selectedObject.warpType && selectedObject.warpType !== 'none' && '✓'}
+                    </AccordionTrigger>
+                    <AccordionContent className="space-y-3 pt-2">
+                      {/* Warp Preset */}
+                      <div className="space-y-2">
+                        <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                          Warp Style
+                        </Label>
+                        <select
+                          value={selectedObject.warpType || 'none'}
+                          onChange={(e) => {
+                            const warpType = e.target.value as any;
+                            const updates: Partial<CanvasObject> = { warpType };
+                            if (warpType === 'none') {
+                              updates.warpIntensity = undefined;
+                              updates.arcRadius = undefined;
+                              updates.arcAngle = undefined;
+                              updates.arcDirection = undefined;
+                            } else if (!selectedObject.warpIntensity) {
+                              updates.warpIntensity = 50;
+                            }
+                            if ((warpType === 'arc-up' || warpType === 'arc-down') && !selectedObject.arcAngle) {
+                              updates.arcAngle = 180;
+                              updates.arcDirection = 'convex';
+                            }
+                            updateWithHistory(updates);
+                          }}
+                          className="w-full h-8 text-xs bg-secondary border border-border px-2"
+                        >
+                          <option value="none">None (Flat)</option>
+                          <optgroup label="Arc">
+                            <option value="arc-up">Arc Up</option>
+                            <option value="arc-down">Arc Down</option>
+                          </optgroup>
+                          <optgroup label="Warp">
+                            <option value="bridge">Bridge</option>
+                            <option value="valley">Valley</option>
+                            <option value="flag">Flag</option>
+                            <option value="wave">Wave</option>
+                          </optgroup>
+                          <optgroup label="Distort">
+                            <option value="bulge">Bulge</option>
+                            <option value="fish-eye">Fish Eye</option>
+                            <option value="rise">Rise</option>
+                            <option value="inflate">Inflate</option>
+                          </optgroup>
+                        </select>
+                      </div>
+
+                      {/* Warp Intensity */}
+                      {selectedObject.warpType && selectedObject.warpType !== 'none' && (
+                        <div className="space-y-2">
+                          <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                            Intensity: {selectedObject.warpIntensity ?? 50}%
+                          </Label>
+                          <Slider
+                            value={[selectedObject.warpIntensity ?? 50]}
+                            onValueChange={([value]) => updateWithHistory({ warpIntensity: value })}
+                            max={100}
+                            min={0}
+                            step={1}
+                            className="flex-1"
+                          />
+                        </div>
+                      )}
+
+                      {/* Arc-specific controls */}
+                      {(selectedObject.warpType === 'arc-up' || selectedObject.warpType === 'arc-down') && (
+                        <>
+                          <div className="space-y-2">
+                            <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                              Arc Angle: {selectedObject.arcAngle ?? 180}°
+                            </Label>
+                            <Slider
+                              value={[selectedObject.arcAngle ?? 180]}
+                              onValueChange={([value]) => updateWithHistory({ arcAngle: value })}
+                              max={350}
+                              min={10}
+                              step={5}
+                              className="flex-1"
+                            />
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                              Direction
+                            </Label>
+                            <div className="grid grid-cols-2 gap-1">
+                              {(['convex', 'concave'] as const).map(dir => (
+                                <button
+                                  key={dir}
+                                  onClick={() => updateWithHistory({ arcDirection: dir })}
+                                  className={`h-8 text-xs capitalize transition-colors ${
+                                    (selectedObject.arcDirection || 'convex') === dir
+                                      ? 'bg-primary text-primary-foreground'
+                                      : 'bg-secondary hover:bg-secondary/80'
+                                  }`}
+                                >
+                                  {dir === 'convex' ? 'Convex ⌣' : 'Concave ⌢'}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        </>
+                      )}
+
+                      {/* Text on Path indicator */}
+                      {selectedObject.textPathId && (
+                        <div className="space-y-2">
+                          <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                            Attached to Path
+                          </Label>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-muted-foreground flex-1">Following custom path</span>
+                            <button
+                              onClick={() => updateWithHistory({ textPathId: undefined })}
+                              className="h-7 px-2 text-[10px] uppercase bg-destructive/10 text-destructive border border-destructive/30 hover:bg-destructive/20 transition-colors"
+                            >
+                              Detach
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+
                 {/* Text Shadow */}
                 <Accordion type="single" collapsible className="border-t border-border">
                   <AccordionItem value="text-shadow">
