@@ -52,6 +52,8 @@ import { CommandPalette } from '@/components/CommandPalette';
 import { QuickAccessToolbar } from '@/components/deckforge/QuickAccessToolbar';
 import { EditorLoadingSkeleton } from '@/components/deckforge/EditorLoadingSkeleton';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useWindowSize } from '@/hooks/use-window-size';
+import { ToolbarOverflowMenu, OverflowItem } from '@/components/deckforge/ToolbarOverflowMenu';
 import { cn } from '@/lib/utils';
 import { toastUtils } from '@/lib/toast-utils';
 import toast from 'react-hot-toast';
@@ -66,6 +68,12 @@ export default function DeckForge() {
   const { isAuthenticated } = useAuthStore();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const { width: windowWidth } = useWindowSize();
+
+  // Toolbar overflow: determine how many collapsible items to hide
+  // >1400px: show all, 1000-1400px: collapse last 4, <1000px: collapse last 8
+  const toolbarOverflowCount = windowWidth > 1400 ? 0 : windowWidth >= 1000 ? 4 : 8;
+
   const [isInitializing, setIsInitializing] = useState(true);
   const [saveStatus, setSaveStatus] = useState<string>('');
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -1077,7 +1085,7 @@ export default function DeckForge() {
           </div>
         )}
 
-        <div className="ml-auto flex items-center gap-4 overflow-x-auto overflow-y-hidden scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent pr-2 py-3 min-w-0 flex-shrink">
+        <div className="ml-auto flex items-center gap-3 overflow-hidden pr-2 py-3 min-w-0 flex-shrink flex-wrap-reverse justify-end">
           {!isMobile && (
             <>
               <span className="text-[10px] text-muted-foreground uppercase tracking-widest hidden md:block mr-4">
@@ -1295,273 +1303,170 @@ export default function DeckForge() {
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              <Tooltip delayDuration={300}>
-                <TooltipTrigger asChild>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => openModal('brandKit', setIsBrandKitModalOpen)}
-                    disabled={loadingModal === 'brandKit'}
-                    className="gap-2"
-                  >
-                    {loadingModal === 'brandKit' ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Palette className="w-4 h-4" />
+              {/* Collapsible toolbar items — responsive overflow */}
+              {(() => {
+                const collapsibleItems: OverflowItem[] = [
+                  {
+                    id: 'brandKit',
+                    label: 'Brand Kits',
+                    icon: <Palette className="w-4 h-4" />,
+                    onClick: () => openModal('brandKit', setIsBrandKitModalOpen),
+                    disabled: loadingModal === 'brandKit',
+                    badge: 'PRO',
+                    badgeColor: 'accent',
+                  },
+                  {
+                    id: 'colorExtractor',
+                    label: 'Extract Colors',
+                    icon: <Palette className="w-4 h-4" />,
+                    onClick: () => openModal('colorExtractor', setIsColorExtractorOpen),
+                    disabled: loadingModal === 'colorExtractor',
+                    shortcut: 'Ctrl+Shift+E',
+                  },
+                  {
+                    id: 'fontUpload',
+                    label: 'Custom Fonts',
+                    icon: <Type className="w-4 h-4" />,
+                    onClick: () => openModal('fontUpload', setIsFontUploadModalOpen),
+                    disabled: loadingModal === 'fontUpload',
+                  },
+                  {
+                    id: 'history',
+                    label: 'History',
+                    icon: <Clock className="w-4 h-4" />,
+                    onClick: () => openModal('history', setIsVersionHistoryOpen),
+                    disabled: loadingModal === 'history',
+                    shortcut: 'Ctrl+H',
+                  },
+                  {
+                    id: 'preview',
+                    label: 'Preview',
+                    icon: <Play className="w-4 h-4" />,
+                    onClick: () => openModal('preview', setIsAnimationPreviewOpen),
+                    disabled: loadingModal === 'preview',
+                    shortcut: 'Ctrl+P',
+                  },
+                  {
+                    id: '3dPrint',
+                    label: '3D Print',
+                    icon: <span className="text-sm">🖨️</span>,
+                    onClick: () => openModal('3dPrint', setIs3DGeneratorOpen),
+                    disabled: loadingModal === '3dPrint',
+                    badge: 'NEW',
+                    badgeColor: 'primary',
+                    variant: 'gradient' as const,
+                    gradientClass: 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0',
+                  },
+                  {
+                    id: 'templates',
+                    label: 'Templates',
+                    icon: <Sparkles className="w-4 h-4" />,
+                    onClick: () => openModal('templates', setIsTemplateGalleryOpen),
+                    disabled: loadingModal === 'templates',
+                    badge: 'NEW',
+                    badgeColor: 'primary',
+                  },
+                  {
+                    id: 'marketplace',
+                    label: 'Marketplace',
+                    icon: <Sparkles className="w-4 h-4" />,
+                    onClick: () => navigate('/marketplace'),
+                    badge: 'NEW',
+                    badgeColor: 'primary',
+                  },
+                  {
+                    id: 'parkBuilder',
+                    label: 'Park Builder',
+                    icon: <Ruler className="w-4 h-4" />,
+                    onClick: () => navigate('/fingerpark'),
+                    badge: 'NEW',
+                    badgeColor: 'primary',
+                  },
+                  {
+                    id: 'gallery',
+                    label: 'Gallery',
+                    icon: <Sparkles className="w-4 h-4" />,
+                    onClick: () => navigate('/gallery'),
+                  },
+                ];
+
+                const visibleCount = collapsibleItems.length - toolbarOverflowCount;
+                const visibleItems = collapsibleItems.slice(0, visibleCount);
+                const overflowItems = collapsibleItems.slice(visibleCount);
+
+                return (
+                  <>
+                    {visibleItems.map((item) => (
+                      <Tooltip key={item.id} delayDuration={300}>
+                        <TooltipTrigger asChild>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={item.onClick}
+                            disabled={item.disabled}
+                            className={cn("gap-2", item.gradientClass)}
+                          >
+                            {item.disabled ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              item.icon
+                            )}
+                            {item.label}
+                            {item.badge && (
+                              <span className={cn(
+                                "ml-1 text-[9px]",
+                                item.badgeColor === 'accent' ? "text-accent" :
+                                item.badgeColor === 'primary' ? "text-primary" :
+                                "text-muted-foreground",
+                                item.gradientClass && "bg-white/20 px-1 rounded"
+                              )}>
+                                {item.badge}
+                              </span>
+                            )}
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold">{item.label}</span>
+                            {item.shortcut && (
+                              <kbd className="px-1.5 py-0.5 text-xs bg-muted border border-border rounded font-mono">{item.shortcut}</kbd>
+                            )}
+                          </div>
+                        </TooltipContent>
+                      </Tooltip>
+                    ))}
+
+                    {currentDesignId && (
+                      <Tooltip delayDuration={300}>
+                        <TooltipTrigger asChild>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => openModal('share', setIsShareModalOpen)}
+                            disabled={loadingModal === 'share'}
+                            className="gap-2"
+                          >
+                            {loadingModal === 'share' ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <Share2 className="w-4 h-4" />
+                            )}
+                            Share
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <span className="font-semibold">Share Design</span>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Get shareable link or embed code
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
                     )}
-                    Brand Kits
-                    <span className="ml-1 text-[9px] text-accent">PRO</span>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <span className="font-semibold">Brand Kits</span>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Save and reuse color palettes and styles
-                  </p>
-                </TooltipContent>
-              </Tooltip>
 
-              <Tooltip delayDuration={300}>
-                <TooltipTrigger asChild>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => openModal('colorExtractor', setIsColorExtractorOpen)}
-                    disabled={loadingModal === 'colorExtractor'}
-                    className="gap-2"
-                  >
-                    {loadingModal === 'colorExtractor' ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Palette className="w-4 h-4" />
-                    )}
-                    Extract Colors
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <span className="font-semibold">Extract Colors</span>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Extract color palette from any image
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-
-              <Tooltip delayDuration={300}>
-                <TooltipTrigger asChild>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => openModal('fontUpload', setIsFontUploadModalOpen)}
-                    disabled={loadingModal === 'fontUpload'}
-                    className="gap-2"
-                  >
-                    {loadingModal === 'fontUpload' ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Type className="w-4 h-4" />
-                    )}
-                    Custom Fonts
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <span className="font-semibold">Custom Fonts</span>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Upload and use your own font files
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-
-              {currentDesignId && (
-                <Tooltip delayDuration={300}>
-                  <TooltipTrigger asChild>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => openModal('share', setIsShareModalOpen)}
-                      disabled={loadingModal === 'share'}
-                      className="gap-2"
-                    >
-                      {loadingModal === 'share' ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <Share2 className="w-4 h-4" />
-                      )}
-                      Share
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <span className="font-semibold">Share Design</span>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Get shareable link or embed code
-                    </p>
-                  </TooltipContent>
-                </Tooltip>
-              )}
-
-              <Tooltip delayDuration={300}>
-                <TooltipTrigger asChild>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => openModal('history', setIsVersionHistoryOpen)}
-                    disabled={loadingModal === 'history'}
-                    className="gap-2"
-                  >
-                    {loadingModal === 'history' ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Clock className="w-4 h-4" />
-                    )}
-                    History
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <span className="font-semibold">Version History</span>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    View and restore previous versions
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-
-              <Tooltip delayDuration={300}>
-                <TooltipTrigger asChild>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => openModal('preview', setIsAnimationPreviewOpen)}
-                    disabled={loadingModal === 'preview'}
-                    className="gap-2"
-                  >
-                    {loadingModal === 'preview' ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Play className="w-4 h-4" />
-                    )}
-                    Preview
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <span className="font-semibold">3D Preview</span>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Animate your deck in 3D rotation
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-
-              <Tooltip delayDuration={300}>
-                <TooltipTrigger asChild>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => openModal('3dPrint', setIs3DGeneratorOpen)}
-                    disabled={loadingModal === '3dPrint'}
-                    className="gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0"
-                  >
-                    {loadingModal === '3dPrint' ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <span className="text-sm font-bold">🖨️ 3D Print</span>
-                    )}
-                    {loadingModal !== '3dPrint' && (
-                      <span className="ml-1 text-[9px] bg-white/20 px-1 rounded">NEW</span>
-                    )}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <span className="font-semibold">3D Print Generator</span>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Create 3D-printable deck file
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-
-              <Tooltip delayDuration={300}>
-                <TooltipTrigger asChild>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => openModal('templates', setIsTemplateGalleryOpen)}
-                    disabled={loadingModal === 'templates'}
-                    className="gap-2"
-                  >
-                    {loadingModal === 'templates' ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Sparkles className="w-4 h-4" />
-                    )}
-                    Templates
-                    <span className="ml-1 text-[9px] text-primary">NEW</span>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <span className="font-semibold">Design Templates</span>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Start from pre-made deck designs
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-
-              <Tooltip delayDuration={300}>
-                <TooltipTrigger asChild>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => navigate('/marketplace')}
-                    className="gap-2"
-                  >
-                    <Sparkles className="w-4 h-4" />
-                    Marketplace
-                    <span className="ml-1 text-[9px] text-primary">NEW</span>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <span className="font-semibold">Design Marketplace</span>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Browse community designs
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-
-              <Tooltip delayDuration={300}>
-                <TooltipTrigger asChild>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => navigate('/fingerpark')}
-                    className="gap-2"
-                  >
-                    <Ruler className="w-4 h-4" />
-                    Park Builder
-                    <span className="ml-1 text-[9px] text-primary">NEW</span>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <span className="font-semibold">Fingerpark Builder</span>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Design your custom skatepark
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-
-              <Tooltip delayDuration={300}>
-                <TooltipTrigger asChild>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => navigate('/gallery')}
-                    className="gap-2"
-                  >
-                    <Sparkles className="w-4 h-4" />
-                    Gallery
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <span className="font-semibold">Public Gallery</span>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Browse featured deck designs
-                  </p>
-                </TooltipContent>
-              </Tooltip>
+                    <ToolbarOverflowMenu items={overflowItems} />
+                  </>
+                );
+              })()}
 
               <Tooltip delayDuration={300}>
                 <TooltipTrigger asChild>
