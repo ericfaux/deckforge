@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Upload, X, Loader2, CheckCircle, Trash2 } from 'lucide-react';
+import { Upload, X, Loader2, CheckCircle, Trash2, Type } from 'lucide-react';
 import { fontsApi, Font, loadFont } from '@/lib/fonts';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
