@@ -1430,6 +1430,29 @@ export function WorkbenchStage() {
   // Snap tooltip label
   const [snapTooltip, setSnapTooltip] = useState<string | null>(null);
 
+  // Welcome overlay state - persisted via localStorage
+  const [showWelcome, setShowWelcome] = useState(() => {
+    return !localStorage.getItem('deckforge_welcome_dismissed') && objects.length === 0;
+  });
+  const [welcomeFading, setWelcomeFading] = useState(false);
+
+  const dismissWelcome = useCallback(() => {
+    if (!showWelcome || welcomeFading) return;
+    setWelcomeFading(true);
+    localStorage.setItem('deckforge_welcome_dismissed', 'true');
+    setTimeout(() => {
+      setShowWelcome(false);
+      setWelcomeFading(false);
+    }, 300);
+  }, [showWelcome, welcomeFading]);
+
+  // Auto-dismiss when first object is added
+  useEffect(() => {
+    if (objects.length > 0 && showWelcome) {
+      dismissWelcome();
+    }
+  }, [objects.length, showWelcome, dismissWelcome]);
+
   // Handle container resize
   useEffect(() => {
     const updateSize = () => {
@@ -1624,6 +1647,10 @@ export function WorkbenchStage() {
     if (activeTool === 'pen' || activeTool === 'brush') {
       return;
     }
+    // Dismiss welcome overlay on any canvas click
+    if (showWelcome) {
+      dismissWelcome();
+    }
     if (e.target === e.currentTarget) {
       // Exit isolation mode if clicking on empty space
       if (isolatedGroupId) {
@@ -1632,7 +1659,7 @@ export function WorkbenchStage() {
         selectObject(null);
       }
     }
-  }, [selectObject, activeTool, isolatedGroupId, exitIsolationMode]);
+  }, [selectObject, activeTool, isolatedGroupId, exitIsolationMode, showWelcome, dismissWelcome]);
 
   const handleObjectSelect = useCallback((objId: string, e?: React.MouseEvent) => {
     // Check if object is locked
@@ -2331,152 +2358,7 @@ export function WorkbenchStage() {
           />
         )}
 
-        {/* Improved empty state with onboarding */}
-        {objects.length === 0 && activeTool !== 'pen' && activeTool !== 'brush' && (
-          <g transform={`translate(${deckX}, ${deckY}) scale(${stageScale})`} pointerEvents="none">
-            {/* Welcome message */}
-            <text
-              x={deckWidth / 2}
-              y={deckHeight / 2 - 40}
-              textAnchor="middle"
-              fontSize={16 / stageScale}
-              fontFamily="Oswald, sans-serif"
-              fill="#ffffff"
-              stroke="#333333"
-              strokeWidth={0.5 / stageScale}
-              fontWeight="bold"
-            >
-              Welcome to DeckForge
-            </text>
-            
-            <text
-              x={deckWidth / 2}
-              y={deckHeight / 2 - 20}
-              textAnchor="middle"
-              fontSize={11 / stageScale}
-              fontFamily="sans-serif"
-              fill="#888888"
-            >
-              Design your custom fingerboard deck
-            </text>
-
-            {/* Quick start icons */}
-            <g transform={`translate(${deckWidth / 2 - 60}, ${deckHeight / 2 + 10})`}>
-              {/* Text tool hint */}
-              <g>
-                <rect
-                  x={0}
-                  y={0}
-                  width={35}
-                  height={35}
-                  fill="rgba(255, 255, 255, 0.1)"
-                  stroke="#ffffff"
-                  strokeWidth={1.5 / stageScale}
-                  rx={3 / stageScale}
-                />
-                <text
-                  x={17.5}
-                  y={23}
-                  textAnchor="middle"
-                  fontSize={20 / stageScale}
-                  fill="#ffffff"
-                  fontWeight="bold"
-                >
-                  T
-                </text>
-              </g>
-              
-              {/* Stickers hint */}
-              <g transform="translate(40, 0)">
-                <rect
-                  x={0}
-                  y={0}
-                  width={35}
-                  height={35}
-                  fill="rgba(255, 255, 255, 0.1)"
-                  stroke="#ffffff"
-                  strokeWidth={1.5 / stageScale}
-                  rx={3 / stageScale}
-                />
-                <text
-                  x={17.5}
-                  y={23}
-                  textAnchor="middle"
-                  fontSize={20 / stageScale}
-                  fill="#ffffff"
-                  fontWeight="bold"
-                >
-                  S
-                </text>
-              </g>
-              
-              {/* Upload hint */}
-              <g transform="translate(80, 0)">
-                <rect
-                  x={0}
-                  y={0}
-                  width={35}
-                  height={35}
-                  fill="rgba(255, 255, 255, 0.1)"
-                  stroke="#ffffff"
-                  strokeWidth={1.5 / stageScale}
-                  rx={3 / stageScale}
-                />
-                <text
-                  x={17.5}
-                  y={23}
-                  textAnchor="middle"
-                  fontSize={20 / stageScale}
-                  fill="#ffffff"
-                  fontWeight="bold"
-                >
-                  U
-                </text>
-              </g>
-            </g>
-
-            {/* Hints text */}
-            <text
-              x={deckWidth / 2}
-              y={deckHeight / 2 + 60}
-              textAnchor="middle"
-              fontSize={9 / stageScale}
-              fontFamily="monospace"
-              fill="#666666"
-            >
-              Press T for Text  •  S for Stickers  •  U to Upload
-            </text>
-            
-            <text
-              x={deckWidth / 2}
-              y={deckHeight / 2 + 75}
-              textAnchor="middle"
-              fontSize={9 / stageScale}
-              fontFamily="monospace"
-              fill="#555555"
-            >
-              Or click the tool rail on the left
-            </text>
-
-            {/* Arrow pointing to tool rail */}
-            <g transform={`translate(-10, ${deckHeight / 2})`}>
-              <path
-                d="M 0 0 L -15 -5 L -15 5 Z"
-                fill="#ffffff"
-                opacity={0.7}
-              />
-              <line
-                x1={-15}
-                y1={0}
-                x2={-30}
-                y2={0}
-                stroke="#ffffff"
-                strokeWidth={2 / stageScale}
-                opacity={0.7}
-              />
-            </g>
-          </g>
-        )}
+        {/* Welcome overlay moved to HTML overlay below */}
 
         {/* Pen Tool - Must be LAST to be on top */}
         <PenTool
@@ -2503,6 +2385,56 @@ export function WorkbenchStage() {
 
       {/* Zoom controls */}
       <ZoomControls />
+
+      {/* Welcome overlay */}
+      {showWelcome && (
+        <div
+          className="absolute inset-0 flex items-center justify-center pointer-events-none z-40"
+          style={{
+            opacity: welcomeFading ? 0 : 1,
+            transition: 'opacity 300ms ease-out',
+          }}
+        >
+          <div className="relative text-center pointer-events-auto">
+            <button
+              onClick={(e) => { e.stopPropagation(); dismissWelcome(); }}
+              className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-white/10 hover:bg-white/20 text-white/60 hover:text-white flex items-center justify-center text-sm transition-colors"
+              aria-label="Dismiss welcome"
+            >
+              ×
+            </button>
+            <h2
+              className="text-white font-bold text-base"
+              style={{ fontFamily: 'Oswald, sans-serif', textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}
+            >
+              Welcome to DeckForge
+            </h2>
+            <p className="text-[#888] text-[11px] mt-1">
+              Design your custom fingerboard deck
+            </p>
+            <div className="flex gap-2 justify-center mt-4">
+              {[
+                { key: 'T', label: 'Text' },
+                { key: 'S', label: 'Stickers' },
+                { key: 'U', label: 'Upload' },
+              ].map((item) => (
+                <div
+                  key={item.key}
+                  className="w-9 h-9 rounded border border-white/80 bg-white/10 flex items-center justify-center text-white font-bold text-lg"
+                >
+                  {item.key}
+                </div>
+              ))}
+            </div>
+            <p className="text-[#666] text-[9px] font-mono mt-3">
+              Press T for Text  •  S for Stickers  •  U to Upload
+            </p>
+            <p className="text-[#555] text-[9px] font-mono mt-1">
+              Or click the tool rail on the left
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Isolation mode banner */}
       {isolatedGroupId && (
