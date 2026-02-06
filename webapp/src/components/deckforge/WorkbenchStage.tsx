@@ -11,7 +11,11 @@ import { HardwareGuideOverlay } from './HardwareGuideOverlay';
 import { BleedSafeZoneOverlay } from './BleedSafeZoneOverlay';
 import { MeasurementTool } from './MeasurementTool';
 import { SymmetryGuide } from './SymmetryGuide';
+import { DraggableGuides } from './DraggableGuides';
+import { BooleanToolbar } from './BooleanToolbar';
+import { PathEditor } from './PathEditor';
 import { getGuideSnapTargets, getAccurateDeckPath } from '@/lib/deck-guides';
+import { guidesToSnapTargets } from '@/lib/snapping';
 import { CanvasContextMenu } from './ContextMenu';
 import { ContextMenu as ContextMenuRoot, ContextMenuTrigger } from '@/components/ui/context-menu';
 import { SelectionBox } from './SelectionBox';
@@ -1414,6 +1418,14 @@ export function WorkbenchStage() {
     isolatedGroupId,
     enterIsolationMode,
     exitIsolationMode,
+    guides,
+    showGuides,
+    addGuide,
+    updateGuide: updateGuidePosition,
+    removeGuide,
+    editingPathId,
+    setEditingPath,
+    booleanOperation,
   } = useDeckForgeStore();
 
   // Get current deck dimensions based on selected size
@@ -1421,10 +1433,17 @@ export function WorkbenchStage() {
   const deckWidth = currentDeckSize.canvasWidth;
   const deckHeight = currentDeckSize.canvasHeight;
 
-  // Guide snap targets for hardware guides, safe zones, etc.
+  // Guide snap targets for hardware guides, safe zones, and custom user guides
   const guideSnapTargets = useMemo(
-    () => (showHardwareGuide || showBleedSafeZone) ? getGuideSnapTargets(deckSizeId) : [],
-    [deckSizeId, showHardwareGuide, showBleedSafeZone]
+    () => {
+      const targets = (showHardwareGuide || showBleedSafeZone) ? getGuideSnapTargets(deckSizeId) : [];
+      // Add custom user guides as snap targets
+      if (showGuides && guides.length > 0) {
+        targets.push(...guidesToSnapTargets(guides));
+      }
+      return targets;
+    },
+    [deckSizeId, showHardwareGuide, showBleedSafeZone, showGuides, guides]
   );
 
   // Snap tooltip label
@@ -1681,42 +1700,46 @@ export function WorkbenchStage() {
   }, [selectObject, toggleSelectObject, objects]);
 
   // Handle pen tool path completion
-  const handlePenToolComplete = useCallback((pathData: string, strokeWidth: number, strokeColor: string, opacity: number, dashStyle: 'solid' | 'dashed' | 'dotted', mode: 'click' | 'draw') => {
+  const handlePenToolComplete = useCallback((pathData: string, strokeWidth: number, strokeColor: string, opacity: number, dashStyle: 'solid' | 'dashed' | 'dotted', mode: 'click' | 'draw', penPathPoints?: Array<{ x: number; y: number; cp1x?: number; cp1y?: number; cp2x?: number; cp2y?: number }>) => {
     // Close tool immediately to prevent further clicks
     setActiveTool(null);
-    
-    // Parse SVG path data into PathPoints
-    const pathPoints: Array<{ x: number; y: number; cp1x?: number; cp1y?: number; cp2x?: number; cp2y?: number }> = [];
-    
-    // Simple regex to extract coordinates from path data
-    const commands = pathData.match(/[MLQCmlqc][^MLQCmlqc]*/g) || [];
-    
-    commands.forEach((cmd) => {
-      const type = cmd[0];
-      const coords = cmd.slice(1).trim().split(/[\s,]+/).map(Number);
-      
-      if (type === 'M' || type === 'm') {
-        pathPoints.push({ x: coords[0], y: coords[1] });
-      } else if (type === 'L' || type === 'l') {
-        pathPoints.push({ x: coords[0], y: coords[1] });
-      } else if (type === 'Q' || type === 'q') {
-        pathPoints.push({
-          x: coords[2],
-          y: coords[3],
-          cp1x: coords[0],
-          cp1y: coords[1],
-        });
-      } else if (type === 'C' || type === 'c') {
-        pathPoints.push({
-          x: coords[4],
-          y: coords[5],
-          cp1x: coords[0],
-          cp1y: coords[1],
-          cp2x: coords[2],
-          cp2y: coords[3],
-        });
-      }
-    });
+
+    // Use directly provided pathPoints if available (from upgraded PenTool), otherwise parse from pathData
+    let pathPoints: Array<{ x: number; y: number; cp1x?: number; cp1y?: number; cp2x?: number; cp2y?: number }> = [];
+
+    if (penPathPoints && penPathPoints.length > 0) {
+      pathPoints = penPathPoints;
+    } else {
+      // Fallback: parse SVG path data into PathPoints
+      const commands = pathData.match(/[MLQCmlqc][^MLQCmlqc]*/g) || [];
+
+      commands.forEach((cmd) => {
+        const type = cmd[0];
+        const coords = cmd.slice(1).trim().split(/[\s,]+/).map(Number);
+
+        if (type === 'M' || type === 'm') {
+          pathPoints.push({ x: coords[0], y: coords[1] });
+        } else if (type === 'L' || type === 'l') {
+          pathPoints.push({ x: coords[0], y: coords[1] });
+        } else if (type === 'Q' || type === 'q') {
+          pathPoints.push({
+            x: coords[2],
+            y: coords[3],
+            cp1x: coords[0],
+            cp1y: coords[1],
+          });
+        } else if (type === 'C' || type === 'c') {
+          pathPoints.push({
+            x: coords[4],
+            y: coords[5],
+            cp1x: coords[0],
+            cp1y: coords[1],
+            cp2x: coords[2],
+            cp2y: coords[3],
+          });
+        }
+      });
+    }
 
     if (pathPoints.length > 0) {
       // Calculate actual bounding box from path points
@@ -2196,7 +2219,11 @@ export function WorkbenchStage() {
                         }
                       });
                     } : undefined}
-                    onDoubleClick={obj.type === 'group' ? () => enterIsolationMode(obj.id) : undefined}
+                    onDoubleClick={
+                      obj.type === 'group' ? () => enterIsolationMode(obj.id) :
+                      obj.type === 'path' ? () => setEditingPath(obj.id) :
+                      undefined
+                    }
                   />
                 </g>
               );
@@ -2246,13 +2273,28 @@ export function WorkbenchStage() {
             />
           )}
 
-          {/* Ruler overlay */}
+          {/* Ruler overlay (with drag-to-create guides) */}
           <RulerOverlay
             deckX={deckX}
             deckY={deckY}
             stageScale={stageScale}
             enabled={showRulers}
           />
+
+          {/* Custom draggable guides */}
+          {showGuides && guides.length > 0 && activeTool !== 'pen' && activeTool !== 'brush' && (
+            <DraggableGuides
+              guides={guides}
+              deckX={deckX}
+              deckY={deckY}
+              stageScale={stageScale}
+              deckWidth={deckWidth}
+              deckHeight={deckHeight}
+              onAddGuide={addGuide}
+              onUpdateGuide={(id, position) => updateGuidePosition(id, { position })}
+              onDeleteGuide={removeGuide}
+            />
+          )}
 
           {/* Selection box for multi-select */}
           <g transform={`translate(${deckX}, ${deckY}) scale(${stageScale})`}>
@@ -2359,6 +2401,40 @@ export function WorkbenchStage() {
         )}
 
         {/* Welcome overlay moved to HTML overlay below */}
+
+        {/* Boolean operations toolbar (shows when 2+ objects selected) */}
+        {selectedIds.length >= 2 && activeTool !== 'pen' && activeTool !== 'brush' && (
+          <foreignObject
+            x={deckX + deckWidth * stageScale + 12}
+            y={deckY}
+            width={180}
+            height={80}
+          >
+            <BooleanToolbar
+              selectedIds={selectedIds}
+              onBooleanOp={(op) => booleanOperation(selectedIds, op)}
+            />
+          </foreignObject>
+        )}
+
+        {/* Path node editor (double-click a path to edit) */}
+        {editingPathId && (() => {
+          const editingObj = objects.find(o => o.id === editingPathId);
+          if (!editingObj || editingObj.type !== 'path' || !editingObj.pathPoints) return null;
+          return (
+            <PathEditor
+              object={editingObj}
+              deckX={deckX}
+              deckY={deckY}
+              stageScale={stageScale}
+              onUpdatePoints={(newPoints) => {
+                saveToHistory();
+                updateObject(editingPathId, { pathPoints: newPoints });
+              }}
+              onClose={() => setEditingPath(null)}
+            />
+          );
+        })()}
 
         {/* Pen Tool - Must be LAST to be on top */}
         <PenTool
