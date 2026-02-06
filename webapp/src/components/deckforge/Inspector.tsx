@@ -13,6 +13,7 @@ import { FontUploadModal } from './FontUploadModal';
 import { GoogleFontPicker } from './GoogleFontPicker';
 import { ComponentErrorBoundary } from '@/components/ComponentErrorBoundary';
 import { ObjectEffects } from './ObjectEffects';
+import { HueRotateDial } from './HueRotateDial';
 import { GradientPicker } from './GradientPicker';
 import { ColorPicker } from './ColorPicker';
 import { useDeckDimensions } from './WorkbenchStage';
@@ -1208,7 +1209,7 @@ export function Inspector() {
               </div>
             )}
 
-            {/* Filters Section - Punk Zine Aesthetic */}
+            {/* ═══════════ FILTERS SECTION ═══════════ */}
             <div className="pt-4 border-t border-border space-y-4">
               <div className="py-2">
                 <span className="font-display text-[10px] uppercase tracking-widest text-muted-foreground">
@@ -1300,87 +1301,93 @@ export function Inspector() {
                 </p>
               </div>
 
-              {/* Colorize */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                    Colorize
-                  </Label>
-                  <button
-                    onClick={() => updateWithHistory({
-                      colorize: selectedObject.colorize ? null : '#00ff00'
-                    })}
-                    className={`w-10 h-5 rounded-full transition-colors relative ${
-                      selectedObject.colorize ? 'bg-primary' : 'bg-muted'
-                    }`}
-                  >
-                    <span
-                      className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-transform ${
-                        selectedObject.colorize ? 'translate-x-5' : 'translate-x-0.5'
-                      }`}
-                    />
-                  </button>
-                </div>
-                {selectedObject.colorize && (
-                  <div className="flex items-center gap-2 pt-1">
-                    <input
-                      type="color"
-                      value={selectedObject.colorize}
-                      onChange={(e) => updateWithHistory({ colorize: e.target.value })}
-                      className="w-8 h-8 border border-border cursor-pointer bg-transparent"
-                    />
-                    <div className="flex gap-1">
-                      {['#ccff00', '#ff6600', '#00ffff', '#ff00ff', '#ffffff'].map((color) => (
-                        <button
-                          key={color}
-                          onClick={() => updateWithHistory({ colorize: color })}
-                          className={`w-6 h-6 border ${
-                            selectedObject.colorize === color ? 'border-primary' : 'border-border'
-                          }`}
-                          style={{ backgroundColor: color }}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
-                <p className="text-[9px] text-muted-foreground">
-                  Cast in a single punk zine color
-                </p>
-              </div>
-            </div>
-
-            {/* Remix Toolbar Section */}
-            <div className="pt-4 border-t border-border space-y-4">
-              <div className="py-2">
-                <span className="font-display text-[10px] uppercase tracking-widest text-muted-foreground">
-                  Remix Effects
-                </span>
-              </div>
-
-              {/* Hue Shift */}
+              {/* Blur */}
               <div className="space-y-2">
                 <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                  Hue Shift
+                  Blur
                 </Label>
                 <div className="flex items-center gap-3">
                   <Slider
-                    value={[selectedObject.hueRotate ?? 0]}
-                    onValueChange={([value]) => updateWithHistory({ hueRotate: value })}
-                    max={360}
+                    value={[selectedObject.blur ?? 0]}
+                    onValueChange={([value]) => updateWithHistory({ blur: value })}
+                    max={20}
                     min={0}
-                    step={15}
+                    step={0.5}
                     className="flex-1"
                   />
                   <span className="text-[11px] font-mono w-10 text-right">
-                    {selectedObject.hueRotate ?? 0}°
+                    {selectedObject.blur ?? 0}px
                   </span>
                 </div>
-                <div
-                  className="h-3 w-full rounded"
-                  style={{
-                    background: 'linear-gradient(to right, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000)'
-                  }}
-                />
+              </div>
+
+              {/* Saturate */}
+              <div className="space-y-2">
+                <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                  Saturate
+                </Label>
+                <div className="flex items-center gap-3">
+                  <Slider
+                    value={[selectedObject.saturate ?? 100]}
+                    onValueChange={([value]) => updateWithHistory({ saturate: value })}
+                    max={200}
+                    min={0}
+                    step={5}
+                    className="flex-1"
+                  />
+                  <span className="text-[11px] font-mono w-10 text-right">
+                    {selectedObject.saturate ?? 100}%
+                  </span>
+                </div>
+              </div>
+
+              {/* Sepia */}
+              <div className="space-y-2">
+                <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                  Sepia
+                </Label>
+                <div className="flex items-center gap-3">
+                  <Slider
+                    value={[selectedObject.sepia ?? 0]}
+                    onValueChange={([value]) => updateWithHistory({ sepia: value })}
+                    max={100}
+                    min={0}
+                    step={5}
+                    className="flex-1"
+                  />
+                  <span className="text-[11px] font-mono w-10 text-right">
+                    {selectedObject.sepia ?? 0}%
+                  </span>
+                </div>
+              </div>
+
+              {/* Hue Rotate - Circular Dial */}
+              <HueRotateDial
+                value={selectedObject.hueRotate ?? 0}
+                onChange={(value) => updateWithHistory({ hueRotate: value })}
+              />
+
+              {/* Posterize */}
+              <div className="space-y-2">
+                <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                  Posterize
+                </Label>
+                <div className="flex items-center gap-3">
+                  <Slider
+                    value={[selectedObject.posterize ?? 32]}
+                    onValueChange={([value]) => updateWithHistory({ posterize: value })}
+                    max={32}
+                    min={2}
+                    step={1}
+                    className="flex-1"
+                  />
+                  <span className="text-[11px] font-mono w-14 text-right">
+                    {selectedObject.posterize ?? 32} lvl
+                  </span>
+                </div>
+                <p className="text-[9px] text-muted-foreground">
+                  Reduce color levels (lower = more posterized)
+                </p>
               </div>
 
               {/* Invert Toggle */}
@@ -1431,7 +1438,135 @@ export function Inspector() {
                 </p>
               </div>
 
-              {/* Reset Remix Button */}
+              {/* Colorize */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                    Colorize
+                  </Label>
+                  <button
+                    onClick={() => updateWithHistory({
+                      colorize: selectedObject.colorize ? null : '#00ff00'
+                    })}
+                    className={`w-10 h-5 rounded-full transition-colors relative ${
+                      selectedObject.colorize ? 'bg-primary' : 'bg-muted'
+                    }`}
+                  >
+                    <span
+                      className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-transform ${
+                        selectedObject.colorize ? 'translate-x-5' : 'translate-x-0.5'
+                      }`}
+                    />
+                  </button>
+                </div>
+                {selectedObject.colorize && (
+                  <div className="flex items-center gap-2 pt-1">
+                    <input
+                      type="color"
+                      value={selectedObject.colorize}
+                      onChange={(e) => updateWithHistory({ colorize: e.target.value })}
+                      className="w-8 h-8 border border-border cursor-pointer bg-transparent"
+                    />
+                    <div className="flex gap-1">
+                      {['#ccff00', '#ff6600', '#00ffff', '#ff00ff', '#ffffff'].map((color) => (
+                        <button
+                          key={color}
+                          onClick={() => updateWithHistory({ colorize: color })}
+                          className={`w-6 h-6 border ${
+                            selectedObject.colorize === color ? 'border-primary' : 'border-border'
+                          }`}
+                          style={{ backgroundColor: color }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <p className="text-[9px] text-muted-foreground">
+                  Tint the whole object in a single color
+                </p>
+              </div>
+
+              {/* Duotone */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                    Duotone
+                  </Label>
+                  <button
+                    onClick={() => updateWithHistory({
+                      duotone: {
+                        enabled: !(selectedObject.duotone?.enabled),
+                        color1: selectedObject.duotone?.color1 || '#000000',
+                        color2: selectedObject.duotone?.color2 || '#ccff00',
+                      }
+                    })}
+                    className={`w-10 h-5 rounded-full transition-colors relative ${
+                      selectedObject.duotone?.enabled ? 'bg-primary' : 'bg-muted'
+                    }`}
+                  >
+                    <span
+                      className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-transform ${
+                        selectedObject.duotone?.enabled ? 'translate-x-5' : 'translate-x-0.5'
+                      }`}
+                    />
+                  </button>
+                </div>
+                {selectedObject.duotone?.enabled && (
+                  <div className="space-y-2 pt-1">
+                    <div className="flex items-center gap-2">
+                      <Label className="text-[9px] text-muted-foreground w-16">Shadow</Label>
+                      <input
+                        type="color"
+                        value={selectedObject.duotone?.color1 || '#000000'}
+                        onChange={(e) => updateWithHistory({
+                          duotone: { ...selectedObject.duotone!, color1: e.target.value }
+                        })}
+                        className="w-8 h-6 border border-border cursor-pointer bg-transparent"
+                      />
+                      <div className="flex gap-1">
+                        {['#000000', '#1a1a1a', '#0000ff', '#ff0000'].map((c) => (
+                          <button
+                            key={c}
+                            onClick={() => updateWithHistory({
+                              duotone: { ...selectedObject.duotone!, color1: c }
+                            })}
+                            className="w-5 h-5 border border-border"
+                            style={{ backgroundColor: c }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Label className="text-[9px] text-muted-foreground w-16">Highlight</Label>
+                      <input
+                        type="color"
+                        value={selectedObject.duotone?.color2 || '#ccff00'}
+                        onChange={(e) => updateWithHistory({
+                          duotone: { ...selectedObject.duotone!, color2: e.target.value }
+                        })}
+                        className="w-8 h-6 border border-border cursor-pointer bg-transparent"
+                      />
+                      <div className="flex gap-1">
+                        {['#ccff00', '#00ffff', '#ff00ff', '#ffff00'].map((c) => (
+                          <button
+                            key={c}
+                            onClick={() => updateWithHistory({
+                              duotone: { ...selectedObject.duotone!, color2: c }
+                            })}
+                            className="w-5 h-5 border border-border"
+                            style={{ backgroundColor: c }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+                <p className="text-[9px] text-muted-foreground">
+                  Two-color tone mapping effect
+                </p>
+              </div>
+
+              {/* Reset All Filters */}
               <button
                 onClick={() => updateWithHistory({
                   hueRotate: 0,
@@ -1441,7 +1576,12 @@ export function Inspector() {
                   brightness: 100,
                   grayscale: 0,
                   threshold: false,
-                  colorize: null
+                  colorize: null,
+                  blur: 0,
+                  saturate: 100,
+                  sepia: 0,
+                  posterize: 32,
+                  duotone: { enabled: false, color1: '#000000', color2: '#ccff00' },
                 })}
                 className="w-full border border-border hover:border-primary transition-colors py-1.5 px-3 text-[10px] uppercase tracking-wider flex items-center justify-center gap-2"
               >
@@ -1450,21 +1590,7 @@ export function Inspector() {
               </button>
             </div>
 
-            {/* Advanced Effects Section */}
-            <Accordion type="single" collapsible className="border-t border-border">
-              <AccordionItem value="effects" className="border-none">
-                <AccordionTrigger className="py-3 px-0 hover:no-underline">
-                  <span className="font-display text-[10px] uppercase tracking-widest text-muted-foreground">
-                    Advanced Effects
-                  </span>
-                </AccordionTrigger>
-                <AccordionContent className="pb-4">
-                  <AdvancedEffects />
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
-
-            {/* Object Effects Section */}
+            {/* ═══════════ EFFECTS SECTION ═══════════ */}
             <div className="pt-4 border-t border-border">
               <div className="py-2">
                 <span className="font-display text-[10px] uppercase tracking-widest text-muted-foreground">
@@ -1473,6 +1599,20 @@ export function Inspector() {
               </div>
               <ObjectEffects />
             </div>
+
+            {/* Advanced Effects (Gradients) */}
+            <Accordion type="single" collapsible className="border-t border-border">
+              <AccordionItem value="effects" className="border-none">
+                <AccordionTrigger className="py-3 px-0 hover:no-underline">
+                  <span className="font-display text-[10px] uppercase tracking-widest text-muted-foreground">
+                    Advanced (Gradients)
+                  </span>
+                </AccordionTrigger>
+                <AccordionContent className="pb-4">
+                  <AdvancedEffects />
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
 
             {/* Pattern Generator Section */}
             {(selectedObject.type === 'shape' || selectedObject.type === 'image' || selectedObject.type === 'sticker') && (
