@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { getDeckSize } from '@/lib/deck-sizes';
+import { loadFontsForObjects } from '@/lib/google-fonts';
 
 export type ToolType = 'templates' | 'graphics' | 'text' | 'uploads' | 'background' | 'finishes' | 'stickers' | 'patterns' | 'textures' | 'lines' | 'pen';
 
@@ -859,8 +860,12 @@ export const useDeckForgeStore = create<DeckForgeState>((set, get) => ({
 
   // Design management
   loadDesign: (designData) => {
+    const objects = designData.objects || [];
+    // Load any Google Fonts used in the design
+    loadFontsForObjects(objects);
+
     set({
-      objects: designData.objects || [],
+      objects,
       textureOverlays: designData.textureOverlays || defaultTextureOverlays,
       selectedId: null,
       past: [],
