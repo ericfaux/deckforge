@@ -1,4 +1,4 @@
-import { ZoomIn, ZoomOut, Undo, Redo, Wrench, Scan, Ruler, Flipvertical2 } from 'lucide-react';
+import { ZoomIn, ZoomOut, Undo, Redo, Wrench, Scan, Ruler, FlipVertical2 } from 'lucide-react';
 import { useDeckForgeStore } from '@/store/deckforge';
 import { cn } from '@/lib/utils';
 import { EnhancedTooltip } from '@/components/ui/enhanced-tooltip';
@@ -137,7 +137,7 @@ export function ZoomControls() {
           onClick={() => { vibrate(10); toggleSymmetryGuide(); }}
           className={cn(btnClass, showSymmetryGuide ? btnActive : btnDefault)}
         >
-          <Flipvertical2 className="w-5 h-5 md:w-4 md:h-4" />
+          <FlipVertical2 className="w-5 h-5 md:w-4 md:h-4" />
         </button>
       </EnhancedTooltip>
     </div>
