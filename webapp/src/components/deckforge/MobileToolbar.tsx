@@ -23,6 +23,7 @@ interface MobileToolbarProps {
   onOpenLayers: () => void;
   isSaving: boolean;
   isExporting: boolean;
+  localSaveStatus?: 'idle' | 'saved';
 }
 
 export function MobileToolbar({
@@ -33,6 +34,7 @@ export function MobileToolbar({
   onOpenLayers,
   isSaving,
   isExporting,
+  localSaveStatus = 'idle',
 }: MobileToolbarProps) {
   const { undo, redo, past, future, selectedId, deleteObject } = useDeckForgeStore();
   const [isExpanded, setIsExpanded] = useState(false);
@@ -148,6 +150,12 @@ export function MobileToolbar({
         {/* Expanded section */}
         {isExpanded && (
           <div className="border-t border-border p-3 space-y-2">
+            {localSaveStatus === 'saved' && (
+              <div className="flex items-center justify-center gap-1.5 py-1">
+                <div className="w-2 h-2 bg-green-500 rounded-full" />
+                <span className="text-[11px] text-green-600 font-medium">Saved</span>
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-2">
               <button
                 onClick={() => {
