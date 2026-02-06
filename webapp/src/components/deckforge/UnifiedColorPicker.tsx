@@ -63,6 +63,7 @@ const LINEAR_PRESETS: { name: string; stops: GradientStop[]; angle: number }[] =
   { name: 'Aurora', stops: [{ offset: 0, color: '#43e97b' }, { offset: 1, color: '#38f9d7' }], angle: 135 },
   { name: 'Berry', stops: [{ offset: 0, color: '#8e2de2' }, { offset: 1, color: '#4a00e0' }], angle: 135 },
   { name: 'Gold', stops: [{ offset: 0, color: '#f7971e' }, { offset: 1, color: '#ffd200' }], angle: 135 },
+  { name: 'Pastel', stops: [{ offset: 0, color: '#fbc2eb' }, { offset: 0.5, color: '#a6c1ee' }, { offset: 1, color: '#fad0c4' }], angle: 135 },
 ];
 
 const RADIAL_PRESETS: { name: string; stops: GradientStop[] }[] = [
@@ -72,6 +73,7 @@ const RADIAL_PRESETS: { name: string; stops: GradientStop[] }[] = [
   { name: 'Orb', stops: [{ offset: 0, color: '#00d2ff' }, { offset: 1, color: '#3a47d5' }] },
   { name: 'Vortex', stops: [{ offset: 0, color: '#fc5c7d' }, { offset: 0.5, color: '#6a82fb' }, { offset: 1, color: '#000033' }] },
   { name: 'Eclipse', stops: [{ offset: 0, color: '#1a1a2e' }, { offset: 0.5, color: '#e94560' }, { offset: 1, color: '#0f3460' }] },
+  { name: 'Pastel', stops: [{ offset: 0, color: '#ffecd2' }, { offset: 0.5, color: '#fcb69f' }, { offset: 1, color: '#fbc2eb' }] },
 ];
 
 // ─── Color utilities ─────────────────────────────────────────────
@@ -667,17 +669,45 @@ export function UnifiedColorPicker({
         </label>
       )}
 
-      {/* Preview swatch + toggle */}
-      <div className="flex items-center gap-2">
-        <button
-          className="w-10 h-10 rounded border-2 border-border shadow-sm cursor-pointer hover:scale-105 transition-transform shrink-0"
-          style={swatchStyle}
-          onClick={() => setIsOpen(!isOpen)}
-          title={activeTab === 'solid' ? color : `${activeTab} gradient`}
-        />
-        {/* Quick hex input for solid */}
-        {activeTab === 'solid' && (
-          <>
+      {/* ─── Fill mode toggle: [Solid] [Gradient] ─── always visible ─── */}
+      {showGradients && (
+        <div className="grid grid-cols-2 gap-1">
+          <button
+            onClick={() => handleTabChange('solid')}
+            className={cn(
+              "py-1.5 px-2 text-[10px] uppercase tracking-wider font-medium rounded-sm border transition-colors",
+              activeTab === 'solid'
+                ? "border-primary bg-primary text-primary-foreground"
+                : "border-border hover:border-primary/50 bg-secondary text-muted-foreground"
+            )}
+          >
+            Solid
+          </button>
+          <button
+            onClick={() => handleTabChange(activeTab === 'radial-gradient' ? 'radial-gradient' : 'linear-gradient')}
+            className={cn(
+              "py-1.5 px-2 text-[10px] uppercase tracking-wider font-medium rounded-sm border transition-colors",
+              activeTab !== 'solid'
+                ? "border-primary bg-primary text-primary-foreground"
+                : "border-border hover:border-primary/50 bg-secondary text-muted-foreground"
+            )}
+          >
+            Gradient
+          </button>
+        </div>
+      )}
+
+      {/* ═══════════ SOLID MODE ═══════════ */}
+      {activeTab === 'solid' && (
+        <>
+          {/* Preview swatch + quick controls */}
+          <div className="flex items-center gap-2">
+            <button
+              className="w-10 h-10 rounded border-2 border-border shadow-sm cursor-pointer hover:scale-105 transition-transform shrink-0"
+              style={{ backgroundColor: color }}
+              onClick={() => setIsOpen(!isOpen)}
+              title={color}
+            />
             <input
               type="color"
               value={color}
@@ -697,51 +727,20 @@ export function UnifiedColorPicker({
               maxLength={7}
               className="w-20 h-10 px-2 text-xs font-mono border border-border rounded bg-background"
             />
-          </>
-        )}
-        {activeTab !== 'solid' && (
-          <div
-            className="flex-1 h-10 rounded border border-border"
-            style={{ background: gradientPreviewCSS }}
-          />
-        )}
-        <Button
-          size="sm"
-          variant="outline"
-          className="shrink-0 h-10 w-10 p-0"
-          onClick={() => setIsOpen(!isOpen)}
-          title="Open color picker"
-        >
-          <ChevronDown className={cn("w-4 h-4 transition-transform", isOpen && "rotate-180")} />
-        </Button>
-      </div>
+            <Button
+              size="sm"
+              variant="outline"
+              className="shrink-0 h-10 w-10 p-0"
+              onClick={() => setIsOpen(!isOpen)}
+              title="Open color picker"
+            >
+              <ChevronDown className={cn("w-4 h-4 transition-transform", isOpen && "rotate-180")} />
+            </Button>
+          </div>
 
-      {/* Expanded picker */}
-      {isOpen && (
-        <div className="border border-accent/30 bg-accent/5 rounded p-3 space-y-3">
-          {/* Tab buttons */}
-          {showGradients && (
-            <div className="grid grid-cols-3 gap-1">
-              {(['solid', 'linear-gradient', 'radial-gradient'] as FillMode[]).map(tab => (
-                <button
-                  key={tab}
-                  onClick={() => handleTabChange(tab)}
-                  className={cn(
-                    "py-1.5 px-2 text-[9px] uppercase tracking-wider border transition-colors",
-                    activeTab === tab
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : "border-border hover:border-primary bg-secondary text-muted-foreground"
-                  )}
-                >
-                  {tab === 'solid' ? 'Solid' : tab === 'linear-gradient' ? 'Linear' : 'Radial'}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* ═══════════ SOLID TAB ═══════════ */}
-          {activeTab === 'solid' && (
-            <div className="space-y-3">
+          {/* Expanded solid picker */}
+          {isOpen && (
+            <div className="border border-accent/30 bg-accent/5 rounded p-3 space-y-3">
               {/* HSL Spectrum */}
               <SpectrumPicker color={color} onChange={handleColorChange} />
 
@@ -918,67 +917,57 @@ export function UnifiedColorPicker({
               </div>
             </div>
           )}
+        </>
+      )}
 
-          {/* ═══════════ LINEAR GRADIENT TAB ═══════════ */}
-          {activeTab === 'linear-gradient' && (
-            <div className="space-y-3">
-              <GradientStopEditor
-                stops={gc.stops}
-                angle={gc.angle}
-                isRadial={false}
-                onChange={(stops) => handleGradientChange({ stops })}
-                onAngleChange={(angle) => handleGradientChange({ angle })}
-              />
+      {/* ═══════════ GRADIENT MODE ═══════════ */}
+      {activeTab !== 'solid' && (
+        <div className="border border-accent/30 bg-accent/5 rounded p-3 space-y-3">
+          {/* Gradient type selector: Linear / Radial */}
+          <div className="grid grid-cols-2 gap-1">
+            <button
+              onClick={() => handleTabChange('linear-gradient')}
+              className={cn(
+                "py-1 px-2 text-[9px] uppercase tracking-wider font-medium rounded-sm border transition-colors",
+                activeTab === 'linear-gradient'
+                  ? "border-accent bg-accent text-accent-foreground"
+                  : "border-border hover:border-accent/50 bg-secondary text-muted-foreground"
+              )}
+            >
+              Linear
+            </button>
+            <button
+              onClick={() => handleTabChange('radial-gradient')}
+              className={cn(
+                "py-1 px-2 text-[9px] uppercase tracking-wider font-medium rounded-sm border transition-colors",
+                activeTab === 'radial-gradient'
+                  ? "border-accent bg-accent text-accent-foreground"
+                  : "border-border hover:border-accent/50 bg-secondary text-muted-foreground"
+              )}
+            >
+              Radial
+            </button>
+          </div>
 
-              {/* Reverse button */}
-              <Button
-                size="sm"
-                variant="outline"
-                className="w-full h-6 text-[9px] gap-1"
-                onClick={handleReverse}
-              >
-                <RotateCw className="w-3 h-3" /> Reverse
-              </Button>
+          {/* Live preview bar */}
+          <div
+            className="h-8 rounded border border-border"
+            style={{ background: gradientPreviewCSS }}
+            title={`${activeTab === 'linear-gradient' ? 'Linear' : 'Radial'} gradient preview`}
+          />
 
-              {/* Presets */}
-              <div className="space-y-1">
-                <span className="text-[9px] uppercase tracking-widest text-muted-foreground">Presets</span>
-                <div className="grid grid-cols-3 gap-1.5">
-                  {LINEAR_PRESETS.map(preset => (
-                    <button
-                      key={preset.name}
-                      onClick={() => {
-                        handleGradientChange({ stops: preset.stops, angle: preset.angle });
-                        toast.success(`Applied ${preset.name}`);
-                      }}
-                      className="group space-y-1"
-                    >
-                      <div
-                        className="h-6 rounded border border-border group-hover:border-primary transition-colors group-hover:scale-105 transform transition-transform"
-                        style={{ background: buildGradientCSS(preset.stops, 90) }}
-                      />
-                      <span className="text-[8px] text-muted-foreground group-hover:text-foreground block text-center">
-                        {preset.name}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
+          {/* Gradient stop editor with color pickers */}
+          <GradientStopEditor
+            stops={gc.stops}
+            angle={gc.angle}
+            isRadial={activeTab === 'radial-gradient'}
+            onChange={(stops) => handleGradientChange({ stops })}
+            onAngleChange={(angle) => handleGradientChange({ angle })}
+          />
 
-          {/* ═══════════ RADIAL GRADIENT TAB ═══════════ */}
+          {/* Radial-specific controls */}
           {activeTab === 'radial-gradient' && (
-            <div className="space-y-3">
-              <GradientStopEditor
-                stops={gc.stops}
-                angle={gc.angle}
-                isRadial={true}
-                onChange={(stops) => handleGradientChange({ stops })}
-                onAngleChange={(angle) => handleGradientChange({ angle })}
-              />
-
-              {/* Center X/Y controls */}
+            <>
               <div className="space-y-1.5">
                 <Label className="text-[9px] uppercase tracking-widest text-muted-foreground">
                   Center X: {Math.round((gc.centerX ?? 0.5) * 100)}%
@@ -1009,43 +998,51 @@ export function UnifiedColorPicker({
                   min={10} max={100} step={1}
                 />
               </div>
-
-              {/* Reverse button */}
-              <Button
-                size="sm"
-                variant="outline"
-                className="w-full h-6 text-[9px] gap-1"
-                onClick={handleReverse}
-              >
-                <RotateCw className="w-3 h-3" /> Reverse
-              </Button>
-
-              {/* Presets */}
-              <div className="space-y-1">
-                <span className="text-[9px] uppercase tracking-widest text-muted-foreground">Presets</span>
-                <div className="grid grid-cols-3 gap-1.5">
-                  {RADIAL_PRESETS.map(preset => (
-                    <button
-                      key={preset.name}
-                      onClick={() => {
-                        handleGradientChange({ stops: preset.stops, centerX: 0.5, centerY: 0.5, radius: 0.5 });
-                        toast.success(`Applied ${preset.name}`);
-                      }}
-                      className="group space-y-1"
-                    >
-                      <div
-                        className="h-6 rounded border border-border group-hover:border-primary transition-colors group-hover:scale-105 transform transition-transform"
-                        style={{ background: buildRadialGradientCSS(preset.stops) }}
-                      />
-                      <span className="text-[8px] text-muted-foreground group-hover:text-foreground block text-center">
-                        {preset.name}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
+            </>
           )}
+
+          {/* Reverse button */}
+          <Button
+            size="sm"
+            variant="outline"
+            className="w-full h-6 text-[9px] gap-1"
+            onClick={handleReverse}
+          >
+            <RotateCw className="w-3 h-3" /> Reverse
+          </Button>
+
+          {/* Gradient Presets */}
+          <div className="space-y-1">
+            <span className="text-[9px] uppercase tracking-widest text-muted-foreground">Presets</span>
+            <div className="grid grid-cols-3 gap-1.5">
+              {(activeTab === 'linear-gradient' ? LINEAR_PRESETS : RADIAL_PRESETS).map(preset => (
+                <button
+                  key={preset.name}
+                  onClick={() => {
+                    if (activeTab === 'linear-gradient') {
+                      handleGradientChange({ stops: preset.stops, angle: (preset as typeof LINEAR_PRESETS[number]).angle });
+                    } else {
+                      handleGradientChange({ stops: preset.stops, centerX: 0.5, centerY: 0.5, radius: 0.5 });
+                    }
+                    toast.success(`Applied ${preset.name}`);
+                  }}
+                  className="group space-y-1"
+                >
+                  <div
+                    className="h-6 rounded border border-border group-hover:border-primary transition-colors group-hover:scale-105 transform transition-transform"
+                    style={{
+                      background: activeTab === 'linear-gradient'
+                        ? buildGradientCSS(preset.stops, 90)
+                        : buildRadialGradientCSS(preset.stops)
+                    }}
+                  />
+                  <span className="text-[8px] text-muted-foreground group-hover:text-foreground block text-center">
+                    {preset.name}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       )}
     </div>
