@@ -1,4 +1,4 @@
-import { useEffect, useState, lazy, Suspense } from 'react';
+import { useEffect, useState, useRef, lazy, Suspense } from 'react';
 import { ToolRail } from '@/components/deckforge/ToolRail';
 import { ToolDrawer } from '@/components/deckforge/ToolDrawer';
 import { WorkbenchStage } from '@/components/deckforge/WorkbenchStage';
@@ -45,7 +45,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Save, Download, User, Sparkles, Clock, Menu, Share2, Play, ChevronDown, Palette, Undo, Redo, Type, Ruler, Loader2, FileImage, FileText, Zap, Image } from 'lucide-react';
+import { Save, Download, User, Sparkles, Clock, Menu, Share2, Play, ChevronDown, Palette, Undo, Redo, Type, Ruler, Loader2, FileImage, FileText, Zap, Image, Check, Cloud } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { KeyboardShortcuts } from '@/components/deckforge/KeyboardShortcuts';
 import { CommandPalette } from '@/components/CommandPalette';
@@ -55,9 +55,11 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import { toastUtils } from '@/lib/toast-utils';
 import toast from 'react-hot-toast';
+import { saveToLocalStorage, getLatestAutosave, hasAutosaveData, clearAutosaveData, type AutosaveData } from '@/lib/autosave';
+import { AutosaveRecoveryDialog } from '@/components/deckforge/AutosaveRecoveryDialog';
 
 export default function DeckForge() {
-  const { selectedId, selectedIds, deleteObject, undo, redo, getCanvasState, currentDesignId, setDesignId, setSaving, isSaving, objects, designName, createVersion, past, future, updateObject, saveToHistory, addObject, selectObject, setActiveTool, stageScale, setStageScale, arrayDuplicate, showRulers, toggleRulers, groupObjects, ungroupObject, flashCopiedObject, flashPastedObject, lastAction, undoRedoChangedIds, deckSizeId } = useDeckForgeStore();
+  const { selectedId, selectedIds, deleteObject, undo, redo, getCanvasState, currentDesignId, setDesignId, setSaving, isSaving, objects, designName, createVersion, past, future, updateObject, saveToHistory, addObject, selectObject, setActiveTool, stageScale, setStageScale, arrayDuplicate, showRulers, toggleRulers, groupObjects, ungroupObject, flashCopiedObject, flashPastedObject, lastAction, undoRedoChangedIds, deckSizeId, backgroundColor, textureOverlays, loadDesign, setBackgroundColor, setDeckSize } = useDeckForgeStore();
   
   // Get current deck dimensions (dynamic based on selected size)
   const { width: deckWidth, height: deckHeight } = useDeckDimensions();
@@ -85,6 +87,13 @@ export default function DeckForge() {
   const [mobileInspectorOpen, setMobileInspectorOpen] = useState(false);
   const [mobileLayersOpen, setMobileLayersOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Autosave recovery
+  const [recoveryDialogOpen, setRecoveryDialogOpen] = useState(false);
+  const [recoveryData, setRecoveryData] = useState<AutosaveData | null>(null);
+
+  // Local save status indicator
+  const [localSaveStatus, setLocalSaveStatus] = useState<'idle' | 'saved'>('idle');
   
   // Helper to open modals with loading state
   const openModal = (modalName: string, setterFn: (open: boolean) => void) => {
@@ -98,7 +107,18 @@ export default function DeckForge() {
 
   const handleSave = async () => {
     if (!isAuthenticated) {
-      navigate('/auth');
+      // Save locally first for guests
+      saveToLocalStorage({
+        timestamp: Date.now(),
+        objects,
+        textureOverlays,
+        backgroundColor,
+        deckSizeId,
+        designName,
+      });
+      setLocalSaveStatus('saved');
+      setTimeout(() => setLocalSaveStatus('idle'), 3000);
+      toastUtils.success('Design saved locally!', 'Login to save to cloud and access from anywhere');
       return;
     }
 
@@ -108,7 +128,7 @@ export default function DeckForge() {
 
     try {
       const canvasState = getCanvasState();
-      
+
       if (currentDesignId) {
         // Update existing design
         await designsAPI.update(currentDesignId, {
@@ -129,6 +149,16 @@ export default function DeckForge() {
         setHasUnsavedChanges(false);
         toastUtils.success('Design created successfully', 'Your design has been saved');
       }
+
+      // Also save locally as backup
+      saveToLocalStorage({
+        timestamp: Date.now(),
+        objects,
+        textureOverlays,
+        backgroundColor,
+        deckSizeId,
+        designName,
+      });
 
       setTimeout(() => setSaveStatus(''), 3000);
     } catch (err) {
@@ -376,6 +406,80 @@ export default function DeckForge() {
       cancelAutoSave(); // Cancel pending auto-save on unmount or deps change
     };
   }, [hasUnsavedChanges, currentDesignId, isAuthenticated, debouncedAutoSave, cancelAutoSave]);
+
+  // Check for autosave recovery data on mount
+  useEffect(() => {
+    if (hasAutosaveData() && objects.length === 0 && !currentDesignId) {
+      const data = getLatestAutosave();
+      if (data && data.objects.length > 0) {
+        setRecoveryData(data);
+        setRecoveryDialogOpen(true);
+      }
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Auto-save to localStorage every 30 seconds (for all users, including guests)
+  useEffect(() => {
+    if (objects.length === 0) return;
+
+    const interval = setInterval(() => {
+      saveToLocalStorage({
+        timestamp: Date.now(),
+        objects,
+        textureOverlays,
+        backgroundColor,
+        deckSizeId,
+        designName,
+      });
+    }, 30_000);
+
+    return () => clearInterval(interval);
+  }, [objects, textureOverlays, backgroundColor, deckSizeId, designName]);
+
+  // Save to localStorage on significant changes (add/remove object)
+  const prevObjectCountRef = useRef(objects.length);
+  useEffect(() => {
+    const prevCount = prevObjectCountRef.current;
+    prevObjectCountRef.current = objects.length;
+
+    // Only trigger on add/remove (count changed), not on every render
+    if (objects.length !== prevCount && objects.length > 0) {
+      saveToLocalStorage({
+        timestamp: Date.now(),
+        objects,
+        textureOverlays,
+        backgroundColor,
+        deckSizeId,
+        designName,
+      });
+    }
+  }, [objects.length]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleRecoverAutosave = () => {
+    if (recoveryData) {
+      loadDesign({
+        objects: recoveryData.objects,
+        textureOverlays: recoveryData.textureOverlays,
+        name: recoveryData.designName,
+        id: null,
+      });
+      if (recoveryData.backgroundColor) {
+        setBackgroundColor(recoveryData.backgroundColor);
+      }
+      if (recoveryData.deckSizeId) {
+        setDeckSize(recoveryData.deckSizeId);
+      }
+      toastUtils.success('Design recovered!', 'Your previous work has been restored');
+    }
+    setRecoveryDialogOpen(false);
+    setRecoveryData(null);
+  };
+
+  const handleDiscardAutosave = () => {
+    clearAutosaveData();
+    setRecoveryDialogOpen(false);
+    setRecoveryData(null);
+  };
 
   // Show feedback for undo/redo actions
   useEffect(() => {
@@ -1074,6 +1178,14 @@ export default function DeckForge() {
                 </TooltipContent>
               </Tooltip>
               
+              {/* Saved status indicator */}
+              {(localSaveStatus === 'saved' || (saveStatus && saveStatus.includes('Saved'))) && (
+                <div className="flex items-center gap-1.5 animate-in fade-in-50 duration-300">
+                  <div className="w-2 h-2 bg-green-500 rounded-full" />
+                  <span className="text-[11px] text-green-600 font-medium">Saved</span>
+                </div>
+              )}
+
               <Tooltip delayDuration={300}>
                 <TooltipTrigger asChild>
                   <div className="relative">
@@ -1105,7 +1217,11 @@ export default function DeckForge() {
                     <kbd className="px-1.5 py-0.5 text-xs bg-muted border border-border rounded font-mono">Ctrl+S</kbd>
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
-                    {hasUnsavedChanges ? 'You have unsaved changes' : 'Save to cloud storage'}
+                    {!isAuthenticated
+                      ? 'Save locally (login to save to cloud)'
+                      : hasUnsavedChanges
+                        ? 'You have unsaved changes'
+                        : 'Save to cloud storage'}
                   </p>
                 </TooltipContent>
               </Tooltip>
@@ -1548,6 +1664,7 @@ export default function DeckForge() {
           onOpenLayers={() => setMobileLayersOpen(true)}
           isSaving={isSaving}
           isExporting={isExporting}
+          localSaveStatus={localSaveStatus}
         />
       )}
 
@@ -1788,6 +1905,14 @@ export default function DeckForge() {
           onClose={() => setIsSmartDuplicateOpen(false)}
         />
       </Suspense>
+
+      {/* Autosave Recovery Dialog */}
+      <AutosaveRecoveryDialog
+        open={recoveryDialogOpen}
+        autosaveData={recoveryData}
+        onRecover={handleRecoverAutosave}
+        onDiscard={handleDiscardAutosave}
+      />
 
       {/* Batch Actions Toolbar (appears when multiple objects selected) */}
       <BatchActionsToolbar />
