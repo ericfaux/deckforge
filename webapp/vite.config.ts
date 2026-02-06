@@ -26,10 +26,13 @@ export default defineConfig(({ mode }) => ({
           // Core React and UI libraries
           'vendor-react': ['react', 'react-dom', 'react-router-dom'],
           'vendor-ui': ['lucide-react', 'react-hot-toast'],
-          
+
           // Heavy libraries
           'vendor-supabase': ['@supabase/supabase-js'],
-          
+          'vendor-konva': ['konva', 'react-konva'],
+          'vendor-three': ['three', '@react-three/fiber', '@react-three/drei'],
+          'jspdf': ['jspdf'],
+
           // Our component groups (lazy loaded)
           'modals': [
             './src/components/deckforge/ExportPreview.tsx',
@@ -43,7 +46,6 @@ export default defineConfig(({ mode }) => ({
         },
       },
     },
-    // Increase chunk size warning limit since we're splitting intentionally
-    chunkSizeWarningLimit: 600,
+    chunkSizeWarningLimit: 300,
   },
 }));
