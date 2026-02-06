@@ -1,4 +1,4 @@
-import { GripVertical, Eye, EyeOff, Lock, Unlock, Trash2, Type, ImageIcon, Square, Circle, Star, Sticker, Minus, Pen, Mountain, Layers as LayersIcon, Info, Search, X, Filter, Scissors } from 'lucide-react';
+import { GripVertical, Eye, EyeOff, Lock, Unlock, Trash2, Type, ImageIcon, Square, Circle, Star, Sticker, Minus, Pen, Mountain, Layers as LayersIcon, Info, Search, X, Filter, Scissors, Link } from 'lucide-react';
 import { useDeckForgeStore, CanvasObject } from '@/store/deckforge';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -273,7 +273,7 @@ function LayerItem({
 }
 
 export function LayerList() {
-  const { objects, selectedId, selectObject, deleteObject, moveLayer } = useDeckForgeStore();
+  const { objects, selectedId, selectedIds, selectObject, deleteObject, moveLayer, updateObject, saveToHistory } = useDeckForgeStore();
   
   // Filter state
   const [searchQuery, setSearchQuery] = useState('');
@@ -432,6 +432,44 @@ export function LayerList() {
           </div>
         )}
       </div>
+      {/* Attach Text to Path button - shown when both text and path are selected */}
+      {(() => {
+        const selIds = selectedIds.length > 0 ? selectedIds : (selectedId ? [selectedId] : []);
+        const selectedObjs = objects.filter(o => selIds.includes(o.id));
+        const textObj = selectedObjs.find(o => o.type === 'text');
+        const pathObj = selectedObjs.find(o => o.type === 'path' && !o.brushType);
+
+        if (textObj && pathObj) {
+          const isAttached = textObj.textPathId === pathObj.id;
+          return (
+            <div className="px-3 py-2 border-b border-border bg-primary/5">
+              <button
+                onClick={() => {
+                  saveToHistory();
+                  if (isAttached) {
+                    updateObject(textObj.id, { textPathId: undefined });
+                    toast.success('Text detached from path');
+                  } else {
+                    updateObject(textObj.id, { textPathId: pathObj.id, warpType: 'none' });
+                    toast.success('Text attached to path');
+                  }
+                }}
+                className={cn(
+                  "w-full h-8 flex items-center justify-center gap-2 text-xs font-medium uppercase tracking-wider transition-colors rounded",
+                  isAttached
+                    ? "bg-destructive/10 text-destructive border border-destructive/30 hover:bg-destructive/20"
+                    : "bg-primary text-primary-foreground hover:bg-primary/90"
+                )}
+              >
+                <Link className="w-3.5 h-3.5" />
+                {isAttached ? 'Detach Text from Path' : 'Attach Text to Path'}
+              </button>
+            </div>
+          );
+        }
+        return null;
+      })()}
+
       <ScrollArea className="h-48">
         {objects.length === 0 ? (
           <div className="p-6 text-center space-y-3 animate-in fade-in-50 duration-500">

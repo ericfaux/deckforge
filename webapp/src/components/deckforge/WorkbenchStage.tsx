@@ -16,6 +16,7 @@ import toast from 'react-hot-toast';
 import { getDeckSize } from '@/lib/deck-sizes';
 import { useSwipeGesture } from '@/hooks/use-swipe-gesture';
 import { useLongPress } from '@/hooks/use-long-press';
+import { generateArcPath, generateWarpPath, pathPointsToSvgPath, hasTextWarp } from '@/lib/text-warp';
 
 // Legacy deck dimensions (kept for backward compatibility - DO NOT USE)
 // Use useDeckDimensions() hook instead for dynamic sizing
@@ -447,7 +448,7 @@ const CanvasObjectItem = memo(function CanvasObjectItem({
   if (obj.type === 'text') {
     const gradientId = obj.gradientStops ? `gradient-${obj.id}` : null;
     const fillValue = gradientId ? `url(#${gradientId})` : (obj.colorize || obj.fill || '#ffffff');
-    
+
     // Apply text transform
     let displayText = obj.text || 'Text';
     if (obj.textTransform === 'uppercase') displayText = displayText.toUpperCase();
@@ -455,44 +456,95 @@ const CanvasObjectItem = memo(function CanvasObjectItem({
     else if (obj.textTransform === 'capitalize') {
       displayText = displayText.replace(/\b\w/g, char => char.toUpperCase());
     }
-    
+
     // Build text shadow
     let textShadow = 'none';
     if (obj.textShadow?.enabled) {
       const { offsetX, offsetY, blur, color } = obj.textShadow;
       textShadow = `${offsetX}px ${offsetY}px ${blur}px ${color}`;
     }
-    
+
     // Build text decoration (SVG doesn't support text-decoration directly, use tspan)
     const textDecoration = obj.textDecoration || 'none';
-    
+
     // Outline stroke for text
     const textOutline = getOutlineStrokeProps(obj, false);
 
+    // Check if text has warp/curve applied
+    const isWarped = hasTextWarp(obj);
+
+    // Generate warp path if needed
+    let warpPathData = '';
+    const warpPathId = `warp-path-${obj.id}`;
+
+    if (isWarped) {
+      if (obj.textPathId) {
+        // Text attached to a custom path - look up the path object
+        const allObjects = useDeckForgeStore.getState().objects;
+        const pathObj = allObjects.find(o => o.id === obj.textPathId);
+        if (pathObj?.pathPoints && pathObj.pathPoints.length > 0) {
+          warpPathData = pathPointsToSvgPath(pathObj.pathPoints, obj.x, obj.y);
+        }
+      } else if (obj.warpType && obj.warpType !== 'none') {
+        // Check for arc with direction
+        if ((obj.warpType === 'arc-up' || obj.warpType === 'arc-down') && obj.arcAngle) {
+          const direction = obj.warpType === 'arc-up'
+            ? (obj.arcDirection || 'convex')
+            : (obj.arcDirection === 'convex' ? 'concave' : 'convex');
+          warpPathData = generateArcPath({
+            width: obj.width * obj.scaleX,
+            height: obj.height * obj.scaleY,
+            radius: obj.arcRadius,
+            angle: obj.arcAngle,
+            direction,
+          });
+        } else {
+          warpPathData = generateWarpPath({
+            warpType: obj.warpType,
+            width: obj.width * obj.scaleX,
+            height: obj.height * obj.scaleY,
+            intensity: obj.warpIntensity ?? 50,
+          });
+        }
+      }
+    }
+
+    // Calculate startOffset for text alignment on path
+    let startOffset = '0%';
+    if (isWarped && warpPathData) {
+      if (obj.align === 'center') startOffset = '50%';
+      else if (obj.align === 'right') startOffset = '100%';
+    }
+
+    const gradientDefs = obj.gradientStops ? (
+      obj.fillType === 'radial-gradient' ? (
+        <radialGradient
+          id={gradientId!}
+          cx={`${(obj.gradientCenterX ?? 0.5) * 100}%`}
+          cy={`${(obj.gradientCenterY ?? 0.5) * 100}%`}
+          r={`${(obj.gradientRadius ?? 0.5) * 100}%`}
+        >
+          {obj.gradientStops.map((stop, i) => (
+            <stop key={i} offset={`${stop.offset * 100}%`} stopColor={stop.color} />
+          ))}
+        </radialGradient>
+      ) : (
+        <linearGradient id={gradientId!} x1="0%" y1="0%" x2="100%" y2="0%" gradientTransform={`rotate(${obj.gradientAngle || 0})`}>
+          {obj.gradientStops.map((stop, i) => (
+            <stop key={i} offset={`${stop.offset * 100}%`} stopColor={stop.color} />
+          ))}
+        </linearGradient>
+      )
+    ) : null;
+
     const textEl = (
       <>
-        {obj.gradientStops && (
-          <defs>
-            {obj.fillType === 'radial-gradient' ? (
-              <radialGradient
-                id={gradientId!}
-                cx={`${(obj.gradientCenterX ?? 0.5) * 100}%`}
-                cy={`${(obj.gradientCenterY ?? 0.5) * 100}%`}
-                r={`${(obj.gradientRadius ?? 0.5) * 100}%`}
-              >
-                {obj.gradientStops.map((stop, i) => (
-                  <stop key={i} offset={`${stop.offset * 100}%`} stopColor={stop.color} />
-                ))}
-              </radialGradient>
-            ) : (
-              <linearGradient id={gradientId!} x1="0%" y1="0%" x2="100%" y2="0%" gradientTransform={`rotate(${obj.gradientAngle || 0})`}>
-                {obj.gradientStops.map((stop, i) => (
-                  <stop key={i} offset={`${stop.offset * 100}%`} stopColor={stop.color} />
-                ))}
-              </linearGradient>
-            )}
-          </defs>
-        )}
+        <defs>
+          {gradientDefs}
+          {isWarped && warpPathData && (
+            <path id={warpPathId} d={warpPathData} fill="none" />
+          )}
+        </defs>
         <text
           transform={transform}
           fill={fillValue}
@@ -500,7 +552,10 @@ const CanvasObjectItem = memo(function CanvasObjectItem({
           fontFamily={obj.fontFamily || 'Oswald, sans-serif'}
           fontWeight={obj.fontWeight || 'normal'}
           fontStyle={obj.fontStyle || 'normal'}
-          textAnchor={obj.align === 'center' ? 'middle' : obj.align === 'right' ? 'end' : 'start'}
+          textAnchor={isWarped && warpPathData
+            ? (obj.align === 'center' ? 'middle' : obj.align === 'right' ? 'end' : 'start')
+            : (obj.align === 'center' ? 'middle' : obj.align === 'right' ? 'end' : 'start')
+          }
           opacity={obj.opacity}
           letterSpacing={obj.letterSpacing || 0}
           stroke={textOutline.stroke}
@@ -514,7 +569,16 @@ const CanvasObjectItem = memo(function CanvasObjectItem({
           }}
           onMouseDown={handleMouseDown}
         >
-          {displayText}
+          {isWarped && warpPathData ? (
+            <textPath
+              href={`#${warpPathId}`}
+              startOffset={startOffset}
+            >
+              {displayText}
+            </textPath>
+          ) : (
+            displayText
+          )}
         </text>
       </>
     );
