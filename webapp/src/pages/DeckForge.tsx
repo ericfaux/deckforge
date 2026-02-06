@@ -1857,6 +1857,10 @@ export default function DeckForge() {
         <ColorExtractorModal
           isOpen={isColorExtractorOpen}
           onClose={() => setIsColorExtractorOpen(false)}
+          onSaveAsBrandKit={() => {
+            setIsColorExtractorOpen(false);
+            openModal('brandKit', setIsBrandKitModalOpen);
+          }}
         />
 
         {/* Smart Duplicate */}
