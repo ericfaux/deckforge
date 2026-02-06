@@ -4,6 +4,210 @@ import { CanvasObject } from '@/store/deckforge';
 import { useDeckForgeStore } from '@/store/deckforge';
 import toast from 'react-hot-toast';
 
+// --- Template Preview SVG Component ---
+
+const PREVIEW_CANVAS_W = 750;
+const PREVIEW_CANVAS_H = 2450;
+
+function getDeckClipPath(w: number, h: number): string {
+  const r = w / 2;
+  return `
+    M 0 ${r}
+    Q 0 0 ${w / 2} 0
+    Q ${w} 0 ${w} ${r}
+    L ${w} ${h - r}
+    Q ${w} ${h} ${w / 2} ${h}
+    Q 0 ${h} 0 ${h - r}
+    Z
+  `;
+}
+
+function computeStarPoints(cx: number, cy: number, outerR: number): string {
+  const innerR = outerR * 0.4;
+  const pts: string[] = [];
+  for (let i = 0; i < 10; i++) {
+    const r = i % 2 === 0 ? outerR : innerR;
+    const angle = (Math.PI / 5) * i - Math.PI / 2;
+    pts.push(`${cx + r * Math.cos(angle)},${cy + r * Math.sin(angle)}`);
+  }
+  return pts.join(' ');
+}
+
+function PreviewObject({ obj, templateId, index }: { obj: CanvasObject; templateId: string; index: number }) {
+  const gradientId = `prev-grad-${templateId}-${index}`;
+  const transform = `rotate(${obj.rotation || 0}, ${obj.x + (obj.width * (obj.scaleX || 1)) / 2}, ${obj.y + (obj.height * (obj.scaleY || 1)) / 2})`;
+
+  if (obj.type === 'shape') {
+    const hasGradient = obj.gradientStops && obj.gradientStops.length > 0;
+    const fillValue = hasGradient ? `url(#${gradientId})` : (obj.fill || '#ffffff');
+
+    // For patterns, use the primary pattern color as a solid fill in preview
+    const patternFill = obj.patternType ? (obj.patternPrimaryColor || obj.fill || '#333') : null;
+
+    if (obj.shapeType === 'circle') {
+      return (
+        <g transform={transform} opacity={obj.opacity}>
+          {hasGradient && (
+            <defs>
+              <linearGradient id={gradientId} x1="0%" y1="0%" x2="0%" y2="100%" gradientTransform={`rotate(${(obj.gradientAngle || 0) - 90})`}>
+                {obj.gradientStops!.map((stop, i) => (
+                  <stop key={i} offset={`${stop.offset * 100}%`} stopColor={stop.color} />
+                ))}
+              </linearGradient>
+            </defs>
+          )}
+          <circle
+            cx={obj.x + obj.width / 2}
+            cy={obj.y + obj.height / 2}
+            r={obj.width / 2 * (obj.scaleX || 1)}
+            fill={patternFill || fillValue}
+            stroke={obj.stroke}
+            strokeWidth={obj.strokeWidth || 0}
+          />
+        </g>
+      );
+    }
+
+    if (obj.shapeType === 'star') {
+      const cx = obj.x + obj.width / 2;
+      const cy = obj.y + obj.height / 2;
+      const outerR = obj.width / 2 * (obj.scaleX || 1);
+      return (
+        <g transform={transform} opacity={obj.opacity}>
+          {hasGradient && (
+            <defs>
+              <linearGradient id={gradientId} x1="0%" y1="0%" x2="0%" y2="100%" gradientTransform={`rotate(${(obj.gradientAngle || 0) - 90})`}>
+                {obj.gradientStops!.map((stop, i) => (
+                  <stop key={i} offset={`${stop.offset * 100}%`} stopColor={stop.color} />
+                ))}
+              </linearGradient>
+            </defs>
+          )}
+          <polygon
+            points={computeStarPoints(cx, cy, outerR)}
+            fill={patternFill || fillValue}
+            stroke={obj.stroke}
+            strokeWidth={obj.strokeWidth || 0}
+          />
+        </g>
+      );
+    }
+
+    // Default: rect
+    return (
+      <g transform={transform} opacity={obj.opacity}>
+        {hasGradient && (
+          <defs>
+            <linearGradient id={gradientId} x1="0%" y1="0%" x2="0%" y2="100%" gradientTransform={`rotate(${(obj.gradientAngle || 0) - 90})`}>
+              {obj.gradientStops!.map((stop, i) => (
+                <stop key={i} offset={`${stop.offset * 100}%`} stopColor={stop.color} />
+              ))}
+            </linearGradient>
+          </defs>
+        )}
+        <rect
+          x={obj.x}
+          y={obj.y}
+          width={obj.width * (obj.scaleX || 1)}
+          height={obj.height * (obj.scaleY || 1)}
+          fill={patternFill || fillValue}
+        />
+      </g>
+    );
+  }
+
+  if (obj.type === 'text') {
+    const hasGradient = obj.gradientStops && obj.gradientStops.length > 0;
+    const fillValue = hasGradient ? `url(#${gradientId})` : (obj.colorize || obj.fill || '#ffffff');
+    let displayText = obj.text || 'Text';
+    if (obj.textTransform === 'uppercase') displayText = displayText.toUpperCase();
+    else if (obj.textTransform === 'lowercase') displayText = displayText.toLowerCase();
+
+    return (
+      <g opacity={obj.opacity}>
+        {hasGradient && (
+          <defs>
+            <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="0%" gradientTransform={`rotate(${obj.gradientAngle || 0})`}>
+              {obj.gradientStops!.map((stop, i) => (
+                <stop key={i} offset={`${stop.offset * 100}%`} stopColor={stop.color} />
+              ))}
+            </linearGradient>
+          </defs>
+        )}
+        <text
+          x={obj.x}
+          y={obj.y + (obj.fontSize || 24)}
+          transform={`rotate(${obj.rotation || 0}, ${obj.x + (obj.width * (obj.scaleX || 1)) / 2}, ${obj.y + (obj.height * (obj.scaleY || 1)) / 2})`}
+          fill={fillValue}
+          fontSize={obj.fontSize || 24}
+          fontFamily={obj.fontFamily || 'Impact, sans-serif'}
+          fontWeight={obj.fontWeight || 'normal'}
+          fontStyle={obj.fontStyle || 'normal'}
+          stroke={obj.stroke}
+          strokeWidth={obj.strokeWidth || 0}
+          letterSpacing={obj.letterSpacing || 0}
+        >
+          {displayText}
+        </text>
+      </g>
+    );
+  }
+
+  if (obj.type === 'sticker') {
+    // Render emoji character for sticker previews
+    const emoji = obj.emoji || obj.icon || '';
+    const size = obj.width * (obj.scaleX || 1);
+    const cy = obj.y + (obj.height * (obj.scaleY || 1)) / 2;
+    return (
+      <text
+        x={obj.x + size / 2}
+        y={cy}
+        fontSize={size * 0.8}
+        textAnchor="middle"
+        dominantBaseline="central"
+        opacity={obj.opacity}
+        transform={`rotate(${obj.rotation || 0}, ${obj.x + size / 2}, ${cy})`}
+      >
+        {emoji}
+      </text>
+    );
+  }
+
+  return null;
+}
+
+function TemplatePreview({ template }: { template: Template }) {
+  const clipId = `deck-clip-${template.id}`;
+  const deckPath = getDeckClipPath(PREVIEW_CANVAS_W, PREVIEW_CANVAS_H);
+
+  return (
+    <svg
+      viewBox={`-4 -4 ${PREVIEW_CANVAS_W + 8} ${PREVIEW_CANVAS_H + 8}`}
+      className="w-full h-full"
+      preserveAspectRatio="xMidYMid meet"
+      role="img"
+      aria-label={`Preview of ${template.name} template`}
+    >
+      <defs>
+        <clipPath id={clipId}>
+          <path d={deckPath} />
+        </clipPath>
+      </defs>
+
+      {/* Deck shape background */}
+      <g clipPath={`url(#${clipId})`}>
+        <rect x="0" y="0" width={PREVIEW_CANVAS_W} height={PREVIEW_CANVAS_H} fill="#1a1a1a" />
+        {template.objects.map((obj, i) => (
+          <PreviewObject key={obj.id || i} obj={obj} templateId={template.id} index={i} />
+        ))}
+      </g>
+
+      {/* Deck outline */}
+      <path d={deckPath} fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="6" />
+    </svg>
+  );
+}
+
 interface Template {
   id: string;
   name: string;
@@ -973,15 +1177,22 @@ export function TemplateGalleryModal({ isOpen, onClose }: TemplateGalleryModalPr
                   className="group border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden hover:shadow-lg transition-all cursor-pointer bg-white dark:bg-gray-900"
                   onClick={() => handleUseTemplate(template)}
                 >
-                  {/* Thumbnail */}
-                  <div className="aspect-[3/8] bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 flex items-center justify-center text-8xl relative">
-                    {template.thumbnail}
+                  {/* Visual Preview */}
+                  <div className="aspect-[3/4] bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 relative p-3 flex items-center justify-center">
+                    <div className="h-full w-auto" style={{ aspectRatio: `${PREVIEW_CANVAS_W} / ${PREVIEW_CANVAS_H}` }}>
+                      <TemplatePreview template={template} />
+                    </div>
                     {template.featured && (
-                      <div className="absolute top-3 right-3 bg-yellow-400 text-yellow-900 px-2 py-1 rounded-full flex items-center gap-1 text-xs font-bold">
+                      <div className="absolute top-3 right-3 bg-yellow-400 text-yellow-900 px-2 py-1 rounded-full flex items-center gap-1 text-xs font-bold shadow-md z-10">
                         <Star className="w-3 h-3 fill-current" />
                         Featured
                       </div>
                     )}
+                    <div className="absolute bottom-3 left-3 z-10">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider bg-black/60 text-white backdrop-blur-sm">
+                        {template.category}
+                      </span>
+                    </div>
                   </div>
 
                   {/* Info */}
