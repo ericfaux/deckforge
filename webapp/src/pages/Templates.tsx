@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDeckForgeStore } from '@/store/deckforge';
-import { templates, searchTemplates, Template } from '@/lib/templates';
+import { templates, templateCategories, Template } from '@/lib/templates';
 import { generateThumbnail } from '@/lib/generateTemplateThumbnails';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,10 +9,11 @@ import { Search, Sparkles } from 'lucide-react';
 
 export default function Templates() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [category, setCategory] = useState('all');
   const [templatesWithThumbnails, setTemplatesWithThumbnails] = useState<Template[]>(templates);
   const { loadDesign } = useDeckForgeStore();
   const navigate = useNavigate();
-  
+
   // Generate thumbnails on mount
   useEffect(() => {
     const generateThumbnails = () => {
@@ -27,21 +28,31 @@ export default function Templates() {
       });
       setTemplatesWithThumbnails(updated);
     };
-    
+
     // Small delay to ensure DOM is ready
     setTimeout(generateThumbnails, 100);
   }, []);
 
   const filteredTemplates = useMemo(() => {
-    if (!searchQuery) return templatesWithThumbnails;
-    
-    const lowerQuery = searchQuery.toLowerCase();
-    return templatesWithThumbnails.filter(t => 
-      t.name.toLowerCase().includes(lowerQuery) ||
-      t.description.toLowerCase().includes(lowerQuery) ||
-      t.tags.some(tag => tag.toLowerCase().includes(lowerQuery))
-    );
-  }, [searchQuery, templatesWithThumbnails]);
+    let filtered = templatesWithThumbnails;
+
+    // Apply category filter
+    if (category !== 'all') {
+      filtered = filtered.filter(t => t.category === category);
+    }
+
+    // Apply search filter
+    if (searchQuery) {
+      const lowerQuery = searchQuery.toLowerCase();
+      filtered = filtered.filter(t =>
+        t.name.toLowerCase().includes(lowerQuery) ||
+        t.description.toLowerCase().includes(lowerQuery) ||
+        t.tags.some(tag => tag.toLowerCase().includes(lowerQuery))
+      );
+    }
+
+    return filtered;
+  }, [searchQuery, category, templatesWithThumbnails]);
 
   const useTemplate = (templateId: string) => {
     const template = templatesWithThumbnails.find(t => t.id === templateId);
@@ -71,17 +82,36 @@ export default function Templates() {
 
       {/* Main content */}
       <div className="container mx-auto px-6 py-8">
-        {/* Search */}
-        <div className="max-w-md mb-8">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder="Search templates..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
+        {/* Search + Category Filters */}
+        <div className="flex flex-col gap-4 mb-8">
+          <div className="max-w-md">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Search templates..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+          </div>
+
+          {/* Category pills */}
+          <div className="flex gap-2 flex-wrap">
+            {templateCategories.map((cat) => (
+              <button
+                key={cat.value}
+                onClick={() => setCategory(cat.value)}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                  category === cat.value
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+                }`}
+              >
+                {cat.label}
+              </button>
+            ))}
           </div>
         </div>
 
@@ -91,14 +121,14 @@ export default function Templates() {
             <p className="text-muted-foreground">No templates found</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
             {filteredTemplates.map((template) => (
               <div
                 key={template.id}
-                className="group border border-border hover:border-primary transition-colors bg-card overflow-hidden cursor-pointer"
+                className="group border border-border hover:border-primary transition-colors bg-card overflow-hidden cursor-pointer rounded-lg"
                 onClick={() => useTemplate(template.id)}
               >
-                {/* Thumbnail placeholder */}
+                {/* Thumbnail */}
                 <div className="aspect-[32/98] bg-muted flex items-center justify-center overflow-hidden relative">
                   {template.thumbnail ? (
                     <img
@@ -114,7 +144,7 @@ export default function Templates() {
                       </p>
                     </div>
                   )}
-                  
+
                   {/* Hover overlay */}
                   <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                     <Button size="sm" variant="default">
@@ -131,10 +161,10 @@ export default function Templates() {
                   <p className="text-xs text-muted-foreground">
                     {template.description}
                   </p>
-                  
+
                   {/* Tags */}
                   <div className="flex flex-wrap gap-1 pt-2">
-                    {template.tags.map((tag) => (
+                    {template.tags.slice(0, 3).map((tag) => (
                       <span
                         key={tag}
                         className="px-2 py-0.5 text-[10px] uppercase tracking-wider bg-primary/10 text-primary rounded"

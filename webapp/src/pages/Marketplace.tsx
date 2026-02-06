@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { marketplaceAPI, MarketplaceDesign } from '@/lib/marketplace';
+import { marketplaceSeedDesigns } from '@/lib/marketplace-seed';
 import { Search, Heart, Download, DollarSign, Filter, TrendingUp, Clock, Sparkles, PackageSearch } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,6 +12,38 @@ import { BackToTop } from '@/components/BackToTop';
 import { EmptyState } from '@/components/EmptyState';
 import { ErrorState } from '@/components/ErrorState';
 import toast from 'react-hot-toast';
+
+function filterSeedDesigns(params: {
+  category?: string;
+  sortBy?: string;
+  search?: string;
+}): MarketplaceDesign[] {
+  let filtered = [...marketplaceSeedDesigns];
+
+  if (params.category) {
+    filtered = filtered.filter(d => d.category === params.category);
+  }
+
+  if (params.search) {
+    const q = params.search.toLowerCase();
+    filtered = filtered.filter(d =>
+      d.title.toLowerCase().includes(q) ||
+      (d.description || '').toLowerCase().includes(q) ||
+      d.tags.some(t => t.toLowerCase().includes(q))
+    );
+  }
+
+  if (params.sortBy === 'popular') {
+    filtered.sort((a, b) => b.downloads - a.downloads);
+  } else if (params.sortBy === 'newest') {
+    filtered.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  } else {
+    // trending: combine downloads + recency
+    filtered.sort((a, b) => (b.downloads + b.favorites) - (a.downloads + a.favorites));
+  }
+
+  return filtered;
+}
 
 export default function Marketplace() {
   const navigate = useNavigate();
@@ -48,14 +81,23 @@ export default function Marketplace() {
       }
 
       const data = await marketplaceAPI.browseDesigns(params);
-      setDesigns(data);
+      // If no real designs exist, show seed data
+      if (data.length === 0) {
+        setDesigns(filterSeedDesigns(params));
+      } else {
+        setDesigns(data);
+      }
     } catch (error: any) {
       console.error('Failed to load designs:', error);
-      
-      // If the marketplace table doesn't exist yet, show empty state instead of error
+
+      // If the marketplace table doesn't exist yet, show seed data
       if (error.message?.includes('marketplace_designs') || error.message?.includes('schema cache')) {
-        console.log('Marketplace feature coming soon - database table not yet created');
-        setDesigns([]);
+        console.log('Marketplace: showing seed data (database table not yet created)');
+        setDesigns(filterSeedDesigns({
+          category: category !== 'all' ? category : undefined,
+          sortBy,
+          search: searchQuery || undefined,
+        }));
       } else {
         setError(error.message || 'Failed to load marketplace designs');
       }
