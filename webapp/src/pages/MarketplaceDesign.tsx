@@ -5,6 +5,7 @@ import { Heart, Download, DollarSign, ExternalLink, ShoppingCart, Loader2, Star,
 import { Button } from '@/components/ui/button';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '@/store/auth';
+import { DeckThumbnail } from '@/components/deckforge/DeckThumbnail';
 
 export default function MarketplaceDesignPage() {
   const { id } = useParams<{ id: string }>();
@@ -170,18 +171,13 @@ export default function MarketplaceDesignPage() {
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
             {/* Preview Image */}
-            <div className="aspect-[3/8] bg-gradient-to-br from-muted to-muted/50 rounded-lg overflow-hidden relative">
-              {design.thumbnail_url ? (
-                <img
-                  src={design.thumbnail_url}
-                  alt={design.title}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-8xl">
-                  🎨
-                </div>
-              )}
+            <div className="aspect-[3/8] bg-gradient-to-br from-muted to-muted/50 rounded-lg overflow-hidden relative flex items-center justify-center p-6">
+              <DeckThumbnail
+                designId={design.id}
+                category={design.category}
+                title={design.title}
+                thumbnailUrl={design.thumbnail_url}
+              />
               
               {design.featured_until && new Date(design.featured_until) > new Date() && (
                 <div className="absolute top-4 left-4 bg-yellow-400 text-yellow-900 px-3 py-1.5 rounded-full flex items-center gap-2 text-sm font-bold">

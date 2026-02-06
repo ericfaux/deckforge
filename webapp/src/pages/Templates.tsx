@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useDeckForgeStore } from '@/store/deckforge';
 import { templates, templateCategories, Template } from '@/lib/templates';
 import { generateThumbnail } from '@/lib/generateTemplateThumbnails';
+import { TemplateDeckThumbnail } from '@/components/deckforge/DeckThumbnail';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Search, Sparkles } from 'lucide-react';
@@ -129,20 +130,19 @@ export default function Templates() {
                 onClick={() => useTemplate(template.id)}
               >
                 {/* Thumbnail */}
-                <div className="aspect-[32/98] bg-muted flex items-center justify-center overflow-hidden relative">
+                <div className="aspect-[32/98] bg-muted flex items-center justify-center overflow-hidden relative p-2">
                   {template.thumbnail ? (
                     <img
                       src={template.thumbnail}
                       alt={template.name}
                       className="w-full h-full object-cover"
+                      onError={(e) => {
+                        // Hide broken image, SVG fallback will show
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
                     />
                   ) : (
-                    <div className="text-center p-4">
-                      <Sparkles className="w-8 h-8 mx-auto mb-2 text-primary" />
-                      <p className="text-xs text-muted-foreground uppercase tracking-widest">
-                        {template.name}
-                      </p>
-                    </div>
+                    <TemplateDeckThumbnail template={template} />
                   )}
 
                   {/* Hover overlay */}
