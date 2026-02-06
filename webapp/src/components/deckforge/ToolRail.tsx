@@ -135,12 +135,13 @@ export function ToolRail() {
                   <TooltipTrigger asChild>
                     <button
                       onClick={() => setActiveTool(isActive ? null : tool.id)}
+                      aria-label={tool.shortcut ? `${tool.label} (${tool.shortcut})` : tool.label}
                       className={cn(
                         'relative w-11 h-11 flex items-center justify-center rounded-md transition-all duration-200',
                         'border-2 border-transparent touch-target',
                         'hover:border-border hover:bg-secondary hover:scale-105 active:scale-95',
-                        isActive 
-                          ? 'tool-active border-primary bg-primary/10 scale-105 shadow-lg shadow-primary/20' 
+                        isActive
+                          ? 'tool-active border-primary bg-primary/10 scale-105 shadow-lg shadow-primary/20'
                           : 'hover:shadow-md'
                       )}
                     >
@@ -187,36 +188,55 @@ export function ToolRail() {
               const Icon = tool.icon;
               const isActive = activeTool === tool.id;
               return (
-                <button
-                  key={tool.id}
-                  onClick={() => setActiveTool(isActive ? null : tool.id)}
-                  className={cn(
-                    'relative min-w-[64px] h-16 flex flex-col items-center justify-center gap-1 shrink-0 rounded-md transition-all duration-200',
-                    'border-2 border-transparent touch-manipulation',
-                    'hover:bg-secondary/50 hover:border-border active:bg-secondary/80 active:scale-95',
-                    isActive 
-                      ? 'tool-active border-primary bg-primary/10 shadow-lg shadow-primary/20' 
-                      : 'hover:shadow-md'
-                  )}
-                >
-                  {/* Active indicator bar (top for mobile) */}
-                  {isActive && (
-                    <div className="absolute top-0 left-1/2 -translate-x-1/2 h-1 w-8 bg-primary rounded-b-full animate-in slide-in-from-top-2 duration-200" />
-                  )}
-                  <Icon 
-                    className={cn(
-                      'w-5 h-5 transition-colors duration-200',
-                      isActive ? 'text-primary drop-shadow-sm' : 'text-muted-foreground'
-                    )} 
-                    strokeWidth={isActive ? 2 : 1.5} 
-                  />
-                  <span className={cn(
-                    "text-[9px] uppercase tracking-wider transition-colors duration-200",
-                    isActive ? 'text-primary font-semibold' : 'text-muted-foreground'
-                  )}>
-                    {tool.label}
-                  </span>
-                </button>
+                <Tooltip key={tool.id} delayDuration={300}>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={() => setActiveTool(isActive ? null : tool.id)}
+                      aria-label={tool.shortcut ? `${tool.label} (${tool.shortcut})` : tool.label}
+                      className={cn(
+                        'relative min-w-[64px] h-16 flex flex-col items-center justify-center gap-1 shrink-0 rounded-md transition-all duration-200',
+                        'border-2 border-transparent touch-manipulation',
+                        'hover:bg-secondary/50 hover:border-border active:bg-secondary/80 active:scale-95',
+                        isActive
+                          ? 'tool-active border-primary bg-primary/10 shadow-lg shadow-primary/20'
+                          : 'hover:shadow-md'
+                      )}
+                    >
+                      {/* Active indicator bar (top for mobile) */}
+                      {isActive && (
+                        <div className="absolute top-0 left-1/2 -translate-x-1/2 h-1 w-8 bg-primary rounded-b-full animate-in slide-in-from-top-2 duration-200" />
+                      )}
+                      <Icon
+                        className={cn(
+                          'w-5 h-5 transition-colors duration-200',
+                          isActive ? 'text-primary drop-shadow-sm' : 'text-muted-foreground'
+                        )}
+                        strokeWidth={isActive ? 2 : 1.5}
+                      />
+                      <span className={cn(
+                        "text-[9px] uppercase tracking-wider transition-colors duration-200",
+                        isActive ? 'text-primary font-semibold' : 'text-muted-foreground'
+                      )}>
+                        {tool.label}
+                      </span>
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="max-w-xs">
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="font-semibold">{tool.label}</span>
+                        {tool.shortcut && (
+                          <kbd className="px-1.5 py-0.5 text-xs bg-muted border border-border rounded font-mono">
+                            {tool.shortcut}
+                          </kbd>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {tool.description}
+                      </p>
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
               );
             })}
           </div>
