@@ -30,7 +30,7 @@ import { getDeckSize } from '@/lib/deck-sizes';
 import { useDeckForgeStore, CanvasObject } from '@/store/deckforge';
 import { useAuthStore } from '@/store/auth';
 import { designsAPI } from '@/lib/api';
-import { exportToPNG, exportToSVG, downloadBlob } from '@/lib/export';
+import { exportToPNG, exportToSVG, exportToPDF, downloadBlob } from '@/lib/export';
 import { preloadUserFonts } from '@/lib/fonts';
 import { Button } from '@/components/ui/button';
 import {
@@ -38,7 +38,14 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Save, Download, User, Sparkles, Clock, Menu, Share2, Play, ChevronDown, Palette, Undo, Redo, Type, Ruler, Loader2 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Save, Download, User, Sparkles, Clock, Menu, Share2, Play, ChevronDown, Palette, Undo, Redo, Type, Ruler, Loader2, FileImage, FileText, Zap, Image } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { KeyboardShortcuts } from '@/components/deckforge/KeyboardShortcuts';
 import { CommandPalette } from '@/components/CommandPalette';
@@ -61,7 +68,6 @@ export default function DeckForge() {
   const [saveStatus, setSaveStatus] = useState<string>('');
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
-  const [showExportMenu, setShowExportMenu] = useState(false);
   const [loadingModal, setLoadingModal] = useState<string | null>(null);
   const [isVersionHistoryOpen, setIsVersionHistoryOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
@@ -166,10 +172,39 @@ export default function DeckForge() {
   const handleExport = async () => {
     setIsExporting(true);
     setSaveStatus('Exporting PNG...');
-    setShowExportMenu(false);
 
     try {
-      // Export at 3x resolution for print quality
+      // Export at 300 DPI for print quality (300dpi / 25.4mm per inch ≈ 12x scale)
+      const blob = await exportToPNG(objects, {
+        scale: 12,
+        format: 'png',
+        includeBackground: true,
+        width: deckWidth,
+        height: deckHeight,
+      });
+
+      const filename = `${designName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_300dpi_${Date.now()}.png`;
+      downloadBlob(blob, filename);
+
+      setSaveStatus('Exported PNG!');
+      toastUtils.success(`Exported as ${filename}`, 'High-resolution 300 DPI PNG ready to print');
+      setTimeout(() => setSaveStatus(''), 2000);
+    } catch (err) {
+      console.error('Export failed:', err);
+      setSaveStatus('Export failed');
+      toastUtils.error('Failed to export PNG', 'Please try again or check browser console for details');
+      setTimeout(() => setSaveStatus(''), 2000);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleExportPNGScreen = async () => {
+    setIsExporting(true);
+    setSaveStatus('Exporting PNG (Screen)...');
+
+    try {
+      // Export at 72 DPI for screen (72dpi / 25.4mm ≈ 3x scale)
       const blob = await exportToPNG(objects, {
         scale: 3,
         format: 'png',
@@ -178,12 +213,11 @@ export default function DeckForge() {
         height: deckHeight,
       });
 
-      // Generate filename from design name
-      const filename = `${designName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_${Date.now()}.png`;
+      const filename = `${designName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_72dpi_${Date.now()}.png`;
       downloadBlob(blob, filename);
 
       setSaveStatus('Exported PNG!');
-      toastUtils.success(`Exported as ${filename}`, 'High-resolution PNG ready to print');
+      toastUtils.success(`Exported as ${filename}`, 'Screen-resolution 72 DPI PNG');
       setTimeout(() => setSaveStatus(''), 2000);
     } catch (err) {
       console.error('Export failed:', err);
@@ -198,17 +232,14 @@ export default function DeckForge() {
   const handleExportSVG = async () => {
     setIsExporting(true);
     setSaveStatus('Exporting SVG...');
-    setShowExportMenu(false);
 
     try {
-      // Export as scalable vector
       const blob = await exportToSVG(objects, {
         includeBackground: true,
         width: deckWidth,
         height: deckHeight,
       });
 
-      // Generate filename from design name
       const filename = `${designName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_${Date.now()}.svg`;
       downloadBlob(blob, filename);
 
@@ -219,6 +250,62 @@ export default function DeckForge() {
       console.error('SVG export failed:', err);
       setSaveStatus('Export failed');
       toastUtils.error('Failed to export SVG', 'Please try again or check browser console for details');
+      setTimeout(() => setSaveStatus(''), 2000);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleExportPDF = async () => {
+    setIsExporting(true);
+    setSaveStatus('Exporting PDF...');
+
+    try {
+      const blob = await exportToPDF(objects, {
+        scale: 12,
+        includeBackground: true,
+        title: designName,
+      });
+
+      const filename = `${designName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_${Date.now()}.pdf`;
+      downloadBlob(blob, filename);
+
+      setSaveStatus('Exported PDF!');
+      toastUtils.success(`Exported as ${filename}`, 'Print-ready PDF document');
+      setTimeout(() => setSaveStatus(''), 2000);
+    } catch (err) {
+      console.error('PDF export failed:', err);
+      setSaveStatus('Export failed');
+      toastUtils.error('Failed to export PDF', 'Please try again or check browser console for details');
+      setTimeout(() => setSaveStatus(''), 2000);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleQuickExport = async () => {
+    setIsExporting(true);
+    setSaveStatus('Quick exporting...');
+
+    try {
+      const blob = await exportToPNG(objects, {
+        scale: 1,
+        format: 'png',
+        includeBackground: true,
+        width: deckWidth,
+        height: deckHeight,
+      });
+
+      const filename = `${designName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_${Date.now()}.png`;
+      downloadBlob(blob, filename);
+
+      setSaveStatus('Exported!');
+      toastUtils.success(`Quick exported as ${filename}`, '1x PNG instant download');
+      setTimeout(() => setSaveStatus(''), 2000);
+    } catch (err) {
+      console.error('Quick export failed:', err);
+      setSaveStatus('Export failed');
+      toastUtils.error('Failed to export', 'Please try again');
       setTimeout(() => setSaveStatus(''), 2000);
     } finally {
       setIsExporting(false);
@@ -239,25 +326,6 @@ export default function DeckForge() {
     return () => window.removeEventListener('beforeunload', handler);
   }, [hasUnsavedChanges]);
 
-  // Close export menu when clicking outside
-  useEffect(() => {
-    if (!showExportMenu) return;
-
-    const handler = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      // Check if click is outside export menu and button
-      if (!target.closest('[data-export-menu]') && !target.closest('[data-export-button]')) {
-        setShowExportMenu(false);
-      }
-    };
-
-    // Add slight delay to prevent immediate closing
-    setTimeout(() => {
-      document.addEventListener('click', handler);
-    }, 10);
-
-    return () => document.removeEventListener('click', handler);
-  }, [showExportMenu]);
 
   // Preload user's custom fonts on mount
   // Initialize editor (preload fonts, set up canvas, etc.)
@@ -1042,21 +1110,25 @@ export default function DeckForge() {
                 </TooltipContent>
               </Tooltip>
 
-              <div className="relative">
+              <DropdownMenu>
                 <Tooltip delayDuration={300}>
                   <TooltipTrigger asChild>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setShowExportMenu(!showExportMenu)}
-                      disabled={isExporting}
-                      className="gap-2"
-                      data-export-button="true"
-                    >
-                      <Download className="w-4 h-4" />
-                      {isExporting ? 'Exporting...' : 'Export'}
-                      <ChevronDown className="w-3 h-3" />
-                    </Button>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={isExporting}
+                        className="gap-2"
+                      >
+                        {isExporting ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Download className="w-4 h-4" />
+                        )}
+                        {isExporting ? 'Exporting...' : 'Export'}
+                        <ChevronDown className="w-3 h-3" />
+                      </Button>
+                    </DropdownMenuTrigger>
                   </TooltipTrigger>
                   <TooltipContent>
                     <div className="flex items-center gap-2">
@@ -1064,56 +1136,39 @@ export default function DeckForge() {
                       <kbd className="px-1.5 py-0.5 text-xs bg-muted border border-border rounded font-mono">Ctrl+E</kbd>
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">
-                      Export as PNG, SVG, or use presets
+                      Export as PNG, SVG, PDF, or quick export
                     </p>
                   </TooltipContent>
                 </Tooltip>
-
-                {showExportMenu && !isExporting && (
-                  <div 
-                    className="absolute top-full mt-1 right-0 z-50 bg-card border border-border shadow-lg min-w-[180px] rounded-lg overflow-hidden"
-                    data-export-menu="true"
-                  >
-                    <button
-                      onClick={() => {
-                        setShowExportMenu(false);
-                        openModal('exportPresets', setIsExportPresetsOpen);
-                      }}
-                      disabled={loadingModal === 'exportPresets'}
-                      className="w-full px-4 py-2.5 text-left text-sm hover:bg-secondary transition-colors font-medium flex items-center gap-2 disabled:opacity-50"
-                    >
-                      {loadingModal === 'exportPresets' ? (
-                        <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                      ) : (
-                        <Sparkles className="w-4 h-4 text-primary" />
-                      )}
-                      Quick Export
-                      <span className="ml-auto text-[9px] text-primary">NEW</span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        setShowExportMenu(false);
-                        openModal('exportPreview', setIsExportPreviewOpen);
-                      }}
-                      disabled={loadingModal === 'exportPreview'}
-                      className="w-full px-4 py-2 text-left text-sm hover:bg-secondary transition-colors border-t border-border disabled:opacity-50 flex items-center gap-2"
-                    >
-                      {loadingModal === 'exportPreview' ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : null}
-                      PNG (High-Res)
-                      <span className="ml-2 text-[9px] text-muted-foreground">Preview first</span>
-                    </button>
-                    <button
-                      onClick={handleExportSVG}
-                      className="w-full px-4 py-2 text-left text-sm hover:bg-secondary transition-colors border-t border-border"
-                    >
-                      SVG (Vector)
-                      <span className="ml-2 text-[10px] text-accent">PRO</span>
-                    </button>
-                  </div>
-                )}
-              </div>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuItem onClick={handleExport} disabled={isExporting}>
+                    <FileImage className="w-4 h-4 mr-2" />
+                    Export PNG
+                    <span className="ml-auto text-[10px] text-muted-foreground">300 DPI</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleExportPNGScreen} disabled={isExporting}>
+                    <Image className="w-4 h-4 mr-2" />
+                    Export PNG (Screen)
+                    <span className="ml-auto text-[10px] text-muted-foreground">72 DPI</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleExportSVG} disabled={isExporting}>
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    Export SVG
+                    <span className="ml-auto text-[10px] text-muted-foreground">Vector</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleExportPDF} disabled={isExporting}>
+                    <FileText className="w-4 h-4 mr-2" />
+                    Export PDF
+                    <span className="ml-auto text-[10px] text-muted-foreground">Print-ready</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleQuickExport} disabled={isExporting}>
+                    <Zap className="w-4 h-4 mr-2" />
+                    Quick Export
+                    <span className="ml-auto text-[10px] text-muted-foreground">1x PNG</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
 
               <Tooltip delayDuration={300}>
                 <TooltipTrigger asChild>
