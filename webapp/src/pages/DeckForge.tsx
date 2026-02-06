@@ -61,7 +61,7 @@ import { saveToLocalStorage, getLatestAutosave, hasAutosaveData, clearAutosaveDa
 import { AutosaveRecoveryDialog } from '@/components/deckforge/AutosaveRecoveryDialog';
 
 export default function DeckForge() {
-  const { selectedId, selectedIds, deleteObject, undo, redo, getCanvasState, currentDesignId, setDesignId, setSaving, isSaving, objects, designName, createVersion, past, future, updateObject, saveToHistory, addObject, selectObject, setActiveTool, stageScale, setStageScale, arrayDuplicate, showRulers, toggleRulers, groupObjects, ungroupObject, flashCopiedObject, flashPastedObject, lastAction, undoRedoChangedIds, deckSizeId, backgroundColor, backgroundFillType, backgroundGradient, textureOverlays, loadDesign, setBackgroundColor, setDeckSize } = useDeckForgeStore();
+  const { selectedId, selectedIds, deleteObject, undo, redo, getCanvasState, currentDesignId, setDesignId, setSaving, isSaving, objects, designName, createVersion, past, future, updateObject, saveToHistory, addObject, selectObject, setActiveTool, stageScale, setStageScale, arrayDuplicate, showRulers, toggleRulers, groupObjects, ungroupObject, flashCopiedObject, flashPastedObject, lastAction, undoRedoChangedIds, deckSizeId, backgroundColor, backgroundFillType, backgroundGradient, textureOverlays, loadDesign, setBackgroundColor, setDeckSize, isolatedGroupId, exitIsolationMode, setSelectedIds } = useDeckForgeStore();
   
   // Get current deck dimensions (dynamic based on selected size)
   const { width: deckWidth, height: deckHeight } = useDeckDimensions();
@@ -620,10 +620,11 @@ export default function DeckForge() {
 
       // === EDITING ===
 
-      // Delete selected object
-      if ((key === 'delete' || key === 'backspace') && selectedId) {
+      // Delete selected object(s)
+      if ((key === 'delete' || key === 'backspace') && (selectedId || selectedIds.length > 0)) {
         e.preventDefault();
-        deleteObject(selectedId);
+        const idsToDelete = selectedIds.length > 0 ? [...selectedIds] : (selectedId ? [selectedId] : []);
+        idsToDelete.forEach(id => deleteObject(id));
         return;
       }
 
@@ -715,11 +716,15 @@ export default function DeckForge() {
         return;
       }
 
-      // Escape to deselect/close tools
+      // Escape to exit isolation mode, deselect, or close tools
       if (key === 'escape') {
         e.preventDefault();
-        selectObject(null);
-        setActiveTool(null);
+        if (isolatedGroupId) {
+          exitIsolationMode();
+        } else {
+          selectObject(null);
+          setActiveTool(null);
+        }
         return;
       }
 
@@ -824,21 +829,25 @@ export default function DeckForge() {
       }
 
       // === NUDGING WITH ARROW KEYS ===
-      
-      if (selectedId && ['arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(key)) {
+
+      if ((selectedId || selectedIds.length > 0) && ['arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(key)) {
         e.preventDefault();
-        const obj = objects.find(o => o.id === selectedId);
-        if (!obj) return;
+        const nudgeAmount = shift ? 10 : 1;
+        const idsToNudge = selectedIds.length > 0 ? selectedIds : (selectedId ? [selectedId] : []);
 
-        const nudgeAmount = shift ? 10 : 1; // Shift = 10px, normal = 1px
-        const updates: Partial<CanvasObject> = {};
+        saveToHistory();
+        for (const id of idsToNudge) {
+          const obj = objects.find(o => o.id === id);
+          if (!obj || obj.locked) continue;
 
-        if (key === 'arrowup') updates.y = obj.y - nudgeAmount;
-        if (key === 'arrowdown') updates.y = obj.y + nudgeAmount;
-        if (key === 'arrowleft') updates.x = obj.x - nudgeAmount;
-        if (key === 'arrowright') updates.x = obj.x + nudgeAmount;
+          const updates: Partial<CanvasObject> = {};
+          if (key === 'arrowup') updates.y = obj.y - nudgeAmount;
+          if (key === 'arrowdown') updates.y = obj.y + nudgeAmount;
+          if (key === 'arrowleft') updates.x = obj.x - nudgeAmount;
+          if (key === 'arrowright') updates.x = obj.x + nudgeAmount;
 
-        updateObject(selectedId, updates);
+          updateObject(id, updates);
+        }
         return;
       }
 
@@ -890,13 +899,16 @@ export default function DeckForge() {
       }
 
       // === SELECT ALL ===
-      
-      // Select all (Ctrl+A) - select the last object as proxy for "all"
+
+      // Select all (Ctrl+A) - select all unlocked, visible objects
       if (ctrl && key === 'a') {
         e.preventDefault();
-        if (objects.length > 0) {
-          selectObject(objects[objects.length - 1].id);
-          toast.success(`Selected top object (${objects.length} total)`);
+        const selectableIds = objects
+          .filter(o => !o.locked && !o.hidden)
+          .map(o => o.id);
+        if (selectableIds.length > 0) {
+          setSelectedIds(selectableIds);
+          toast.success(`Selected ${selectableIds.length} objects`);
         }
         return;
       }

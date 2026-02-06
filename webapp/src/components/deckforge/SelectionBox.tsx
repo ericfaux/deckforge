@@ -52,13 +52,14 @@ export function SelectionBox({ deckX, deckY, stageScale }: SelectionBoxProps) {
       const minY = Math.min(startPoint.y, endPoint.y);
       const maxY = Math.max(startPoint.y, endPoint.y);
       
-      // Find all objects within the selection box
+      // Find all objects within the selection box (skip locked/hidden)
       const selectedIds = objects
         .filter(obj => {
+          if (obj.locked || obj.hidden) return false;
           // Check if object center is within selection box
-          const objCenterX = obj.x + obj.width / 2;
-          const objCenterY = obj.y + obj.height / 2;
-          
+          const objCenterX = obj.x + (obj.width * obj.scaleX) / 2;
+          const objCenterY = obj.y + (obj.height * obj.scaleY) / 2;
+
           return (
             objCenterX >= minX &&
             objCenterX <= maxX &&

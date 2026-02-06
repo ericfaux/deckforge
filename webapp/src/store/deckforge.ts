@@ -270,6 +270,9 @@ interface DeckForgeState {
   undoRedoChangedIds: string[];
   lastAction: 'undo' | 'redo' | null;
 
+  // Group isolation mode
+  isolatedGroupId: string | null;
+
   // Actions
   addObject: (obj: Omit<CanvasObject, 'id'>) => void;
   addObjects: (objs: Omit<CanvasObject, 'id'>[]) => void;
@@ -321,6 +324,10 @@ interface DeckForgeState {
   // Visual feedback
   flashCopiedObject: (id: string) => void;
   flashPastedObject: (id: string) => void;
+
+  // Group isolation mode
+  enterIsolationMode: (groupId: string) => void;
+  exitIsolationMode: () => void;
 }
 
 const generateId = () => `obj_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -369,6 +376,7 @@ export const useDeckForgeStore = create<DeckForgeState>((set, get) => ({
   pastedObjectId: null,
   undoRedoChangedIds: [],
   lastAction: null,
+  isolatedGroupId: null,
 
   saveToHistory: () => {
     const { objects, past } = get();
@@ -1035,5 +1043,20 @@ export const useDeckForgeStore = create<DeckForgeState>((set, get) => ({
   flashPastedObject: (id) => {
     set({ pastedObjectId: id });
     setTimeout(() => set({ pastedObjectId: null }), 600);
+  },
+
+  enterIsolationMode: (groupId) => {
+    const { objects } = get();
+    const group = objects.find(o => o.id === groupId);
+    if (group && group.type === 'group' && group.children) {
+      set({ isolatedGroupId: groupId, selectedId: null, selectedIds: [] });
+    }
+  },
+
+  exitIsolationMode: () => {
+    const { isolatedGroupId } = get();
+    if (isolatedGroupId) {
+      set({ isolatedGroupId: null, selectedId: isolatedGroupId, selectedIds: [isolatedGroupId] });
+    }
   },
 }));
