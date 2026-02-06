@@ -51,7 +51,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Save, Download, User, Sparkles, Clock, Menu, Share2, ChevronDown, Palette, Undo, Redo, Type, Ruler, Loader2, FileImage, FileText, Zap, Image, Check, Cloud, Eye } from 'lucide-react';
+import { Save, Download, User, Sparkles, Clock, Menu, Share2, ChevronDown, Palette, Undo, Redo, Type, Ruler, Loader2, FileImage, FileText, Zap, Image, Check, Cloud, Eye, Keyboard } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { KeyboardShortcuts } from '@/components/deckforge/KeyboardShortcuts';
 import { CommandPalette } from '@/components/CommandPalette';
@@ -1537,10 +1537,11 @@ export default function DeckForge() {
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={() => setIsShortcutsModalOpen(true)}
+                    onClick={(e) => { e.preventDefault(); setIsShortcutsModalOpen(true); }}
                     className="gap-2"
                   >
-                    <Menu className="w-3.5 h-3.5" />
+                    <Keyboard className="w-3.5 h-3.5" />
+                    <span className="hidden md:inline text-xs">Shortcuts</span>
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
