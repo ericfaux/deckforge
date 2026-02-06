@@ -82,6 +82,30 @@ interface LayerItemProps {
   isLast: boolean;
 }
 
+// Check which effects/filters are active on an object
+function getActiveEffects(obj: CanvasObject): string[] {
+  const active: string[] = [];
+  // Filters
+  if (obj.contrast !== undefined && obj.contrast !== 100) active.push('contrast');
+  if (obj.brightness !== undefined && obj.brightness !== 100) active.push('brightness');
+  if (obj.grayscale !== undefined && obj.grayscale > 0) active.push('grayscale');
+  if (obj.threshold) active.push('threshold');
+  if (obj.blur !== undefined && obj.blur > 0) active.push('blur');
+  if (obj.saturate !== undefined && obj.saturate !== 100) active.push('saturate');
+  if (obj.sepia !== undefined && obj.sepia > 0) active.push('sepia');
+  if (obj.hueRotate !== undefined && obj.hueRotate > 0) active.push('hue');
+  if (obj.posterize !== undefined && obj.posterize < 32) active.push('posterize');
+  if (obj.invert) active.push('invert');
+  if (obj.pixelate) active.push('pixelate');
+  if (obj.colorize) active.push('colorize');
+  if (obj.duotone?.enabled) active.push('duotone');
+  // Effects
+  if (obj.dropShadow?.enabled) active.push('shadow');
+  if (obj.glow?.enabled) active.push('glow');
+  if (obj.outlineStroke?.enabled) active.push('outline');
+  return active;
+}
+
 function LayerItem({
   obj,
   index,
@@ -91,6 +115,7 @@ function LayerItem({
 }: LayerItemProps) {
   const Icon = getObjectIcon(obj);
   const { updateObject } = useDeckForgeStore();
+  const activeEffects = getActiveEffects(obj);
 
   const toggleVisibility = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -119,6 +144,22 @@ function LayerItem({
       <span className="flex-1 text-xs truncate font-medium">
         {getObjectLabel(obj)}
       </span>
+      {/* Active effects indicator */}
+      {activeEffects.length > 0 && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="flex items-center gap-0.5 shrink-0">
+              <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+              {activeEffects.length > 1 && (
+                <span className="text-[8px] text-primary font-mono">{activeEffects.length}</span>
+              )}
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="left">
+            <p className="text-[10px]">{activeEffects.join(', ')}</p>
+          </TooltipContent>
+        </Tooltip>
+      )}
       
       {/* Visibility Toggle */}
       <Tooltip>

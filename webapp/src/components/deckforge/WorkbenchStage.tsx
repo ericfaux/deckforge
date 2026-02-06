@@ -116,7 +116,88 @@ function buildFilterStyle(obj: CanvasObject): string {
     filters.push(`sepia(${obj.sepia}%)`);
   }
 
+  // Drop shadow via CSS filter
+  if (obj.dropShadow?.enabled) {
+    const { offsetX, offsetY, blur, color, opacity } = obj.dropShadow;
+    // Convert hex color + opacity to rgba
+    const shadowColor = hexToRgba(color || '#000000', opacity ?? 0.5);
+    filters.push(`drop-shadow(${offsetX}px ${offsetY}px ${blur}px ${shadowColor})`);
+  }
+
+  // Glow via CSS drop-shadow with no offset and bright color
+  if (obj.glow?.enabled) {
+    const { blur, color, opacity } = obj.glow;
+    const glowColor = hexToRgba(color || '#ffffff', opacity ?? 0.8);
+    filters.push(`drop-shadow(0 0 ${blur}px ${glowColor})`);
+  }
+
+  // Duotone: apply grayscale then use SVG filter reference
+  if (obj.duotone?.enabled) {
+    filters.push(`url(#duotone-${obj.id})`);
+  }
+
   return filters.length > 0 ? filters.join(' ') : 'none';
+}
+
+// Convert hex color + opacity to rgba string
+function hexToRgba(hex: string, opacity: number): string {
+  // Handle rgba strings passed through
+  if (hex.startsWith('rgba') || hex.startsWith('rgb')) {
+    return hex;
+  }
+  const h = hex.replace('#', '');
+  const r = parseInt(h.substring(0, 2), 16) || 0;
+  const g = parseInt(h.substring(2, 4), 16) || 0;
+  const b = parseInt(h.substring(4, 6), 16) || 0;
+  return `rgba(${r},${g},${b},${opacity})`;
+}
+
+// Build outline stroke props for SVG elements
+function getOutlineStrokeProps(obj: CanvasObject, isSelected: boolean): { stroke?: string; strokeWidth?: number; paintOrder?: string } {
+  if (obj.outlineStroke?.enabled) {
+    return {
+      stroke: obj.outlineStroke.color || '#000000',
+      strokeWidth: obj.outlineStroke.width || 2,
+      paintOrder: 'stroke fill',
+    };
+  }
+  if (isSelected) {
+    return {
+      stroke: '#ccff00',
+      strokeWidth: 2,
+    };
+  }
+  return {};
+}
+
+// Generate SVG filter defs for duotone effect
+function DuotoneFilterDef({ obj }: { obj: CanvasObject }) {
+  if (!obj.duotone?.enabled) return null;
+  const { color1, color2 } = obj.duotone;
+  // Parse hex colors to 0-1 RGB values
+  const parseHex = (hex: string) => {
+    const h = hex.replace('#', '');
+    return {
+      r: (parseInt(h.substring(0, 2), 16) || 0) / 255,
+      g: (parseInt(h.substring(2, 4), 16) || 0) / 255,
+      b: (parseInt(h.substring(4, 6), 16) || 0) / 255,
+    };
+  };
+  const c1 = parseHex(color1 || '#000000');
+  const c2 = parseHex(color2 || '#ccff00');
+
+  return (
+    <filter id={`duotone-${obj.id}`} colorInterpolationFilters="sRGB">
+      {/* Convert to grayscale */}
+      <feColorMatrix type="saturate" values="0" />
+      {/* Map grayscale to duotone: shadow color (c1) to highlight color (c2) */}
+      <feComponentTransfer>
+        <feFuncR type="table" tableValues={`${c1.r} ${c2.r}`} />
+        <feFuncG type="table" tableValues={`${c1.g} ${c2.g}`} />
+        <feFuncB type="table" tableValues={`${c1.b} ${c2.b}`} />
+      </feComponentTransfer>
+    </filter>
+  );
 }
 
 // Get colorize overlay color with reduced opacity for blend
@@ -383,6 +464,9 @@ const CanvasObjectItem = memo(function CanvasObjectItem({
     // Build text decoration (SVG doesn't support text-decoration directly, use tspan)
     const textDecoration = obj.textDecoration || 'none';
     
+    // Outline stroke for text
+    const textOutline = getOutlineStrokeProps(obj, false);
+
     const textEl = (
       <>
         {obj.gradientStops && (
@@ -404,11 +488,14 @@ const CanvasObjectItem = memo(function CanvasObjectItem({
           textAnchor={obj.align === 'center' ? 'middle' : obj.align === 'right' ? 'end' : 'start'}
           opacity={obj.opacity}
           letterSpacing={obj.letterSpacing || 0}
-          style={{ 
-            cursor, 
+          stroke={textOutline.stroke}
+          strokeWidth={textOutline.strokeWidth}
+          style={{
+            cursor,
             filter: filterStyle,
             textShadow,
-            textDecoration: textDecoration === 'underline' ? 'underline' : textDecoration === 'line-through' ? 'line-through' : 'none'
+            textDecoration: textDecoration === 'underline' ? 'underline' : textDecoration === 'line-through' ? 'line-through' : 'none',
+            paintOrder: textOutline.paintOrder,
           }}
           onMouseDown={handleMouseDown}
         >
@@ -570,6 +657,9 @@ const CanvasObjectItem = memo(function CanvasObjectItem({
       return renderWithColorize(el);
     }
 
+    // Compute outline stroke props for shapes
+    const outlineProps = getOutlineStrokeProps(obj, isSelected);
+
     if (obj.shapeType === 'circle') {
       const el = (
         <>
@@ -588,11 +678,24 @@ const CanvasObjectItem = memo(function CanvasObjectItem({
             r={obj.width / 2 * obj.scaleX}
             fill={fillValue}
             opacity={obj.opacity}
-            style={baseStyle}
+            style={{ ...baseStyle, paintOrder: outlineProps.paintOrder }}
             onMouseDown={handleMouseDown}
-            stroke={isSelected ? '#ccff00' : 'none'}
-            strokeWidth={isSelected ? 2 : 0}
+            stroke={outlineProps.stroke || 'none'}
+            strokeWidth={outlineProps.strokeWidth || 0}
           />
+          {/* Selection highlight when outline stroke is active */}
+          {obj.outlineStroke?.enabled && isSelected && (
+            <circle
+              cx={obj.x + obj.width / 2}
+              cy={obj.y + obj.height / 2}
+              r={obj.width / 2 * obj.scaleX + (obj.outlineStroke.width || 2) + 2}
+              fill="none"
+              stroke="#ccff00"
+              strokeWidth={1}
+              strokeDasharray="4,2"
+              style={{ pointerEvents: 'none' }}
+            />
+          )}
         </>
       );
       return renderWithColorize(el);
@@ -623,10 +726,10 @@ const CanvasObjectItem = memo(function CanvasObjectItem({
             points={points.join(' ')}
             fill={fillValue}
             opacity={obj.opacity}
-            style={baseStyle}
+            style={{ ...baseStyle, paintOrder: outlineProps.paintOrder }}
             onMouseDown={handleMouseDown}
-            stroke={isSelected ? '#ccff00' : 'none'}
-            strokeWidth={isSelected ? 2 : 0}
+            stroke={outlineProps.stroke || 'none'}
+            strokeWidth={outlineProps.strokeWidth || 0}
           />
         </>
       );
@@ -651,10 +754,10 @@ const CanvasObjectItem = memo(function CanvasObjectItem({
           height={obj.height * obj.scaleY}
           fill={fillValue}
           opacity={obj.opacity}
-          style={baseStyle}
+          style={{ ...baseStyle, paintOrder: outlineProps.paintOrder }}
           onMouseDown={handleMouseDown}
-          stroke={isSelected ? '#ccff00' : 'none'}
-          strokeWidth={isSelected ? 2 : 0}
+          stroke={outlineProps.stroke || 'none'}
+          strokeWidth={outlineProps.strokeWidth || 0}
         />
       </>
     );
@@ -979,6 +1082,7 @@ const CanvasObjectItem = memo(function CanvasObjectItem({
   if (obj.type === 'image' && obj.src) {
     const width = obj.width * obj.scaleX;
     const height = obj.height * obj.scaleY;
+    const imgOutline = getOutlineStrokeProps(obj, false);
 
     const el = (
       <g
@@ -993,6 +1097,18 @@ const CanvasObjectItem = memo(function CanvasObjectItem({
           height={height}
           preserveAspectRatio="xMidYMid meet"
         />
+        {/* Outline stroke border */}
+        {obj.outlineStroke?.enabled && (
+          <rect
+            x={0}
+            y={0}
+            width={width}
+            height={height}
+            fill="none"
+            stroke={imgOutline.stroke}
+            strokeWidth={imgOutline.strokeWidth}
+          />
+        )}
         {isSelected && (
           <rect
             x={0}
@@ -1449,6 +1565,11 @@ export function WorkbenchStage() {
           <pattern id="halftone-dots-pattern" patternUnits="userSpaceOnUse" width="8" height="8">
             <circle cx="4" cy="4" r="1.5" fill="rgba(0,0,0,0.4)" />
           </pattern>
+
+          {/* Duotone SVG filters for each object */}
+          {objects.filter(o => o.duotone?.enabled).map(o => (
+            <DuotoneFilterDef key={`duotone-${o.id}`} obj={o} />
+          ))}
 
           {/* Background gradient */}
           {backgroundFillType === 'gradient' && backgroundGradient.direction === 'linear' && (
