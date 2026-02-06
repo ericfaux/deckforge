@@ -4,6 +4,7 @@ import { useDeckForgeStore } from '@/store/deckforge';
 import { WorkbenchStage } from './WorkbenchStage';
 import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
+import { getDeckSize } from '@/lib/deck-sizes';
 
 interface AnimationPreviewProps {
   isOpen: boolean;
@@ -16,6 +17,36 @@ export function AnimationPreview({ isOpen, onClose }: AnimationPreviewProps) {
   const [currentRotation, setCurrentRotation] = useState(0);
   const [showSettings, setShowSettings] = useState(false);
   const animationRef = useRef<number>();
+
+  const backgroundColor = useDeckForgeStore(state => state.backgroundColor);
+  const deckSizeId = useDeckForgeStore(state => state.deckSizeId);
+  const currentDeckSize = getDeckSize(deckSizeId);
+  const deckWidth = currentDeckSize.canvasWidth;
+  const deckHeight = currentDeckSize.canvasHeight;
+
+  // Calculate display scale so deck is at least 350px tall and fits viewport
+  const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 800;
+  const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 600;
+  const maxHeight = viewportHeight * 0.6;
+  const maxWidth = viewportWidth * 0.5;
+  const scaleByHeight = maxHeight / deckHeight;
+  const scaleByWidth = maxWidth / deckWidth;
+  const displayScale = Math.max(Math.min(scaleByHeight, scaleByWidth), 350 / deckHeight);
+
+  // Container dimensions for WorkbenchStage (before CSS scale)
+  const containerW = deckWidth + 20;
+  const containerH = deckHeight + 20;
+
+  // Determine if the deck background is dark to choose contrasting preview bg
+  const bgLuminance = (() => {
+    const hex = backgroundColor.replace('#', '');
+    if (hex.length < 6) return 0.5;
+    const r = parseInt(hex.slice(0, 2), 16) / 255;
+    const g = parseInt(hex.slice(2, 4), 16) / 255;
+    const b = parseInt(hex.slice(4, 6), 16) / 255;
+    return 0.299 * r + 0.587 * g + 0.114 * b;
+  })();
+  const isDarkDeck = bgLuminance < 0.4;
 
   useEffect(() => {
     if (isOpen && isPlaying) {
@@ -118,39 +149,68 @@ export function AnimationPreview({ isOpen, onClose }: AnimationPreviewProps) {
         </div>
       )}
 
-      {/* Preview container */}
+      {/* Preview container - contrasting gradient background */}
       <div
         className="absolute inset-0 flex items-center justify-center"
         style={{
-          background: 'radial-gradient(circle, rgba(40,40,40,1) 0%, rgba(0,0,0,1) 100%)',
+          background: isDarkDeck
+            ? 'linear-gradient(135deg, #2a2a3e 0%, #3d3d5c 30%, #4a4a6a 50%, #3d3d5c 70%, #2a2a3e 100%)'
+            : 'linear-gradient(135deg, #1a1a2e 0%, #16213e 30%, #0f3460 50%, #16213e 70%, #1a1a2e 100%)',
         }}
       >
+        {/* Subtle checkerboard pattern overlay for contrast */}
         <div
-          className="relative"
+          className="absolute inset-0 pointer-events-none"
           style={{
-            transform: `perspective(1000px) rotateY(${currentRotation}deg)`,
-            transformStyle: 'preserve-3d',
-            transition: isPlaying ? 'none' : 'transform 0.3s ease',
+            backgroundImage: `
+              linear-gradient(45deg, rgba(255,255,255,0.02) 25%, transparent 25%),
+              linear-gradient(-45deg, rgba(255,255,255,0.02) 25%, transparent 25%),
+              linear-gradient(45deg, transparent 75%, rgba(255,255,255,0.02) 75%),
+              linear-gradient(-45deg, transparent 75%, rgba(255,255,255,0.02) 75%)
+            `,
+            backgroundSize: '24px 24px',
+            backgroundPosition: '0 0, 0 12px, 12px -12px, -12px 0',
           }}
-        >
-          {/* Shadow under deck */}
-          <div
-            className="absolute -bottom-8 left-1/2 -translate-x-1/2 w-32 h-8 rounded-full"
-            style={{
-              background: 'radial-gradient(ellipse, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 70%)',
-              filter: 'blur(8px)',
-            }}
-          />
+        />
 
-          {/* Deck preview - scaled up for visibility */}
+        {/* Perspective container - perspective on parent for proper 3D */}
+        <div style={{ perspective: '1200px', perspectiveOrigin: '50% 50%' }}>
+          {/* Rotating element */}
           <div
-            className="relative"
             style={{
-              transform: 'scale(2.5)',
-              filter: 'drop-shadow(0 20px 40px rgba(0,0,0,0.5))',
+              transform: `rotateY(${currentRotation}deg)`,
+              transformStyle: 'preserve-3d',
+              transition: isPlaying ? 'none' : 'transform 0.3s ease',
             }}
           >
-            <WorkbenchStage />
+            {/* Shadow under deck */}
+            <div
+              className="absolute left-1/2 -translate-x-1/2"
+              style={{
+                bottom: `-${16 * displayScale}px`,
+                width: `${containerW * displayScale * 0.8}px`,
+                height: `${20 * displayScale}px`,
+                borderRadius: '50%',
+                background: 'radial-gradient(ellipse, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0) 70%)',
+                filter: `blur(${8 * displayScale}px)`,
+              }}
+            />
+
+            {/* Deck preview - explicit dimensions for WorkbenchStage */}
+            <div
+              style={{
+                width: `${containerW}px`,
+                height: `${containerH}px`,
+                transform: `scale(${displayScale})`,
+                transformOrigin: 'center center',
+                filter: 'drop-shadow(0 10px 30px rgba(0,0,0,0.4)) drop-shadow(0 4px 12px rgba(0,0,0,0.3))',
+                overflow: 'hidden',
+                pointerEvents: 'none',
+                userSelect: 'none',
+              }}
+            >
+              <WorkbenchStage />
+            </div>
           </div>
         </div>
       </div>
