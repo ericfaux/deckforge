@@ -21,10 +21,16 @@ const ArrayDuplicateModal = lazy(() => import('@/components/deckforge/ArrayDupli
 const ExportPreview = lazy(() => import('@/components/deckforge/ExportPreview').then(m => ({ default: m.ExportPreview })));
 const ExportPresetsModal = lazy(() => import('@/components/deckforge/ExportPresetsModal').then(m => ({ default: m.ExportPresetsModal })));
 const TemplateGalleryModal = lazy(() => import('@/components/deckforge/TemplateGalleryModal').then(m => ({ default: m.TemplateGalleryModal })));
-const DeckGenerator3D = lazy(() => import('@/components/deckforge/DeckGenerator3D').then(m => ({ default: m.default })));
+const DeckGenerator3D = lazy(() =>
+  import('@/components/deckforge/DeckGenerator3D').catch(() => {
+    // Retry once on chunk load failure (common after deploy/rebuild)
+    return import('@/components/deckforge/DeckGenerator3D');
+  })
+);
 import { MobileDrawer } from '@/components/deckforge/MobileDrawer';
 import { LayerList } from '@/components/deckforge/LayerList';
 import { ComponentErrorBoundary } from '@/components/ComponentErrorBoundary';
+import { LoadingState } from '@/components/LoadingState';
 import { useDeckDimensions } from '@/components/deckforge/WorkbenchStage';
 import { getDeckSize } from '@/lib/deck-sizes';
 import { useDeckForgeStore, CanvasObject } from '@/store/deckforge';
@@ -1837,12 +1843,14 @@ export default function DeckForge() {
           onClose={() => setIsTemplateGalleryOpen(false)}
         />
 
-        {/* 3D Deck Generator */}
+        {/* 3D Deck Generator - separate Suspense for heavy Three.js chunk */}
         {is3DGeneratorOpen && (
-          <DeckGenerator3D
-            objects={objects}
-            onClose={() => setIs3DGeneratorOpen(false)}
-          />
+          <Suspense fallback={<LoadingState message="Loading 3D Print..." fullScreen />}>
+            <DeckGenerator3D
+              objects={objects}
+              onClose={() => setIs3DGeneratorOpen(false)}
+            />
+          </Suspense>
         )}
 
         {/* Color Palette Extractor */}
