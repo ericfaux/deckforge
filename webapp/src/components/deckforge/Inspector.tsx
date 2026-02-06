@@ -16,6 +16,7 @@ import { ObjectEffects } from './ObjectEffects';
 import { HueRotateDial } from './HueRotateDial';
 import { GradientPicker } from './GradientPicker';
 import { ColorPicker } from './ColorPicker';
+import { UnifiedColorPicker, FillMode, GradientConfig } from './UnifiedColorPicker';
 import { useDeckDimensions } from './WorkbenchStage';
 import { preloadUserFonts, Font, loadFont } from '@/lib/fonts';
 import { preloadTopFonts, loadGoogleFont, getGoogleFonts } from '@/lib/google-fonts';
@@ -144,181 +145,37 @@ export function Inspector() {
 
       {/* Deck Background */}
       <div className="p-3 border-b border-border space-y-3">
-        <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium block">
-          Deck Background
-        </label>
-
-        {/* Solid | Gradient toggle */}
-        <div className="grid grid-cols-2 gap-1">
-          <button
-            onClick={() => setBackgroundFillType('solid')}
-            className={`py-1.5 px-2 text-[10px] uppercase tracking-wider border transition-colors ${
-              backgroundFillType === 'solid'
-                ? 'border-primary bg-primary text-primary-foreground'
-                : 'border-border hover:border-primary bg-secondary text-muted-foreground'
-            }`}
-          >
-            Solid
-          </button>
-          <button
-            onClick={() => setBackgroundFillType('gradient')}
-            className={`py-1.5 px-2 text-[10px] uppercase tracking-wider border transition-colors ${
-              backgroundFillType === 'gradient'
-                ? 'border-primary bg-primary text-primary-foreground'
-                : 'border-border hover:border-primary bg-secondary text-muted-foreground'
-            }`}
-          >
-            Gradient
-          </button>
-        </div>
-
-        {backgroundFillType === 'solid' ? (
-          <ColorPicker
-            label=""
-            value={backgroundColor}
-            onChange={setBackgroundColor}
-            showEyedropper={true}
-          />
-        ) : (
-          <div className="space-y-3">
-            {/* Gradient preview strip */}
-            <div
-              className="h-8 w-full rounded border border-border"
-              style={{
-                background: backgroundGradient.direction === 'radial'
-                  ? `radial-gradient(circle, ${backgroundGradient.startColor} 0%, ${backgroundGradient.endColor} 100%)`
-                  : `linear-gradient(${backgroundGradient.angle}deg, ${backgroundGradient.startColor} 0%, ${backgroundGradient.endColor} 100%)`
-              }}
-            />
-
-            {/* Start color */}
-            <div className="space-y-1">
-              <label className="text-[9px] uppercase tracking-widest text-muted-foreground">Start Color</label>
-              <div className="flex items-center gap-2">
-                <div
-                  className="w-8 h-8 rounded border-2 border-border shrink-0 cursor-pointer"
-                  style={{ backgroundColor: backgroundGradient.startColor }}
-                />
-                <input
-                  type="color"
-                  value={backgroundGradient.startColor}
-                  onChange={(e) => setBackgroundGradient({ startColor: e.target.value })}
-                  className="flex-1 h-8 border border-border rounded cursor-pointer min-w-0"
-                />
-                <input
-                  type="text"
-                  value={backgroundGradient.startColor}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (/^#[0-9A-Fa-f]{0,6}$/.test(val) || val === '') {
-                      setBackgroundGradient({ startColor: val });
-                    }
-                  }}
-                  maxLength={7}
-                  className="w-20 h-8 px-2 text-xs font-mono border border-border rounded bg-background"
-                />
-              </div>
-            </div>
-
-            {/* End color */}
-            <div className="space-y-1">
-              <label className="text-[9px] uppercase tracking-widest text-muted-foreground">End Color</label>
-              <div className="flex items-center gap-2">
-                <div
-                  className="w-8 h-8 rounded border-2 border-border shrink-0 cursor-pointer"
-                  style={{ backgroundColor: backgroundGradient.endColor }}
-                />
-                <input
-                  type="color"
-                  value={backgroundGradient.endColor}
-                  onChange={(e) => setBackgroundGradient({ endColor: e.target.value })}
-                  className="flex-1 h-8 border border-border rounded cursor-pointer min-w-0"
-                />
-                <input
-                  type="text"
-                  value={backgroundGradient.endColor}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (/^#[0-9A-Fa-f]{0,6}$/.test(val) || val === '') {
-                      setBackgroundGradient({ endColor: val });
-                    }
-                  }}
-                  maxLength={7}
-                  className="w-20 h-8 px-2 text-xs font-mono border border-border rounded bg-background"
-                />
-              </div>
-            </div>
-
-            {/* Direction selector */}
-            <div className="space-y-1">
-              <label className="text-[9px] uppercase tracking-widest text-muted-foreground">Direction</label>
-              <div className="grid grid-cols-5 gap-1">
-                {[
-                  { label: '0°', angle: 0, dir: 'linear' as const },
-                  { label: '45°', angle: 45, dir: 'linear' as const },
-                  { label: '90°', angle: 90, dir: 'linear' as const },
-                  { label: '135°', angle: 135, dir: 'linear' as const },
-                  { label: '180°', angle: 180, dir: 'linear' as const },
-                  { label: '225°', angle: 225, dir: 'linear' as const },
-                  { label: '270°', angle: 270, dir: 'linear' as const },
-                  { label: '315°', angle: 315, dir: 'linear' as const },
-                  { label: 'Radial', angle: 0, dir: 'radial' as const },
-                ].map((opt) => {
-                  const isActive = backgroundGradient.direction === opt.dir &&
-                    (opt.dir === 'radial' || backgroundGradient.angle === opt.angle);
-                  return (
-                    <button
-                      key={opt.label}
-                      onClick={() => setBackgroundGradient({ direction: opt.dir, angle: opt.angle })}
-                      className={`py-1 px-1 text-[9px] uppercase tracking-wider border transition-colors ${
-                        isActive
-                          ? 'border-primary bg-primary text-primary-foreground'
-                          : 'border-border hover:border-primary bg-secondary text-muted-foreground'
-                      }`}
-                    >
-                      {opt.label}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Preset gradients */}
-            <div className="space-y-1">
-              <label className="text-[9px] uppercase tracking-widest text-muted-foreground">Presets</label>
-              <div className="grid grid-cols-3 gap-1.5">
-                {[
-                  { name: 'Sunset', start: '#ff6b35', end: '#f472b6' },
-                  { name: 'Ocean', start: '#3b82f6', end: '#14b8a6' },
-                  { name: 'Neon', start: '#22c55e', end: '#a855f7' },
-                  { name: 'Fire', start: '#ef4444', end: '#eab308' },
-                  { name: 'Midnight', start: '#1e3a5f', end: '#0a0a0a' },
-                  { name: 'Custom', start: backgroundGradient.startColor, end: backgroundGradient.endColor },
-                ].map((preset) => (
-                  <button
-                    key={preset.name}
-                    onClick={() => {
-                      if (preset.name !== 'Custom') {
-                        setBackgroundGradient({ startColor: preset.start, endColor: preset.end });
-                      }
-                    }}
-                    className="group space-y-1"
-                  >
-                    <div
-                      className="h-6 w-full rounded border border-border group-hover:border-primary transition-colors"
-                      style={{
-                        background: `linear-gradient(90deg, ${preset.start} 0%, ${preset.end} 100%)`
-                      }}
-                    />
-                    <span className="text-[8px] text-muted-foreground group-hover:text-foreground block text-center">
-                      {preset.name}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
+        <UnifiedColorPicker
+          label="Deck Background"
+          color={backgroundColor}
+          fillMode={backgroundFillType as FillMode}
+          gradientConfig={{
+            stops: backgroundGradient.stops || [
+              { offset: 0, color: backgroundGradient.startColor },
+              { offset: 1, color: backgroundGradient.endColor },
+            ],
+            angle: backgroundGradient.angle,
+            centerX: backgroundGradient.centerX ?? 0.5,
+            centerY: backgroundGradient.centerY ?? 0.5,
+            radius: backgroundGradient.radius ?? 0.5,
+          }}
+          onColorChange={setBackgroundColor}
+          onFillModeChange={(mode) => setBackgroundFillType(mode as any)}
+          onGradientChange={(config) => {
+            setBackgroundGradient({
+              stops: config.stops,
+              angle: config.angle,
+              startColor: config.stops[0]?.color || '#ff6b35',
+              endColor: config.stops[config.stops.length - 1]?.color || '#f7c948',
+              direction: backgroundFillType === 'radial-gradient' ? 'radial' : 'linear',
+              centerX: config.centerX,
+              centerY: config.centerY,
+              radius: config.radius,
+            });
+          }}
+          showGradients={true}
+          showEyedropper={true}
+        />
       </div>
 
       {/* Properties panel */}
@@ -519,20 +376,45 @@ export function Inspector() {
             {/* Color (for text/shapes) */}
             {(selectedObject.type === 'text' || selectedObject.type === 'shape') && (
               <div className="space-y-2">
-                <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                  Color
-                </Label>
-                <GradientPicker
-                  currentFill={selectedObject.fill}
-                  onApplySolid={(color) => updateWithHistory({ fill: color })}
-                  onApplyGradient={(stops, angle) => {
+                <UnifiedColorPicker
+                  label="Fill Color"
+                  color={selectedObject.fill || '#ffffff'}
+                  fillMode={selectedObject.fillType || 'solid'}
+                  gradientConfig={{
+                    stops: selectedObject.gradientStops || [
+                      { offset: 0, color: selectedObject.fill || '#ff0000' },
+                      { offset: 1, color: '#0000ff' },
+                    ],
+                    angle: selectedObject.gradientAngle || 135,
+                    centerX: selectedObject.gradientCenterX ?? 0.5,
+                    centerY: selectedObject.gradientCenterY ?? 0.5,
+                    radius: selectedObject.gradientRadius ?? 0.5,
+                  }}
+                  onColorChange={(color) => updateWithHistory({ fill: color, fillType: 'solid' })}
+                  onFillModeChange={(mode) => {
                     updateWithHistory({
-                      gradientType: 'linear',
-                      gradientStops: stops,
-                      gradientAngle: angle,
-                      fill: stops[0].color, // Fallback color
+                      fillType: mode,
+                      gradientStops: mode !== 'solid'
+                        ? (selectedObject.gradientStops || [
+                            { offset: 0, color: selectedObject.fill || '#ff0000' },
+                            { offset: 1, color: '#0000ff' },
+                          ])
+                        : undefined,
                     });
                   }}
+                  onGradientChange={(config) => {
+                    updateWithHistory({
+                      fillType: selectedObject.fillType === 'radial-gradient' ? 'radial-gradient' : 'linear-gradient',
+                      gradientStops: config.stops,
+                      gradientAngle: config.angle,
+                      gradientCenterX: config.centerX,
+                      gradientCenterY: config.centerY,
+                      gradientRadius: config.radius,
+                      fill: config.stops[0]?.color || '#ffffff',
+                    });
+                  }}
+                  showGradients={true}
+                  showEyedropper={true}
                 />
               </div>
             )}
@@ -566,18 +448,20 @@ export function Inspector() {
                 </div>
 
                 {/* Primary Color */}
-                <ColorPicker
+                <UnifiedColorPicker
                   label="Primary Color"
-                  value={selectedObject.patternPrimaryColor || '#1e3a8a'}
-                  onChange={(color) => updateWithHistory({ patternPrimaryColor: color })}
+                  color={selectedObject.patternPrimaryColor || '#1e3a8a'}
+                  onColorChange={(color) => updateWithHistory({ patternPrimaryColor: color })}
+                  showGradients={false}
                   showEyedropper={true}
                 />
 
                 {/* Secondary Color */}
-                <ColorPicker
+                <UnifiedColorPicker
                   label="Secondary Color"
-                  value={selectedObject.patternSecondaryColor || '#3b82f6'}
-                  onChange={(color) => updateWithHistory({ patternSecondaryColor: color })}
+                  color={selectedObject.patternSecondaryColor || '#3b82f6'}
+                  onColorChange={(color) => updateWithHistory({ patternSecondaryColor: color })}
+                  showGradients={false}
                   showEyedropper={true}
                 />
 
@@ -624,10 +508,20 @@ export function Inspector() {
                   </button>
                 </div>
                 {selectedObject.colorize && (
-                  <ColorPicker
-                    label=""
-                    value={selectedObject.colorize}
-                    onChange={(color) => updateWithHistory({ colorize: color })}
+                  <UnifiedColorPicker
+                    color={selectedObject.colorize}
+                    onColorChange={(color) => updateWithHistory({ colorize: color })}
+                    showGradients={false}
+                    showEyedropper={true}
+                  />
+                )}
+                {/* Pen/Path stroke color */}
+                {selectedObject.type === 'path' && (
+                  <UnifiedColorPicker
+                    label="Stroke Color"
+                    color={selectedObject.stroke || '#ffffff'}
+                    onColorChange={(color) => updateWithHistory({ stroke: color })}
+                    showGradients={false}
                     showEyedropper={true}
                   />
                 )}
@@ -666,23 +560,57 @@ export function Inspector() {
                     </button>
                   </div>
                   {selectedObject.colorize && (
-                    <ColorPicker
-                      label=""
-                      value={selectedObject.colorize}
-                      onChange={(color) => updateWithHistory({ colorize: color })}
+                    <UnifiedColorPicker
+                      color={selectedObject.colorize}
+                      fillMode={selectedObject.fillType || 'solid'}
+                      gradientConfig={{
+                        stops: selectedObject.gradientStops || [
+                          { offset: 0, color: selectedObject.colorize || '#ccff00' },
+                          { offset: 1, color: '#0000ff' },
+                        ],
+                        angle: selectedObject.gradientAngle || 135,
+                        centerX: selectedObject.gradientCenterX ?? 0.5,
+                        centerY: selectedObject.gradientCenterY ?? 0.5,
+                        radius: selectedObject.gradientRadius ?? 0.5,
+                      }}
+                      onColorChange={(color) => updateWithHistory({ colorize: color })}
+                      onFillModeChange={(mode) => {
+                        updateWithHistory({
+                          fillType: mode,
+                          gradientStops: mode !== 'solid'
+                            ? (selectedObject.gradientStops || [
+                                { offset: 0, color: selectedObject.colorize || '#ccff00' },
+                                { offset: 1, color: '#0000ff' },
+                              ])
+                            : undefined,
+                        });
+                      }}
+                      onGradientChange={(config) => {
+                        updateWithHistory({
+                          fillType: selectedObject.fillType === 'radial-gradient' ? 'radial-gradient' : 'linear-gradient',
+                          gradientStops: config.stops,
+                          gradientAngle: config.angle,
+                          gradientCenterX: config.centerX,
+                          gradientCenterY: config.centerY,
+                          gradientRadius: config.radius,
+                          colorize: config.stops[0]?.color || '#ccff00',
+                        });
+                      }}
+                      showGradients={true}
                       showEyedropper={true}
                     />
                   )}
                   <p className="text-[9px] text-muted-foreground">
-                    Tint the sticker with a solid color
+                    Tint the sticker with a color or gradient
                   </p>
                 </div>
 
                 {/* Stroke Color */}
-                <ColorPicker
+                <UnifiedColorPicker
                   label="Stroke Color"
-                  value={selectedObject.stroke || '#ffffff'}
-                  onChange={(color) => updateWithHistory({ stroke: color })}
+                  color={selectedObject.stroke || '#ffffff'}
+                  onColorChange={(color) => updateWithHistory({ stroke: color })}
+                  showGradients={false}
                   showEyedropper={true}
                 />
 
@@ -819,10 +747,44 @@ export function Inspector() {
                 </div>
 
                 {/* Stroke Color */}
-                <ColorPicker
+                <UnifiedColorPicker
                   label="Stroke Color"
-                  value={selectedObject.stroke || '#ffffff'}
-                  onChange={(color) => updateWithHistory({ stroke: color })}
+                  color={selectedObject.stroke || '#ffffff'}
+                  fillMode={selectedObject.fillType || 'solid'}
+                  gradientConfig={{
+                    stops: selectedObject.gradientStops || [
+                      { offset: 0, color: selectedObject.stroke || '#ffffff' },
+                      { offset: 1, color: '#0000ff' },
+                    ],
+                    angle: selectedObject.gradientAngle || 135,
+                    centerX: selectedObject.gradientCenterX ?? 0.5,
+                    centerY: selectedObject.gradientCenterY ?? 0.5,
+                    radius: selectedObject.gradientRadius ?? 0.5,
+                  }}
+                  onColorChange={(color) => updateWithHistory({ stroke: color })}
+                  onFillModeChange={(mode) => {
+                    updateWithHistory({
+                      fillType: mode,
+                      gradientStops: mode !== 'solid'
+                        ? (selectedObject.gradientStops || [
+                            { offset: 0, color: selectedObject.stroke || '#ffffff' },
+                            { offset: 1, color: '#0000ff' },
+                          ])
+                        : undefined,
+                    });
+                  }}
+                  onGradientChange={(config) => {
+                    updateWithHistory({
+                      fillType: selectedObject.fillType === 'radial-gradient' ? 'radial-gradient' : 'linear-gradient',
+                      gradientStops: config.stops,
+                      gradientAngle: config.angle,
+                      gradientCenterX: config.centerX,
+                      gradientCenterY: config.centerY,
+                      gradientRadius: config.radius,
+                      stroke: config.stops[0]?.color || '#ffffff',
+                    });
+                  }}
+                  showGradients={true}
                   showEyedropper={true}
                 />
 
