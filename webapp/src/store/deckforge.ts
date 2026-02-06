@@ -239,6 +239,9 @@ interface DeckForgeState {
   // Hardware guide (visual only, not exported)
   showHardwareGuide: boolean;
   showRulers: boolean; // Ruler overlay toggle
+  showBleedSafeZone: boolean; // Bleed & safe zone guides
+  showSymmetryGuide: boolean; // Vertical symmetry guide
+  measureToolActive: boolean; // Measurement tool mode
 
   // Background color & gradient
   backgroundColor: string;
@@ -302,6 +305,9 @@ interface DeckForgeState {
   arrayDuplicate: (sourceId: string, rows: number, cols: number, gapX: number, gapY: number) => void;
   toggleHardwareGuide: () => void;
   toggleRulers: () => void;
+  toggleBleedSafeZone: () => void;
+  toggleSymmetryGuide: () => void;
+  toggleMeasureTool: () => void;
   setBackgroundColor: (color: string) => void;
   setBackgroundFillType: (type: 'solid' | 'linear-gradient' | 'radial-gradient') => void;
   setBackgroundGradient: (gradient: Partial<DeckForgeState['backgroundGradient']>) => void;
@@ -353,6 +359,9 @@ export const useDeckForgeStore = create<DeckForgeState>((set, get) => ({
   textureOverlays: defaultTextureOverlays,
   showHardwareGuide: false,
   showRulers: false,
+  showBleedSafeZone: false,
+  showSymmetryGuide: false,
+  measureToolActive: false,
   backgroundColor: '#dbdbdb',
   backgroundFillType: 'solid' as 'solid' | 'linear-gradient' | 'radial-gradient',
   backgroundGradient: {
@@ -896,6 +905,18 @@ export const useDeckForgeStore = create<DeckForgeState>((set, get) => ({
 
   toggleRulers: () => {
     set((state) => ({ showRulers: !state.showRulers }));
+  },
+
+  toggleBleedSafeZone: () => {
+    set((state) => ({ showBleedSafeZone: !state.showBleedSafeZone }));
+  },
+
+  toggleSymmetryGuide: () => {
+    set((state) => ({ showSymmetryGuide: !state.showSymmetryGuide }));
+  },
+
+  toggleMeasureTool: () => {
+    set((state) => ({ measureToolActive: !state.measureToolActive }));
   },
 
   setBackgroundColor: (color) => {

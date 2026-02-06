@@ -68,13 +68,14 @@ const shortcuts: Shortcut[] = [
   { keys: ['Alt', 'C'], description: 'Center horizontally (single object)', category: 'Alignment' },
   { keys: ['Alt', 'R'], description: 'Align right (single object)', category: 'Alignment' },
   
-  // View
-  { keys: ['Space', 'Drag'], description: 'Pan canvas', category: 'View' },
-  { keys: ['Scroll'], description: 'Zoom in/out', category: 'View' },
-  { keys: ['Ctrl', '0'], description: 'Reset zoom to 100%', category: 'View' },
-  { keys: ['Ctrl', '1'], description: 'Zoom to fit', category: 'View' },
-  { keys: ['Ctrl', 'Shift', 'R'], description: 'Toggle rulers', category: 'View' },
-  { keys: ['H'], description: 'Toggle hardware guide', category: 'View' },
+  // View & Guides
+  { keys: ['Space', 'Drag'], description: 'Pan canvas', category: 'View & Guides' },
+  { keys: ['Scroll'], description: 'Zoom in/out', category: 'View & Guides' },
+  { keys: ['Ctrl', '0'], description: 'Reset zoom to 100%', category: 'View & Guides' },
+  { keys: ['Ctrl', '1'], description: 'Zoom to fit', category: 'View & Guides' },
+  { keys: ['Ctrl', 'Shift', 'R'], description: 'Toggle rulers (mm)', category: 'View & Guides' },
+  { keys: ['H'], description: 'Toggle hardware guide (trucks, wheelbase, kicks)', category: 'View & Guides' },
+  { keys: ['Ctrl', 'Shift', 'B'], description: 'Toggle bleed & safe zone guides', category: 'View & Guides' },
   
   // Tools
   { keys: ['T'], description: 'Select text tool', category: 'Tools' },
