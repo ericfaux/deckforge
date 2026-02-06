@@ -12,7 +12,7 @@ import { useDebounce } from '@/hooks/use-debounce';
 // Lazy load modals for better performance
 const VersionHistory = lazy(() => import('@/components/deckforge/VersionHistory').then(m => ({ default: m.VersionHistory })));
 const ShareModal = lazy(() => import('@/components/deckforge/ShareModal').then(m => ({ default: m.ShareModal })));
-const AnimationPreview = lazy(() => import('@/components/deckforge/AnimationPreview').then(m => ({ default: m.AnimationPreview })));
+const DeckMockupPreview = lazy(() => import('@/components/deckforge/DeckMockupPreview').then(m => ({ default: m.DeckMockupPreview })));
 const BrandKitModal = lazy(() => import('@/components/deckforge/BrandKitModal').then(m => ({ default: m.BrandKitModal })));
 const FontUploadModal = lazy(() => import('@/components/deckforge/FontUploadModal').then(m => ({ default: m.FontUploadModal })));
 const ColorExtractorModal = lazy(() => import('@/components/deckforge/ColorExtractorModal').then(m => ({ default: m.ColorExtractorModal })));
@@ -45,7 +45,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Save, Download, User, Sparkles, Clock, Menu, Share2, Play, ChevronDown, Palette, Undo, Redo, Type, Ruler, Loader2, FileImage, FileText, Zap, Image, Check, Cloud } from 'lucide-react';
+import { Save, Download, User, Sparkles, Clock, Menu, Share2, ChevronDown, Palette, Undo, Redo, Type, Ruler, Loader2, FileImage, FileText, Zap, Image, Check, Cloud, Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { KeyboardShortcuts } from '@/components/deckforge/KeyboardShortcuts';
 import { CommandPalette } from '@/components/CommandPalette';
@@ -81,7 +81,7 @@ export default function DeckForge() {
   const [loadingModal, setLoadingModal] = useState<string | null>(null);
   const [isVersionHistoryOpen, setIsVersionHistoryOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
-  const [isAnimationPreviewOpen, setIsAnimationPreviewOpen] = useState(false);
+  const [isMockupPreviewOpen, setIsMockupPreviewOpen] = useState(false);
   const [isShortcutsModalOpen, setIsShortcutsModalOpen] = useState(false);
   const [isBrandKitModalOpen, setIsBrandKitModalOpen] = useState(false);
   const [isFontUploadModalOpen, setIsFontUploadModalOpen] = useState(false);
@@ -1359,9 +1359,9 @@ export default function DeckForge() {
                   },
                   {
                     id: 'preview',
-                    label: 'Preview',
-                    icon: <Play className="w-4 h-4" />,
-                    onClick: () => openModal('preview', setIsAnimationPreviewOpen),
+                    label: 'Mockup',
+                    icon: <Eye className="w-4 h-4" />,
+                    onClick: () => openModal('preview', setIsMockupPreviewOpen),
                     disabled: loadingModal === 'preview',
                     shortcut: 'Ctrl+P',
                   },
@@ -1694,10 +1694,10 @@ export default function DeckForge() {
           />
         )}
 
-        {/* Animation Preview */}
-        <AnimationPreview
-          isOpen={isAnimationPreviewOpen}
-          onClose={() => setIsAnimationPreviewOpen(false)}
+        {/* Deck Mockup Preview */}
+        <DeckMockupPreview
+          isOpen={isMockupPreviewOpen}
+          onClose={() => setIsMockupPreviewOpen(false)}
         />
 
         {/* Font Upload Modal */}
