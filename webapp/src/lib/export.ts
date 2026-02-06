@@ -25,7 +25,7 @@ export async function exportToPNG(
     width?: number; // Custom deck width
     height?: number; // Custom deck height
     backgroundColor?: string;
-    backgroundFillType?: 'solid' | 'gradient';
+    backgroundFillType?: 'solid' | 'gradient' | 'linear-gradient' | 'radial-gradient';
     backgroundGradient?: BackgroundGradientData;
   } = {}
 ): Promise<Blob> {
@@ -58,12 +58,12 @@ export async function exportToPNG(
 
   // Background (print-ready)
   if (includeBackground) {
-    if (backgroundFillType === 'gradient' && backgroundGradient) {
+    if ((backgroundFillType === 'gradient' || backgroundFillType === 'linear-gradient' || backgroundFillType === 'radial-gradient') && backgroundGradient) {
       let gradient: CanvasGradient;
-      if (backgroundGradient.direction === 'radial') {
-        const cx = width / 2;
-        const cy = height / 2;
-        const r = Math.max(width, height) / 2;
+      if (backgroundGradient.direction === 'radial' || backgroundFillType === 'radial-gradient') {
+        const cx = (backgroundGradient.centerX ?? 0.5) * width;
+        const cy = (backgroundGradient.centerY ?? 0.5) * height;
+        const r = (backgroundGradient.radius ?? 0.5) * Math.max(width, height);
         gradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
       } else {
         const angle = backgroundGradient.angle * Math.PI / 180;
@@ -76,8 +76,15 @@ export async function exportToPNG(
         const y2 = cy + Math.sin(angle) * len / 2;
         gradient = ctx.createLinearGradient(x1, y1, x2, y2);
       }
-      gradient.addColorStop(0, backgroundGradient.startColor);
-      gradient.addColorStop(1, backgroundGradient.endColor);
+      // Use multi-stop gradient if available, fallback to start/end colors
+      if (backgroundGradient.stops && backgroundGradient.stops.length > 0) {
+        backgroundGradient.stops.forEach((stop: { offset: number; color: string }) => {
+          gradient.addColorStop(stop.offset, stop.color);
+        });
+      } else {
+        gradient.addColorStop(0, backgroundGradient.startColor);
+        gradient.addColorStop(1, backgroundGradient.endColor);
+      }
       ctx.fillStyle = gradient;
     } else {
       ctx.fillStyle = backgroundColor;
@@ -482,7 +489,7 @@ export async function exportToSVG(
     width?: number; // Custom deck width (defaults to DECK_WIDTH)
     height?: number; // Custom deck height (defaults to DECK_HEIGHT)
     backgroundColor?: string;
-    backgroundFillType?: 'solid' | 'gradient';
+    backgroundFillType?: 'solid' | 'gradient' | 'linear-gradient' | 'radial-gradient';
     backgroundGradient?: BackgroundGradientData;
   } = {}
 ): Promise<Blob> {
@@ -512,19 +519,24 @@ export async function exportToSVG(
     bg.setAttribute('width', width.toString());
     bg.setAttribute('height', height.toString());
 
-    if (backgroundFillType === 'gradient' && backgroundGradient) {
+    if ((backgroundFillType === 'gradient' || backgroundFillType === 'linear-gradient' || backgroundFillType === 'radial-gradient') && backgroundGradient) {
       const bgGradId = 'bg-gradient';
-      if (backgroundGradient.direction === 'radial') {
+      const stops = backgroundGradient.stops && backgroundGradient.stops.length > 0
+        ? backgroundGradient.stops
+        : [{ offset: 0, color: backgroundGradient.startColor }, { offset: 1, color: backgroundGradient.endColor }];
+
+      if (backgroundGradient.direction === 'radial' || backgroundFillType === 'radial-gradient') {
         const grad = document.createElementNS('http://www.w3.org/2000/svg', 'radialGradient');
         grad.setAttribute('id', bgGradId);
-        const stop1 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
-        stop1.setAttribute('offset', '0%');
-        stop1.setAttribute('stop-color', backgroundGradient.startColor);
-        const stop2 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
-        stop2.setAttribute('offset', '100%');
-        stop2.setAttribute('stop-color', backgroundGradient.endColor);
-        grad.appendChild(stop1);
-        grad.appendChild(stop2);
+        grad.setAttribute('cx', `${(backgroundGradient.centerX ?? 0.5) * 100}%`);
+        grad.setAttribute('cy', `${(backgroundGradient.centerY ?? 0.5) * 100}%`);
+        grad.setAttribute('r', `${(backgroundGradient.radius ?? 0.5) * 100}%`);
+        stops.forEach((s: { offset: number; color: string }) => {
+          const stop = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
+          stop.setAttribute('offset', `${s.offset * 100}%`);
+          stop.setAttribute('stop-color', s.color);
+          grad.appendChild(stop);
+        });
         defs.appendChild(grad);
       } else {
         const angle = backgroundGradient.angle * Math.PI / 180;
@@ -538,14 +550,12 @@ export async function exportToSVG(
         grad.setAttribute('y1', `${y1}%`);
         grad.setAttribute('x2', `${x2}%`);
         grad.setAttribute('y2', `${y2}%`);
-        const stop1 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
-        stop1.setAttribute('offset', '0%');
-        stop1.setAttribute('stop-color', backgroundGradient.startColor);
-        const stop2 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
-        stop2.setAttribute('offset', '100%');
-        stop2.setAttribute('stop-color', backgroundGradient.endColor);
-        grad.appendChild(stop1);
-        grad.appendChild(stop2);
+        stops.forEach((s: { offset: number; color: string }) => {
+          const stop = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
+          stop.setAttribute('offset', `${s.offset * 100}%`);
+          stop.setAttribute('stop-color', s.color);
+          grad.appendChild(stop);
+        });
         defs.appendChild(grad);
       }
       bg.setAttribute('fill', `url(#${bgGradId})`);
@@ -842,7 +852,7 @@ export async function exportToPDF(
     includeBackground?: boolean;
     title?: string;
     backgroundColor?: string;
-    backgroundFillType?: 'solid' | 'gradient';
+    backgroundFillType?: 'solid' | 'gradient' | 'linear-gradient' | 'radial-gradient';
     backgroundGradient?: BackgroundGradientData;
   } = {}
 ): Promise<Blob> {

@@ -471,11 +471,24 @@ const CanvasObjectItem = memo(function CanvasObjectItem({
       <>
         {obj.gradientStops && (
           <defs>
-            <linearGradient id={gradientId!} x1="0%" y1="0%" x2="100%" y2="0%" gradientTransform={`rotate(${obj.gradientAngle || 0})`}>
-              {obj.gradientStops.map((stop, i) => (
-                <stop key={i} offset={`${stop.offset * 100}%`} stopColor={stop.color} />
-              ))}
-            </linearGradient>
+            {obj.fillType === 'radial-gradient' ? (
+              <radialGradient
+                id={gradientId!}
+                cx={`${(obj.gradientCenterX ?? 0.5) * 100}%`}
+                cy={`${(obj.gradientCenterY ?? 0.5) * 100}%`}
+                r={`${(obj.gradientRadius ?? 0.5) * 100}%`}
+              >
+                {obj.gradientStops.map((stop, i) => (
+                  <stop key={i} offset={`${stop.offset * 100}%`} stopColor={stop.color} />
+                ))}
+              </radialGradient>
+            ) : (
+              <linearGradient id={gradientId!} x1="0%" y1="0%" x2="100%" y2="0%" gradientTransform={`rotate(${obj.gradientAngle || 0})`}>
+                {obj.gradientStops.map((stop, i) => (
+                  <stop key={i} offset={`${stop.offset * 100}%`} stopColor={stop.color} />
+                ))}
+              </linearGradient>
+            )}
           </defs>
         )}
         <text
@@ -665,11 +678,19 @@ const CanvasObjectItem = memo(function CanvasObjectItem({
         <>
           {obj.gradientStops && (
             <defs>
-              <linearGradient id={gradientId!} x1="0%" y1="0%" x2="100%" y2="0%" gradientTransform={`rotate(${obj.gradientAngle || 0})`}>
-                {obj.gradientStops.map((stop, i) => (
-                  <stop key={i} offset={`${stop.offset * 100}%`} stopColor={stop.color} />
-                ))}
-              </linearGradient>
+              {obj.fillType === 'radial-gradient' ? (
+                <radialGradient id={gradientId!} cx={`${(obj.gradientCenterX ?? 0.5) * 100}%`} cy={`${(obj.gradientCenterY ?? 0.5) * 100}%`} r={`${(obj.gradientRadius ?? 0.5) * 100}%`}>
+                  {obj.gradientStops.map((stop, i) => (
+                    <stop key={i} offset={`${stop.offset * 100}%`} stopColor={stop.color} />
+                  ))}
+                </radialGradient>
+              ) : (
+                <linearGradient id={gradientId!} x1="0%" y1="0%" x2="100%" y2="0%" gradientTransform={`rotate(${obj.gradientAngle || 0})`}>
+                  {obj.gradientStops.map((stop, i) => (
+                    <stop key={i} offset={`${stop.offset * 100}%`} stopColor={stop.color} />
+                  ))}
+                </linearGradient>
+              )}
             </defs>
           )}
           <circle
@@ -715,11 +736,19 @@ const CanvasObjectItem = memo(function CanvasObjectItem({
         <>
           {obj.gradientStops && (
             <defs>
-              <linearGradient id={gradientId!} x1="0%" y1="0%" x2="100%" y2="0%" gradientTransform={`rotate(${obj.gradientAngle || 0})`}>
-                {obj.gradientStops.map((stop, i) => (
-                  <stop key={i} offset={`${stop.offset * 100}%`} stopColor={stop.color} />
-                ))}
-              </linearGradient>
+              {obj.fillType === 'radial-gradient' ? (
+                <radialGradient id={gradientId!} cx={`${(obj.gradientCenterX ?? 0.5) * 100}%`} cy={`${(obj.gradientCenterY ?? 0.5) * 100}%`} r={`${(obj.gradientRadius ?? 0.5) * 100}%`}>
+                  {obj.gradientStops.map((stop, i) => (
+                    <stop key={i} offset={`${stop.offset * 100}%`} stopColor={stop.color} />
+                  ))}
+                </radialGradient>
+              ) : (
+                <linearGradient id={gradientId!} x1="0%" y1="0%" x2="100%" y2="0%" gradientTransform={`rotate(${obj.gradientAngle || 0})`}>
+                  {obj.gradientStops.map((stop, i) => (
+                    <stop key={i} offset={`${stop.offset * 100}%`} stopColor={stop.color} />
+                  ))}
+                </linearGradient>
+              )}
             </defs>
           )}
           <polygon
@@ -740,11 +769,19 @@ const CanvasObjectItem = memo(function CanvasObjectItem({
       <>
         {obj.gradientStops && (
           <defs>
-            <linearGradient id={gradientId!} x1="0%" y1="0%" x2="100%" y2="0%" gradientTransform={`rotate(${obj.gradientAngle || 0})`}>
-              {obj.gradientStops.map((stop, i) => (
-                <stop key={i} offset={`${stop.offset * 100}%`} stopColor={stop.color} />
-              ))}
-            </linearGradient>
+            {obj.fillType === 'radial-gradient' ? (
+              <radialGradient id={gradientId!} cx={`${(obj.gradientCenterX ?? 0.5) * 100}%`} cy={`${(obj.gradientCenterY ?? 0.5) * 100}%`} r={`${(obj.gradientRadius ?? 0.5) * 100}%`}>
+                {obj.gradientStops.map((stop, i) => (
+                  <stop key={i} offset={`${stop.offset * 100}%`} stopColor={stop.color} />
+                ))}
+              </radialGradient>
+            ) : (
+              <linearGradient id={gradientId!} x1="0%" y1="0%" x2="100%" y2="0%" gradientTransform={`rotate(${obj.gradientAngle || 0})`}>
+                {obj.gradientStops.map((stop, i) => (
+                  <stop key={i} offset={`${stop.offset * 100}%`} stopColor={stop.color} />
+                ))}
+              </linearGradient>
+            )}
           </defs>
         )}
         <rect
@@ -857,7 +894,8 @@ const CanvasObjectItem = memo(function CanvasObjectItem({
     const endX = obj.lineEndX ?? 60;
     const endY = obj.lineEndY ?? 0;
     const curveAmount = obj.lineCurve ?? 0;
-    const strokeColor = obj.stroke || '#ffffff';
+    const lineGradientId = obj.gradientStops ? `gradient-${obj.id}` : null;
+    const strokeColor = lineGradientId ? `url(#${lineGradientId})` : (obj.stroke || '#ffffff');
     const strokeW = obj.strokeWidth || 3;
     const capStyle = obj.lineCapStyle || 'round';
     const lineType = obj.lineType || 'straight';
@@ -906,6 +944,24 @@ const CanvasObjectItem = memo(function CanvasObjectItem({
         style={{ cursor, filter: filterStyle }}
         onMouseDown={handleMouseDown}
       >
+        {/* Gradient defs for line stroke */}
+        {obj.gradientStops && lineGradientId && (
+          <defs>
+            {obj.fillType === 'radial-gradient' ? (
+              <radialGradient id={lineGradientId} cx={`${(obj.gradientCenterX ?? 0.5) * 100}%`} cy={`${(obj.gradientCenterY ?? 0.5) * 100}%`} r={`${(obj.gradientRadius ?? 0.5) * 100}%`}>
+                {obj.gradientStops.map((stop, i) => (
+                  <stop key={i} offset={`${stop.offset * 100}%`} stopColor={stop.color} />
+                ))}
+              </radialGradient>
+            ) : (
+              <linearGradient id={lineGradientId} x1="0%" y1="0%" x2="100%" y2="0%" gradientTransform={`rotate(${obj.gradientAngle || 0})`}>
+                {obj.gradientStops.map((stop, i) => (
+                  <stop key={i} offset={`${stop.offset * 100}%`} stopColor={stop.color} />
+                ))}
+              </linearGradient>
+            )}
+          </defs>
+        )}
         <path
           d={pathD}
           stroke={strokeColor}
@@ -960,10 +1016,11 @@ const CanvasObjectItem = memo(function CanvasObjectItem({
 
   // Render path (pen tool / bezier curves)
   if (obj.type === 'path' && obj.pathPoints && obj.pathPoints.length > 0) {
+    const pathGradientId = obj.gradientStops ? `gradient-${obj.id}` : null;
     const strokeColor = obj.stroke || '#ffffff';
     const strokeW = obj.strokeWidth || 3;
     const capStyle = obj.lineCapStyle || 'round';
-    const fillColor = obj.solidFill !== false ? (obj.fill || '#ffffff') : 'none';
+    const fillColor = pathGradientId ? `url(#${pathGradientId})` : (obj.solidFill !== false ? (obj.fill || '#ffffff') : 'none');
 
     // Generate SVG path data from points
     let pathD = `M ${obj.pathPoints[0].x} ${obj.pathPoints[0].y}`;
@@ -998,6 +1055,24 @@ const CanvasObjectItem = memo(function CanvasObjectItem({
         style={{ cursor, filter: filterStyle }}
         onMouseDown={handleMouseDown}
       >
+        {/* Gradient defs for path */}
+        {obj.gradientStops && pathGradientId && (
+          <defs>
+            {obj.fillType === 'radial-gradient' ? (
+              <radialGradient id={pathGradientId} cx={`${(obj.gradientCenterX ?? 0.5) * 100}%`} cy={`${(obj.gradientCenterY ?? 0.5) * 100}%`} r={`${(obj.gradientRadius ?? 0.5) * 100}%`}>
+                {obj.gradientStops.map((stop, i) => (
+                  <stop key={i} offset={`${stop.offset * 100}%`} stopColor={stop.color} />
+                ))}
+              </radialGradient>
+            ) : (
+              <linearGradient id={pathGradientId} x1="0%" y1="0%" x2="100%" y2="0%" gradientTransform={`rotate(${obj.gradientAngle || 0})`}>
+                {obj.gradientStops.map((stop, i) => (
+                  <stop key={i} offset={`${stop.offset * 100}%`} stopColor={stop.color} />
+                ))}
+              </linearGradient>
+            )}
+          </defs>
+        )}
         <path
           d={pathD}
           stroke={strokeColor}
@@ -1571,8 +1646,46 @@ export function WorkbenchStage() {
             <DuotoneFilterDef key={`duotone-${o.id}`} obj={o} />
           ))}
 
-          {/* Background gradient */}
-          {backgroundFillType === 'gradient' && backgroundGradient.direction === 'linear' && (
+          {/* Background gradient (multi-stop support) */}
+          {backgroundFillType === 'linear-gradient' && (
+            <linearGradient
+              id="deck-bg-gradient"
+              x1={`${50 - Math.cos(backgroundGradient.angle * Math.PI / 180) * 50}%`}
+              y1={`${50 - Math.sin(backgroundGradient.angle * Math.PI / 180) * 50}%`}
+              x2={`${50 + Math.cos(backgroundGradient.angle * Math.PI / 180) * 50}%`}
+              y2={`${50 + Math.sin(backgroundGradient.angle * Math.PI / 180) * 50}%`}
+            >
+              {(backgroundGradient.stops && backgroundGradient.stops.length > 0)
+                ? backgroundGradient.stops.map((stop, i) => (
+                    <stop key={i} offset={`${stop.offset * 100}%`} stopColor={stop.color} />
+                  ))
+                : <>
+                    <stop offset="0%" stopColor={backgroundGradient.startColor} />
+                    <stop offset="100%" stopColor={backgroundGradient.endColor} />
+                  </>
+              }
+            </linearGradient>
+          )}
+          {backgroundFillType === 'radial-gradient' && (
+            <radialGradient
+              id="deck-bg-gradient"
+              cx={`${(backgroundGradient.centerX ?? 0.5) * 100}%`}
+              cy={`${(backgroundGradient.centerY ?? 0.5) * 100}%`}
+              r={`${(backgroundGradient.radius ?? 0.5) * 100}%`}
+            >
+              {(backgroundGradient.stops && backgroundGradient.stops.length > 0)
+                ? backgroundGradient.stops.map((stop, i) => (
+                    <stop key={i} offset={`${stop.offset * 100}%`} stopColor={stop.color} />
+                  ))
+                : <>
+                    <stop offset="0%" stopColor={backgroundGradient.startColor} />
+                    <stop offset="100%" stopColor={backgroundGradient.endColor} />
+                  </>
+              }
+            </radialGradient>
+          )}
+          {/* Legacy gradient support */}
+          {backgroundFillType === ('gradient' as any) && backgroundGradient.direction === 'linear' && (
             <linearGradient
               id="deck-bg-gradient"
               x1={`${50 - Math.cos(backgroundGradient.angle * Math.PI / 180) * 50}%`}
@@ -1584,7 +1697,7 @@ export function WorkbenchStage() {
               <stop offset="100%" stopColor={backgroundGradient.endColor} />
             </linearGradient>
           )}
-          {backgroundFillType === 'gradient' && backgroundGradient.direction === 'radial' && (
+          {backgroundFillType === ('gradient' as any) && backgroundGradient.direction === 'radial' && (
             <radialGradient id="deck-bg-gradient" cx="50%" cy="50%" r="50%">
               <stop offset="0%" stopColor={backgroundGradient.startColor} />
               <stop offset="100%" stopColor={backgroundGradient.endColor} />
@@ -1598,7 +1711,7 @@ export function WorkbenchStage() {
           <path
             d={getDeckPath(0, 0, deckWidth, deckHeight)}
             transform={`translate(${deckX}, ${deckY}) scale(${stageScale})`}
-            fill={backgroundFillType === 'gradient' ? 'url(#deck-bg-gradient)' : backgroundColor}
+            fill={(backgroundFillType === 'gradient' || backgroundFillType === 'linear-gradient' || backgroundFillType === 'radial-gradient') ? 'url(#deck-bg-gradient)' : backgroundColor}
             style={{ transition: 'transform 0.15s cubic-bezier(0.4, 0, 0.2, 1)' }}
           />
 

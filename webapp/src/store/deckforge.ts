@@ -70,6 +70,9 @@ export interface CanvasObject {
   fillType?: 'solid' | 'linear-gradient' | 'radial-gradient';
   gradientStops?: Array<{ offset: number; color: string }>; // e.g., [{offset: 0, color: '#ff0000'}, {offset: 1, color: '#0000ff'}]
   gradientAngle?: number; // 0-360 degrees for linear gradient
+  gradientCenterX?: number; // 0-1 for radial gradient center X
+  gradientCenterY?: number; // 0-1 for radial gradient center Y
+  gradientRadius?: number; // 0-1 for radial gradient radius
   // For images
   src?: string;
   // For shapes
@@ -207,12 +210,16 @@ interface DeckForgeState {
 
   // Background color & gradient
   backgroundColor: string;
-  backgroundFillType: 'solid' | 'gradient';
+  backgroundFillType: 'solid' | 'linear-gradient' | 'radial-gradient';
   backgroundGradient: {
     startColor: string;
     endColor: string;
     direction: 'linear' | 'radial';
     angle: number; // 0, 45, 90, 135, 180, 225, 270, 315
+    stops?: Array<{ offset: number; color: string }>;
+    centerX?: number; // 0-1 for radial
+    centerY?: number; // 0-1 for radial
+    radius?: number;  // 0-1 for radial
   };
 
   // Design metadata
@@ -261,7 +268,7 @@ interface DeckForgeState {
   toggleHardwareGuide: () => void;
   toggleRulers: () => void;
   setBackgroundColor: (color: string) => void;
-  setBackgroundFillType: (type: 'solid' | 'gradient') => void;
+  setBackgroundFillType: (type: 'solid' | 'linear-gradient' | 'radial-gradient') => void;
   setBackgroundGradient: (gradient: Partial<DeckForgeState['backgroundGradient']>) => void;
   
   // Design management
@@ -308,12 +315,19 @@ export const useDeckForgeStore = create<DeckForgeState>((set, get) => ({
   showHardwareGuide: false,
   showRulers: false,
   backgroundColor: '#dbdbdb',
-  backgroundFillType: 'solid',
+  backgroundFillType: 'solid' as 'solid' | 'linear-gradient' | 'radial-gradient',
   backgroundGradient: {
     startColor: '#ff6b35',
     endColor: '#f7c948',
-    direction: 'linear',
+    direction: 'linear' as 'linear' | 'radial',
     angle: 180,
+    stops: [
+      { offset: 0, color: '#ff6b35' },
+      { offset: 1, color: '#f7c948' },
+    ],
+    centerX: 0.5,
+    centerY: 0.5,
+    radius: 0.5,
   },
   currentDesignId: null,
   designName: 'Untitled Design',
