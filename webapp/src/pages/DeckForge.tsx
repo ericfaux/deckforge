@@ -77,8 +77,8 @@ export default function DeckForge() {
   const { width: windowWidth } = useWindowSize();
 
   // Toolbar overflow: determine how many collapsible items to hide
-  // >1400px: show all, 1000-1400px: collapse last 4, <1000px: collapse last 8
-  const toolbarOverflowCount = windowWidth > 1400 ? 0 : windowWidth >= 1000 ? 4 : 8;
+  // >1400px: show all, >1200px: collapse 4, >1000px: collapse 7, <1000px: collapse all
+  const toolbarOverflowCount = windowWidth > 1400 ? 0 : windowWidth > 1200 ? 4 : windowWidth > 1000 ? 7 : 10;
 
   const [isInitializing, setIsInitializing] = useState(true);
   const [saveStatus, setSaveStatus] = useState<string>('');
@@ -1114,7 +1114,7 @@ export default function DeckForge() {
       {/* Header */}
       <header className={cn(
         "border-b border-border flex items-center px-4 bg-card shrink-0",
-        isMobile ? "h-14" : "h-20"
+        isMobile ? "h-14" : "h-14"
       )}>
         <h1 className={cn(
           "font-display uppercase tracking-widest text-foreground",
@@ -1129,10 +1129,10 @@ export default function DeckForge() {
           </div>
         )}
 
-        <div className="ml-auto flex items-center gap-3 overflow-hidden pr-2 py-3 min-w-0 flex-shrink flex-wrap-reverse justify-end">
+        <div className="ml-auto flex items-center gap-2 pr-2 min-w-0 flex-shrink-0 flex-nowrap">
           {!isMobile && (
             <>
-              <span className="text-[10px] text-muted-foreground uppercase tracking-widest hidden md:block mr-4">
+              <span className="text-[10px] text-muted-foreground uppercase tracking-widest hidden xl:block mr-4 whitespace-nowrap">
                 Fingerboard Graphics Editor
               </span>
               
@@ -1265,7 +1265,7 @@ export default function DeckForge() {
                       ) : (
                         <Save className="w-4 h-4" />
                       )}
-                      {isSaving ? 'Saving...' : 'Save'}
+                      <span className="hidden lg:inline">{isSaving ? 'Saving...' : 'Save'}</span>
                     </Button>
                     {hasUnsavedChanges && !isSaving && (
                       <div className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full animate-pulse" title="Unsaved changes" />
@@ -1302,7 +1302,7 @@ export default function DeckForge() {
                         ) : (
                           <Download className="w-4 h-4" />
                         )}
-                        {isExporting ? 'Exporting...' : 'Export'}
+                        <span className="hidden lg:inline">{isExporting ? 'Exporting...' : 'Export'}</span>
                         <ChevronDown className="w-3 h-3" />
                       </Button>
                     </DropdownMenuTrigger>
@@ -1455,10 +1455,10 @@ export default function DeckForge() {
                             ) : (
                               item.icon
                             )}
-                            {item.label}
+                            <span className="hidden xl:inline">{item.label}</span>
                             {item.badge && (
                               <span className={cn(
-                                "ml-1 text-[9px]",
+                                "text-[9px]",
                                 item.badgeColor === 'accent' ? "text-accent" :
                                 item.badgeColor === 'primary' ? "text-primary" :
                                 "text-muted-foreground",
@@ -1495,7 +1495,7 @@ export default function DeckForge() {
                             ) : (
                               <Share2 className="w-4 h-4" />
                             )}
-                            Share
+                            <span className="hidden lg:inline">Share</span>
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent>
@@ -1521,7 +1521,7 @@ export default function DeckForge() {
                     className="gap-2"
                   >
                     <User className="w-4 h-4" />
-                    {isAuthenticated ? 'My Designs' : 'Login'}
+                    <span className="hidden lg:inline">{isAuthenticated ? 'My Designs' : 'Login'}</span>
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
