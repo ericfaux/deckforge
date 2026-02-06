@@ -93,7 +93,7 @@ export function Inspector() {
     updateObject(selectedId, updates);
   };
 
-  const { backgroundColor, setBackgroundColor } = useDeckForgeStore();
+  const { backgroundColor, setBackgroundColor, backgroundFillType, setBackgroundFillType, backgroundGradient, setBackgroundGradient } = useDeckForgeStore();
 
   return (
     <div 
@@ -123,14 +123,183 @@ export function Inspector() {
         </button>
       </div>
 
-      {/* Background Color Picker */}
-      <div className="p-3 border-b border-border space-y-2">
-        <ColorPicker
-          label="Deck Background"
-          value={backgroundColor}
-          onChange={setBackgroundColor}
-          showEyedropper={true}
-        />
+      {/* Deck Background */}
+      <div className="p-3 border-b border-border space-y-3">
+        <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium block">
+          Deck Background
+        </label>
+
+        {/* Solid | Gradient toggle */}
+        <div className="grid grid-cols-2 gap-1">
+          <button
+            onClick={() => setBackgroundFillType('solid')}
+            className={`py-1.5 px-2 text-[10px] uppercase tracking-wider border transition-colors ${
+              backgroundFillType === 'solid'
+                ? 'border-primary bg-primary text-primary-foreground'
+                : 'border-border hover:border-primary bg-secondary text-muted-foreground'
+            }`}
+          >
+            Solid
+          </button>
+          <button
+            onClick={() => setBackgroundFillType('gradient')}
+            className={`py-1.5 px-2 text-[10px] uppercase tracking-wider border transition-colors ${
+              backgroundFillType === 'gradient'
+                ? 'border-primary bg-primary text-primary-foreground'
+                : 'border-border hover:border-primary bg-secondary text-muted-foreground'
+            }`}
+          >
+            Gradient
+          </button>
+        </div>
+
+        {backgroundFillType === 'solid' ? (
+          <ColorPicker
+            label=""
+            value={backgroundColor}
+            onChange={setBackgroundColor}
+            showEyedropper={true}
+          />
+        ) : (
+          <div className="space-y-3">
+            {/* Gradient preview strip */}
+            <div
+              className="h-8 w-full rounded border border-border"
+              style={{
+                background: backgroundGradient.direction === 'radial'
+                  ? `radial-gradient(circle, ${backgroundGradient.startColor} 0%, ${backgroundGradient.endColor} 100%)`
+                  : `linear-gradient(${backgroundGradient.angle}deg, ${backgroundGradient.startColor} 0%, ${backgroundGradient.endColor} 100%)`
+              }}
+            />
+
+            {/* Start color */}
+            <div className="space-y-1">
+              <label className="text-[9px] uppercase tracking-widest text-muted-foreground">Start Color</label>
+              <div className="flex items-center gap-2">
+                <div
+                  className="w-8 h-8 rounded border-2 border-border shrink-0 cursor-pointer"
+                  style={{ backgroundColor: backgroundGradient.startColor }}
+                />
+                <input
+                  type="color"
+                  value={backgroundGradient.startColor}
+                  onChange={(e) => setBackgroundGradient({ startColor: e.target.value })}
+                  className="flex-1 h-8 border border-border rounded cursor-pointer min-w-0"
+                />
+                <input
+                  type="text"
+                  value={backgroundGradient.startColor}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (/^#[0-9A-Fa-f]{0,6}$/.test(val) || val === '') {
+                      setBackgroundGradient({ startColor: val });
+                    }
+                  }}
+                  maxLength={7}
+                  className="w-20 h-8 px-2 text-xs font-mono border border-border rounded bg-background"
+                />
+              </div>
+            </div>
+
+            {/* End color */}
+            <div className="space-y-1">
+              <label className="text-[9px] uppercase tracking-widest text-muted-foreground">End Color</label>
+              <div className="flex items-center gap-2">
+                <div
+                  className="w-8 h-8 rounded border-2 border-border shrink-0 cursor-pointer"
+                  style={{ backgroundColor: backgroundGradient.endColor }}
+                />
+                <input
+                  type="color"
+                  value={backgroundGradient.endColor}
+                  onChange={(e) => setBackgroundGradient({ endColor: e.target.value })}
+                  className="flex-1 h-8 border border-border rounded cursor-pointer min-w-0"
+                />
+                <input
+                  type="text"
+                  value={backgroundGradient.endColor}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (/^#[0-9A-Fa-f]{0,6}$/.test(val) || val === '') {
+                      setBackgroundGradient({ endColor: val });
+                    }
+                  }}
+                  maxLength={7}
+                  className="w-20 h-8 px-2 text-xs font-mono border border-border rounded bg-background"
+                />
+              </div>
+            </div>
+
+            {/* Direction selector */}
+            <div className="space-y-1">
+              <label className="text-[9px] uppercase tracking-widest text-muted-foreground">Direction</label>
+              <div className="grid grid-cols-5 gap-1">
+                {[
+                  { label: '0°', angle: 0, dir: 'linear' as const },
+                  { label: '45°', angle: 45, dir: 'linear' as const },
+                  { label: '90°', angle: 90, dir: 'linear' as const },
+                  { label: '135°', angle: 135, dir: 'linear' as const },
+                  { label: '180°', angle: 180, dir: 'linear' as const },
+                  { label: '225°', angle: 225, dir: 'linear' as const },
+                  { label: '270°', angle: 270, dir: 'linear' as const },
+                  { label: '315°', angle: 315, dir: 'linear' as const },
+                  { label: 'Radial', angle: 0, dir: 'radial' as const },
+                ].map((opt) => {
+                  const isActive = backgroundGradient.direction === opt.dir &&
+                    (opt.dir === 'radial' || backgroundGradient.angle === opt.angle);
+                  return (
+                    <button
+                      key={opt.label}
+                      onClick={() => setBackgroundGradient({ direction: opt.dir, angle: opt.angle })}
+                      className={`py-1 px-1 text-[9px] uppercase tracking-wider border transition-colors ${
+                        isActive
+                          ? 'border-primary bg-primary text-primary-foreground'
+                          : 'border-border hover:border-primary bg-secondary text-muted-foreground'
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Preset gradients */}
+            <div className="space-y-1">
+              <label className="text-[9px] uppercase tracking-widest text-muted-foreground">Presets</label>
+              <div className="grid grid-cols-3 gap-1.5">
+                {[
+                  { name: 'Sunset', start: '#ff6b35', end: '#f472b6' },
+                  { name: 'Ocean', start: '#3b82f6', end: '#14b8a6' },
+                  { name: 'Neon', start: '#22c55e', end: '#a855f7' },
+                  { name: 'Fire', start: '#ef4444', end: '#eab308' },
+                  { name: 'Midnight', start: '#1e3a5f', end: '#0a0a0a' },
+                  { name: 'Custom', start: backgroundGradient.startColor, end: backgroundGradient.endColor },
+                ].map((preset) => (
+                  <button
+                    key={preset.name}
+                    onClick={() => {
+                      if (preset.name !== 'Custom') {
+                        setBackgroundGradient({ startColor: preset.start, endColor: preset.end });
+                      }
+                    }}
+                    className="group space-y-1"
+                  >
+                    <div
+                      className="h-6 w-full rounded border border-border group-hover:border-primary transition-colors"
+                      style={{
+                        background: `linear-gradient(90deg, ${preset.start} 0%, ${preset.end} 100%)`
+                      }}
+                    />
+                    <span className="text-[8px] text-muted-foreground group-hover:text-foreground block text-center">
+                      {preset.name}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Properties panel */}

@@ -59,7 +59,7 @@ import { saveToLocalStorage, getLatestAutosave, hasAutosaveData, clearAutosaveDa
 import { AutosaveRecoveryDialog } from '@/components/deckforge/AutosaveRecoveryDialog';
 
 export default function DeckForge() {
-  const { selectedId, selectedIds, deleteObject, undo, redo, getCanvasState, currentDesignId, setDesignId, setSaving, isSaving, objects, designName, createVersion, past, future, updateObject, saveToHistory, addObject, selectObject, setActiveTool, stageScale, setStageScale, arrayDuplicate, showRulers, toggleRulers, groupObjects, ungroupObject, flashCopiedObject, flashPastedObject, lastAction, undoRedoChangedIds, deckSizeId, backgroundColor, textureOverlays, loadDesign, setBackgroundColor, setDeckSize } = useDeckForgeStore();
+  const { selectedId, selectedIds, deleteObject, undo, redo, getCanvasState, currentDesignId, setDesignId, setSaving, isSaving, objects, designName, createVersion, past, future, updateObject, saveToHistory, addObject, selectObject, setActiveTool, stageScale, setStageScale, arrayDuplicate, showRulers, toggleRulers, groupObjects, ungroupObject, flashCopiedObject, flashPastedObject, lastAction, undoRedoChangedIds, deckSizeId, backgroundColor, backgroundFillType, backgroundGradient, textureOverlays, loadDesign, setBackgroundColor, setDeckSize } = useDeckForgeStore();
   
   // Get current deck dimensions (dynamic based on selected size)
   const { width: deckWidth, height: deckHeight } = useDeckDimensions();
@@ -113,6 +113,8 @@ export default function DeckForge() {
         objects,
         textureOverlays,
         backgroundColor,
+        backgroundFillType,
+        backgroundGradient,
         deckSizeId,
         designName,
       });
@@ -156,6 +158,8 @@ export default function DeckForge() {
         objects,
         textureOverlays,
         backgroundColor,
+        backgroundFillType,
+        backgroundGradient,
         deckSizeId,
         designName,
       });
@@ -211,6 +215,9 @@ export default function DeckForge() {
         includeBackground: true,
         width: deckWidth,
         height: deckHeight,
+        backgroundColor,
+        backgroundFillType,
+        backgroundGradient,
       });
 
       const filename = `${designName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_300dpi_${Date.now()}.png`;
@@ -241,6 +248,9 @@ export default function DeckForge() {
         includeBackground: true,
         width: deckWidth,
         height: deckHeight,
+        backgroundColor,
+        backgroundFillType,
+        backgroundGradient,
       });
 
       const filename = `${designName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_72dpi_${Date.now()}.png`;
@@ -268,6 +278,9 @@ export default function DeckForge() {
         includeBackground: true,
         width: deckWidth,
         height: deckHeight,
+        backgroundColor,
+        backgroundFillType,
+        backgroundGradient,
       });
 
       const filename = `${designName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_${Date.now()}.svg`;
@@ -295,6 +308,9 @@ export default function DeckForge() {
         scale: 12,
         includeBackground: true,
         title: designName,
+        backgroundColor,
+        backgroundFillType,
+        backgroundGradient,
       });
 
       const filename = `${designName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_${Date.now()}.pdf`;
@@ -324,6 +340,9 @@ export default function DeckForge() {
         includeBackground: true,
         width: deckWidth,
         height: deckHeight,
+        backgroundColor,
+        backgroundFillType,
+        backgroundGradient,
       });
 
       const filename = `${designName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_${Date.now()}.png`;
@@ -428,6 +447,8 @@ export default function DeckForge() {
         objects,
         textureOverlays,
         backgroundColor,
+        backgroundFillType,
+        backgroundGradient,
         deckSizeId,
         designName,
       });
@@ -449,6 +470,8 @@ export default function DeckForge() {
         objects,
         textureOverlays,
         backgroundColor,
+        backgroundFillType,
+        backgroundGradient,
         deckSizeId,
         designName,
       });
@@ -462,6 +485,9 @@ export default function DeckForge() {
         textureOverlays: recoveryData.textureOverlays,
         name: recoveryData.designName,
         id: null,
+        backgroundColor: recoveryData.backgroundColor,
+        backgroundFillType: recoveryData.backgroundFillType,
+        backgroundGradient: recoveryData.backgroundGradient,
       });
       if (recoveryData.backgroundColor) {
         setBackgroundColor(recoveryData.backgroundColor);

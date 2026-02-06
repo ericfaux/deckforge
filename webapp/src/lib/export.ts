@@ -4,6 +4,13 @@ import { CanvasObject } from '@/store/deckforge';
 const DEFAULT_DECK_WIDTH = 96;
 const DEFAULT_DECK_HEIGHT = 294;
 
+export interface BackgroundGradientData {
+  startColor: string;
+  endColor: string;
+  direction: 'linear' | 'radial';
+  angle: number;
+}
+
 /**
  * Export canvas to high-resolution PNG
  * Uses HTML5 Canvas API to render all objects at high DPI
@@ -17,6 +24,9 @@ export async function exportToPNG(
     includeBackground?: boolean;
     width?: number; // Custom deck width
     height?: number; // Custom deck height
+    backgroundColor?: string;
+    backgroundFillType?: 'solid' | 'gradient';
+    backgroundGradient?: BackgroundGradientData;
   } = {}
 ): Promise<Blob> {
   const {
@@ -26,12 +36,15 @@ export async function exportToPNG(
     includeBackground = true,
     width = DEFAULT_DECK_WIDTH,
     height = DEFAULT_DECK_HEIGHT,
+    backgroundColor = '#ffffff',
+    backgroundFillType = 'solid',
+    backgroundGradient,
   } = options;
 
   // Create offscreen canvas at high resolution
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
-  
+
   if (!ctx) {
     throw new Error('Could not get canvas context');
   }
@@ -43,9 +56,32 @@ export async function exportToPNG(
   // Scale context for high DPI
   ctx.scale(scale, scale);
 
-  // White background (print-ready)
+  // Background (print-ready)
   if (includeBackground) {
-    ctx.fillStyle = '#ffffff';
+    if (backgroundFillType === 'gradient' && backgroundGradient) {
+      let gradient: CanvasGradient;
+      if (backgroundGradient.direction === 'radial') {
+        const cx = width / 2;
+        const cy = height / 2;
+        const r = Math.max(width, height) / 2;
+        gradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+      } else {
+        const angle = backgroundGradient.angle * Math.PI / 180;
+        const cx = width / 2;
+        const cy = height / 2;
+        const len = Math.max(width, height);
+        const x1 = cx - Math.cos(angle) * len / 2;
+        const y1 = cy - Math.sin(angle) * len / 2;
+        const x2 = cx + Math.cos(angle) * len / 2;
+        const y2 = cy + Math.sin(angle) * len / 2;
+        gradient = ctx.createLinearGradient(x1, y1, x2, y2);
+      }
+      gradient.addColorStop(0, backgroundGradient.startColor);
+      gradient.addColorStop(1, backgroundGradient.endColor);
+      ctx.fillStyle = gradient;
+    } else {
+      ctx.fillStyle = backgroundColor;
+    }
     ctx.fillRect(0, 0, width, height);
   }
 
@@ -445,12 +481,18 @@ export async function exportToSVG(
     includeBackground?: boolean;
     width?: number; // Custom deck width (defaults to DECK_WIDTH)
     height?: number; // Custom deck height (defaults to DECK_HEIGHT)
+    backgroundColor?: string;
+    backgroundFillType?: 'solid' | 'gradient';
+    backgroundGradient?: BackgroundGradientData;
   } = {}
 ): Promise<Blob> {
   const {
     includeBackground = true,
     width = DEFAULT_DECK_WIDTH,
     height = DEFAULT_DECK_HEIGHT,
+    backgroundColor = '#ffffff',
+    backgroundFillType = 'solid',
+    backgroundGradient,
   } = options;
 
   // Create SVG document
@@ -460,18 +502,58 @@ export async function exportToSVG(
   svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
   svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
 
+  // Add defs for gradients
+  const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+  svg.appendChild(defs);
+
   // Add background
   if (includeBackground) {
     const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
     bg.setAttribute('width', width.toString());
     bg.setAttribute('height', height.toString());
-    bg.setAttribute('fill', '#ffffff');
+
+    if (backgroundFillType === 'gradient' && backgroundGradient) {
+      const bgGradId = 'bg-gradient';
+      if (backgroundGradient.direction === 'radial') {
+        const grad = document.createElementNS('http://www.w3.org/2000/svg', 'radialGradient');
+        grad.setAttribute('id', bgGradId);
+        const stop1 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
+        stop1.setAttribute('offset', '0%');
+        stop1.setAttribute('stop-color', backgroundGradient.startColor);
+        const stop2 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
+        stop2.setAttribute('offset', '100%');
+        stop2.setAttribute('stop-color', backgroundGradient.endColor);
+        grad.appendChild(stop1);
+        grad.appendChild(stop2);
+        defs.appendChild(grad);
+      } else {
+        const angle = backgroundGradient.angle * Math.PI / 180;
+        const x1 = 50 - Math.cos(angle) * 50;
+        const y1 = 50 - Math.sin(angle) * 50;
+        const x2 = 50 + Math.cos(angle) * 50;
+        const y2 = 50 + Math.sin(angle) * 50;
+        const grad = document.createElementNS('http://www.w3.org/2000/svg', 'linearGradient');
+        grad.setAttribute('id', bgGradId);
+        grad.setAttribute('x1', `${x1}%`);
+        grad.setAttribute('y1', `${y1}%`);
+        grad.setAttribute('x2', `${x2}%`);
+        grad.setAttribute('y2', `${y2}%`);
+        const stop1 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
+        stop1.setAttribute('offset', '0%');
+        stop1.setAttribute('stop-color', backgroundGradient.startColor);
+        const stop2 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
+        stop2.setAttribute('offset', '100%');
+        stop2.setAttribute('stop-color', backgroundGradient.endColor);
+        grad.appendChild(stop1);
+        grad.appendChild(stop2);
+        defs.appendChild(grad);
+      }
+      bg.setAttribute('fill', `url(#${bgGradId})`);
+    } else {
+      bg.setAttribute('fill', backgroundColor);
+    }
     svg.appendChild(bg);
   }
-
-  // Add defs for gradients
-  const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
-  svg.appendChild(defs);
 
   // Render each object as SVG
   for (let i = 0; i < objects.length; i++) {
@@ -759,9 +841,12 @@ export async function exportToPDF(
     scale?: number;
     includeBackground?: boolean;
     title?: string;
+    backgroundColor?: string;
+    backgroundFillType?: 'solid' | 'gradient';
+    backgroundGradient?: BackgroundGradientData;
   } = {}
 ): Promise<Blob> {
-  const { scale = 6, includeBackground = true, title = 'Fingerboard Design' } = options;
+  const { scale = 6, includeBackground = true, title = 'Fingerboard Design', backgroundColor, backgroundFillType, backgroundGradient } = options;
 
   // Dynamically import jspdf (code splitting)
   const { jsPDF } = await import('jspdf');
@@ -771,6 +856,9 @@ export async function exportToPDF(
     scale,
     format: 'png',
     includeBackground,
+    backgroundColor,
+    backgroundFillType,
+    backgroundGradient,
   });
 
   // Convert blob to base64 data URL

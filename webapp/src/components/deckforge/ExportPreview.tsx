@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { X, Download, ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { CanvasObject } from '@/store/deckforge';
+import { CanvasObject, useDeckForgeStore } from '@/store/deckforge';
 import { exportToPNG, downloadBlob } from '@/lib/export';
 
 interface ExportPreviewProps {
@@ -16,6 +16,9 @@ export function ExportPreview({ isOpen, onClose, objects, designName, onConfirmE
   const [previewZoom, setPreviewZoom] = useState(1);
   const [isExporting, setIsExporting] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const { backgroundColor, backgroundFillType, backgroundGradient } = useDeckForgeStore();
+
+  const bgOpts = { backgroundColor, backgroundFillType, backgroundGradient };
 
   const handleGeneratePreview = async () => {
     try {
@@ -24,8 +27,9 @@ export function ExportPreview({ isOpen, onClose, objects, designName, onConfirmE
         scale: 2,
         format: 'png',
         includeBackground: true,
+        ...bgOpts,
       });
-      
+
       const url = URL.createObjectURL(blob);
       setPreviewUrl(url);
     } catch (err) {
@@ -41,6 +45,7 @@ export function ExportPreview({ isOpen, onClose, objects, designName, onConfirmE
         scale: 3,
         format: 'png',
         includeBackground: true,
+        ...bgOpts,
       });
 
       const filename = `${designName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_${Date.now()}.png`;
