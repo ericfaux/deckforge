@@ -18,6 +18,8 @@ import { GradientPicker } from './GradientPicker';
 import { ColorPicker } from './ColorPicker';
 import { UnifiedColorPicker, FillMode, GradientConfig } from './UnifiedColorPicker';
 import { useDeckDimensions } from './WorkbenchStage';
+import { getMmPerPixel } from '@/lib/deck-guides';
+import { getDeckSize } from '@/lib/deck-sizes';
 import { preloadUserFonts, Font, loadFont } from '@/lib/fonts';
 import { preloadTopFonts, loadGoogleFont, getGoogleFonts } from '@/lib/google-fonts';
 import toast from 'react-hot-toast';
@@ -160,6 +162,47 @@ function MultiSelectInspector() {
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+/** Shows real-world dimensions of a selected object in millimeters */
+function RealDimensions({ object }: { object: CanvasObject }) {
+  const deckSizeId = useDeckForgeStore(state => state.deckSizeId);
+  const deckSize = getDeckSize(deckSizeId);
+  const mmPerPx = getMmPerPixel(deckSize);
+
+  const widthMm = (object.width * object.scaleX * mmPerPx.x).toFixed(1);
+  const heightMm = (object.height * object.scaleY * mmPerPx.y).toFixed(1);
+  const xMm = (object.x * mmPerPx.x).toFixed(1);
+  const yMm = (object.y * mmPerPx.y).toFixed(1);
+
+  return (
+    <div className="space-y-2">
+      <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
+        Real Size (mm)
+      </Label>
+      <div className="grid grid-cols-2 gap-2">
+        <div className="flex items-center gap-1">
+          <span className="text-[9px] text-muted-foreground w-3">X</span>
+          <span className="text-[11px] font-mono text-foreground">{xMm}mm</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <span className="text-[9px] text-muted-foreground w-3">Y</span>
+          <span className="text-[11px] font-mono text-foreground">{yMm}mm</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <span className="text-[9px] text-muted-foreground w-3">W</span>
+          <span className="text-[11px] font-mono text-foreground">{widthMm}mm</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <span className="text-[9px] text-muted-foreground w-3">H</span>
+          <span className="text-[11px] font-mono text-foreground">{heightMm}mm</span>
+        </div>
+      </div>
+      <p className="text-[9px] text-muted-foreground">
+        Based on {deckSize.name} deck ({deckSize.width}x{deckSize.length}mm)
+      </p>
     </div>
   );
 }
@@ -508,6 +551,9 @@ export function Inspector() {
                 </div>
               </div>
             </div>
+
+            {/* Real-world dimensions (mm) */}
+            <RealDimensions object={selectedObject} />
 
             {/* Color (for text/shapes) */}
             {(selectedObject.type === 'text' || selectedObject.type === 'shape') && (

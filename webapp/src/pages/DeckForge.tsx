@@ -61,7 +61,7 @@ import { saveToLocalStorage, getLatestAutosave, hasAutosaveData, clearAutosaveDa
 import { AutosaveRecoveryDialog } from '@/components/deckforge/AutosaveRecoveryDialog';
 
 export default function DeckForge() {
-  const { selectedId, selectedIds, deleteObject, undo, redo, getCanvasState, currentDesignId, setDesignId, setSaving, isSaving, objects, designName, createVersion, past, future, updateObject, saveToHistory, addObject, selectObject, setActiveTool, stageScale, setStageScale, arrayDuplicate, showRulers, toggleRulers, groupObjects, ungroupObject, flashCopiedObject, flashPastedObject, lastAction, undoRedoChangedIds, deckSizeId, backgroundColor, backgroundFillType, backgroundGradient, textureOverlays, loadDesign, setBackgroundColor, setDeckSize, isolatedGroupId, exitIsolationMode, setSelectedIds } = useDeckForgeStore();
+  const { selectedId, selectedIds, deleteObject, undo, redo, getCanvasState, currentDesignId, setDesignId, setSaving, isSaving, objects, designName, createVersion, past, future, updateObject, saveToHistory, addObject, selectObject, setActiveTool, stageScale, setStageScale, arrayDuplicate, showRulers, toggleRulers, showBleedSafeZone, toggleBleedSafeZone, showSymmetryGuide, toggleSymmetryGuide, toggleHardwareGuide, showHardwareGuide, measureToolActive, toggleMeasureTool, groupObjects, ungroupObject, flashCopiedObject, flashPastedObject, lastAction, undoRedoChangedIds, deckSizeId, backgroundColor, backgroundFillType, backgroundGradient, textureOverlays, loadDesign, setBackgroundColor, setDeckSize, isolatedGroupId, exitIsolationMode, setSelectedIds } = useDeckForgeStore();
   
   // Get current deck dimensions (dynamic based on selected size)
   const { width: deckWidth, height: deckHeight } = useDeckDimensions();
@@ -737,6 +737,25 @@ export default function DeckForge() {
         useDeckForgeStore.getState().toggleRulers();
         const newState = useDeckForgeStore.getState().showRulers;
         toast.success(newState ? 'Rulers enabled' : 'Rulers disabled');
+        return;
+      }
+
+      // Toggle bleed & safe zone guides (Ctrl+Shift+B) - only when no objects selected
+      // When objects are selected, Ctrl+Shift+B is used for Align Bottom
+      if (ctrl && shift && key === 'b' && selectedIds.length === 0) {
+        e.preventDefault();
+        useDeckForgeStore.getState().toggleBleedSafeZone();
+        const newState = useDeckForgeStore.getState().showBleedSafeZone;
+        toast.success(newState ? 'Bleed & safe zone guides enabled' : 'Bleed & safe zone guides disabled');
+        return;
+      }
+
+      // Toggle hardware guide (H) - only when no modifier keys and no input focused
+      if (key === 'h' && !ctrl && !alt && !shift) {
+        e.preventDefault();
+        useDeckForgeStore.getState().toggleHardwareGuide();
+        const newState = useDeckForgeStore.getState().showHardwareGuide;
+        toast.success(newState ? 'Hardware guide enabled' : 'Hardware guide disabled');
         return;
       }
 

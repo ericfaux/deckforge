@@ -7,6 +7,11 @@ import type { BrushStrokeData } from './BrushTool';
 import { TransformHandles } from './TransformHandles';
 import { SnapGuides, calculateSnapGuides, calculateSnapPosition } from './SnapGuides';
 import { RulerOverlay } from './RulerOverlay';
+import { HardwareGuideOverlay } from './HardwareGuideOverlay';
+import { BleedSafeZoneOverlay } from './BleedSafeZoneOverlay';
+import { MeasurementTool } from './MeasurementTool';
+import { SymmetryGuide } from './SymmetryGuide';
+import { getGuideSnapTargets, getAccurateDeckPath } from '@/lib/deck-guides';
 import { CanvasContextMenu } from './ContextMenu';
 import { ContextMenu as ContextMenuRoot, ContextMenuTrigger } from '@/components/ui/context-menu';
 import { SelectionBox } from './SelectionBox';
@@ -72,15 +77,19 @@ const iconMap: Record<string, LucideIcon> = {
 };
 
 // Generate deck path for SVG
+// Uses accurate fingerboard proportions: nose is slightly rounder than tail
 function getDeckPath(x: number, y: number, width: number, height: number): string {
-  const noseRadius = width / 2;
+  // Nose (top) has a slightly wider radius than tail (bottom)
+  const noseRadius = width * 0.52;
+  const tailRadius = width * 0.48;
+
   return `
     M ${x} ${y + noseRadius}
-    Q ${x} ${y} ${x + width / 2} ${y}
-    Q ${x + width} ${y} ${x + width} ${y + noseRadius}
-    L ${x + width} ${y + height - noseRadius}
-    Q ${x + width} ${y + height} ${x + width / 2} ${y + height}
-    Q ${x} ${y + height} ${x} ${y + height - noseRadius}
+    C ${x} ${y + noseRadius * 0.35} ${x + width * 0.15} ${y} ${x + width / 2} ${y}
+    C ${x + width * 0.85} ${y} ${x + width} ${y + noseRadius * 0.35} ${x + width} ${y + noseRadius}
+    L ${x + width} ${y + height - tailRadius}
+    C ${x + width} ${y + height - tailRadius * 0.35} ${x + width * 0.85} ${y + height} ${x + width / 2} ${y + height}
+    C ${x + width * 0.15} ${y + height} ${x} ${y + height - tailRadius * 0.35} ${x} ${y + height - tailRadius}
     Z
   `;
 }
@@ -1386,6 +1395,9 @@ export function WorkbenchStage() {
     textureOverlays,
     showHardwareGuide,
     showRulers,
+    showBleedSafeZone,
+    showSymmetryGuide,
+    measureToolActive,
     activeTool,
     setActiveTool,
     backgroundColor,
@@ -1408,6 +1420,15 @@ export function WorkbenchStage() {
   const currentDeckSize = getDeckSize(deckSizeId);
   const deckWidth = currentDeckSize.canvasWidth;
   const deckHeight = currentDeckSize.canvasHeight;
+
+  // Guide snap targets for hardware guides, safe zones, etc.
+  const guideSnapTargets = useMemo(
+    () => (showHardwareGuide || showBleedSafeZone) ? getGuideSnapTargets(deckSizeId) : [],
+    [deckSizeId, showHardwareGuide, showBleedSafeZone]
+  );
+
+  // Snap tooltip label
+  const [snapTooltip, setSnapTooltip] = useState<string | null>(null);
 
   // Handle container resize
   useEffect(() => {
@@ -2099,10 +2120,11 @@ export function WorkbenchStage() {
                       }
                     }}
                     onDragMove={(draggedObj) => {
-                      // Calculate snap position and guides
+                      // Calculate snap position and guides (including hardware guide targets)
                       const otherObjects = objects.filter(o => o.id !== draggedObj.id && !selectedIds.includes(o.id));
-                      const snap = calculateSnapPosition(draggedObj, otherObjects, 5, deckWidth, deckHeight);
+                      const snap = calculateSnapPosition(draggedObj, otherObjects, 5, deckWidth, deckHeight, guideSnapTargets);
                       setSnapGuides(snap.guides);
+                      setSnapTooltip(snap.snapLabel || null);
 
                       // Apply snapping
                       const snapDeltaX = snap.snappedX - draggedObj.x;
@@ -2125,6 +2147,7 @@ export function WorkbenchStage() {
                     onDragEnd={() => {
                       setIsDraggingObject(false);
                       setSnapGuides([]);
+                      setSnapTooltip(null);
                       multiDragStartRef.current = new Map();
                     }}
                     onContextMenu={(_e, objId) => {
@@ -2242,65 +2265,70 @@ export function WorkbenchStage() {
           style={{ transition: 'transform 0.15s cubic-bezier(0.4, 0, 0.2, 1)' }}
         />
 
+        {/* Bleed & Safe Zone Overlay */}
+        {activeTool !== 'pen' && activeTool !== 'brush' && (
+          <BleedSafeZoneOverlay
+            deckX={deckX}
+            deckY={deckY}
+            stageScale={stageScale}
+            enabled={showBleedSafeZone}
+          />
+        )}
+
         {/* Hardware Guide Overlay - Visual only, not exported */}
-        {showHardwareGuide && activeTool !== 'pen' && activeTool !== 'brush' && (
-          <g transform={`translate(${deckX}, ${deckY}) scale(${stageScale})`} pointerEvents="none">
-            {/* Front Truck Baseplate */}
-            <rect
-              x={deckWidth / 2 - 20}
-              y={35}
-              width={40}
-              height={18}
-              fill="rgba(255, 102, 0, 0.3)"
-              stroke="#ff6600"
-              strokeWidth={1}
-              strokeDasharray="3,2"
-            />
-            {/* Front Truck Mounting Screws (4 holes) */}
-            <circle cx={deckWidth / 2 - 12} cy={40} r={2.5} fill="rgba(255, 102, 0, 0.5)" stroke="#ff6600" strokeWidth={0.5} />
-            <circle cx={deckWidth / 2 + 12} cy={40} r={2.5} fill="rgba(255, 102, 0, 0.5)" stroke="#ff6600" strokeWidth={0.5} />
-            <circle cx={deckWidth / 2 - 12} cy={48} r={2.5} fill="rgba(255, 102, 0, 0.5)" stroke="#ff6600" strokeWidth={0.5} />
-            <circle cx={deckWidth / 2 + 12} cy={48} r={2.5} fill="rgba(255, 102, 0, 0.5)" stroke="#ff6600" strokeWidth={0.5} />
+        {activeTool !== 'pen' && activeTool !== 'brush' && (
+          <HardwareGuideOverlay
+            deckX={deckX}
+            deckY={deckY}
+            stageScale={stageScale}
+            enabled={showHardwareGuide}
+          />
+        )}
 
-            {/* Rear Truck Baseplate */}
-            <rect
-              x={deckWidth / 2 - 20}
-              y={deckHeight - 53}
-              width={40}
-              height={18}
-              fill="rgba(255, 102, 0, 0.3)"
-              stroke="#ff6600"
-              strokeWidth={1}
-              strokeDasharray="3,2"
-            />
-            {/* Rear Truck Mounting Screws (4 holes) */}
-            <circle cx={deckWidth / 2 - 12} cy={deckHeight - 48} r={2.5} fill="rgba(255, 102, 0, 0.5)" stroke="#ff6600" strokeWidth={0.5} />
-            <circle cx={deckWidth / 2 + 12} cy={deckHeight - 48} r={2.5} fill="rgba(255, 102, 0, 0.5)" stroke="#ff6600" strokeWidth={0.5} />
-            <circle cx={deckWidth / 2 - 12} cy={deckHeight - 40} r={2.5} fill="rgba(255, 102, 0, 0.5)" stroke="#ff6600" strokeWidth={0.5} />
-            <circle cx={deckWidth / 2 + 12} cy={deckHeight - 40} r={2.5} fill="rgba(255, 102, 0, 0.5)" stroke="#ff6600" strokeWidth={0.5} />
+        {/* Symmetry Guide */}
+        {activeTool !== 'pen' && activeTool !== 'brush' && (
+          <SymmetryGuide
+            deckX={deckX}
+            deckY={deckY}
+            stageScale={stageScale}
+            enabled={showSymmetryGuide}
+          />
+        )}
 
-            {/* Labels */}
+        {/* Snap tooltip when snapping to guides */}
+        {snapTooltip && isDraggingObject && (
+          <g pointerEvents="none">
+            <rect
+              x={deckX + deckWidth * stageScale / 2 - 60}
+              y={deckY - 20}
+              width={120}
+              height={16}
+              fill="rgba(13, 153, 255, 0.95)"
+              rx={4}
+            />
             <text
-              x={deckWidth / 2}
-              y={28}
+              x={deckX + deckWidth * stageScale / 2}
+              y={deckY - 9}
               textAnchor="middle"
-              fontSize={6}
+              fill="white"
+              fontSize={9}
               fontFamily="JetBrains Mono, monospace"
-              fill="#ff6600"
+              fontWeight="600"
             >
-              FRONT TRUCK
-            </text>
-            <text
-              x={deckWidth / 2}
-              y={deckHeight - 58}
-              textAnchor="middle"
-              fontSize={6}
-              fontFamily="JetBrains Mono, monospace"
-              fill="#ff6600"
-            >
-              REAR TRUCK
+              {snapTooltip}
             </text>
           </g>
+        )}
+
+        {/* Measurement Tool */}
+        {activeTool !== 'pen' && activeTool !== 'brush' && (
+          <MeasurementTool
+            deckX={deckX}
+            deckY={deckY}
+            stageScale={stageScale}
+            enabled={measureToolActive}
+            svgRef={svgRef}
+          />
         )}
 
         {/* Improved empty state with onboarding */}

@@ -171,14 +171,22 @@ export function SnapGuides({ guides, deckX, deckY, stageScale, deckWidth: propDe
   );
 }
 
+// Guide snap target from hardware guides, safe zones, etc.
+export interface GuideSnapTarget {
+  position: number;
+  orientation: 'horizontal' | 'vertical';
+  label: string;
+}
+
 // Calculate snap position and guides - returns both snapped coordinates and visual guides
 export function calculateSnapPosition(
   draggedObject: { x: number; y: number; width: number; height: number; scaleX: number; scaleY: number },
   otherObjects: Array<{ id: string; x: number; y: number; width: number; height: number; scaleX: number; scaleY: number }>,
   snapThreshold: number = 5,
   deckWidth: number = 96,
-  deckHeight: number = 294
-): { snappedX: number; snappedY: number; guides: SnapGuide[] } {
+  deckHeight: number = 294,
+  guideTargets?: GuideSnapTarget[]
+): { snappedX: number; snappedY: number; guides: SnapGuide[]; snapLabel?: string } {
   const draggedWidth = draggedObject.width * draggedObject.scaleX;
   const draggedHeight = draggedObject.height * draggedObject.scaleY;
   const draggedCenterX = draggedObject.x + draggedWidth / 2;
@@ -288,6 +296,64 @@ export function calculateSnapPosition(
     if (dist < bestSnapDistY) { bestSnapDistY = dist; snapY = other.y - draggedHeight; guides.push({ type: 'horizontal', position: other.y }); }
   }
 
+  // Snap to hardware guide targets (center axis, truck holes, safe zones, etc.)
+  let snapLabel: string | undefined;
+  if (guideTargets && guideTargets.length > 0) {
+    for (const target of guideTargets) {
+      if (target.orientation === 'vertical') {
+        // Snap object center X to guide
+        let dist = Math.abs(draggedCenterX - target.position);
+        if (dist < bestSnapDistX) {
+          bestSnapDistX = dist;
+          snapX = target.position - draggedWidth / 2;
+          guides.push({ type: 'vertical', position: target.position, label: target.label });
+          snapLabel = `Snapped to ${target.label.toLowerCase()}`;
+        }
+        // Snap left edge to guide
+        dist = Math.abs(draggedObject.x - target.position);
+        if (dist < bestSnapDistX) {
+          bestSnapDistX = dist;
+          snapX = target.position;
+          guides.push({ type: 'vertical', position: target.position, label: target.label });
+          snapLabel = `Aligned with ${target.label.toLowerCase()}`;
+        }
+        // Snap right edge to guide
+        dist = Math.abs(draggedRight - target.position);
+        if (dist < bestSnapDistX) {
+          bestSnapDistX = dist;
+          snapX = target.position - draggedWidth;
+          guides.push({ type: 'vertical', position: target.position, label: target.label });
+          snapLabel = `Aligned with ${target.label.toLowerCase()}`;
+        }
+      } else {
+        // Snap object center Y to guide
+        let dist = Math.abs(draggedCenterY - target.position);
+        if (dist < bestSnapDistY) {
+          bestSnapDistY = dist;
+          snapY = target.position - draggedHeight / 2;
+          guides.push({ type: 'horizontal', position: target.position, label: target.label });
+          snapLabel = `Snapped to ${target.label.toLowerCase()}`;
+        }
+        // Snap top edge to guide
+        dist = Math.abs(draggedObject.y - target.position);
+        if (dist < bestSnapDistY) {
+          bestSnapDistY = dist;
+          snapY = target.position;
+          guides.push({ type: 'horizontal', position: target.position, label: target.label });
+          snapLabel = `Aligned with ${target.label.toLowerCase()}`;
+        }
+        // Snap bottom edge to guide
+        dist = Math.abs(draggedBottom - target.position);
+        if (dist < bestSnapDistY) {
+          bestSnapDistY = dist;
+          snapY = target.position - draggedHeight;
+          guides.push({ type: 'horizontal', position: target.position, label: target.label });
+          snapLabel = `Aligned with ${target.label.toLowerCase()}`;
+        }
+      }
+    }
+  }
+
   // Add spacing measurements
   const snappedObj = {
     ...draggedObject,
@@ -344,6 +410,7 @@ export function calculateSnapPosition(
     snappedX: snapX !== null ? snapX : draggedObject.x,
     snappedY: snapY !== null ? snapY : draggedObject.y,
     guides: uniqueGuides,
+    snapLabel,
   };
 }
 
