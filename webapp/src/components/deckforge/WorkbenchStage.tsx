@@ -5,7 +5,8 @@ import { PenTool } from './PenTool';
 import { TransformHandles } from './TransformHandles';
 import { SnapGuides, calculateSnapGuides } from './SnapGuides';
 import { RulerOverlay } from './RulerOverlay';
-import { ContextMenu } from './ContextMenu';
+import { CanvasContextMenu } from './ContextMenu';
+import { ContextMenu as ContextMenuRoot, ContextMenuTrigger } from '@/components/ui/context-menu';
 import { SelectionBox } from './SelectionBox';
 import type { LucideIcon } from 'lucide-react';
 import { Skull, Flame, Zap, Sword, Ghost, Bug, Eye, Target, Radio, Disc3, Music2, Rocket, Crown, Anchor, Sun, Moon, Triangle, Hexagon, Circle, Square, Star, Heart, Sparkles, Hand, Cat, Dog, Fish, Bird, Leaf, Cloud, Undo2, Redo2 } from 'lucide-react';
@@ -230,8 +231,7 @@ const CanvasObjectItem = memo(function CanvasObjectItem({
   };
 
   const handleRightClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+    // Don't stopPropagation — let the event bubble to the Radix ContextMenuTrigger
     if (onContextMenu) {
       onContextMenu(e, obj.id);
     }
@@ -1020,7 +1020,7 @@ export function WorkbenchStage() {
   const [touchDistance, setTouchDistance] = useState<number | null>(null);
   const [snapGuides, setSnapGuides] = useState<Array<{ type: 'vertical' | 'horizontal'; position: number; label?: string }>>([]);
   const [isDraggingObject, setIsDraggingObject] = useState(false);
-  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; objectId: string } | null>(null);
+  const [contextTargetId, setContextTargetId] = useState<string | null>(null);
   const [isDraggingFiles, setIsDraggingFiles] = useState(false);
   const [swipeFeedback, setSwipeFeedback] = useState<'undo' | 'redo' | null>(null);
 
@@ -1362,6 +1362,8 @@ export function WorkbenchStage() {
   const enabledTextures = textureOverlays.filter((t) => t.enabled);
 
   return (
+    <ContextMenuRoot onOpenChange={(open) => { if (!open) setContextTargetId(null); }}>
+    <ContextMenuTrigger asChild>
     <div
       id="main-canvas"
       className="relative flex-1 h-full overflow-hidden"
@@ -1374,6 +1376,7 @@ export function WorkbenchStage() {
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
+      onContextMenuCapture={() => setContextTargetId(null)}
       tabIndex={-1}
     >
       {/* Drag overlay */}
@@ -1517,12 +1520,9 @@ export function WorkbenchStage() {
                       setIsDraggingObject(false);
                       setSnapGuides([]);
                     }}
-                    onContextMenu={(e, objId) => {
-                      setContextMenu({
-                        x: e.clientX,
-                        y: e.clientY,
-                        objectId: objId,
-                      });
+                    onContextMenu={(_e, objId) => {
+                      setContextTargetId(objId);
+                      selectObject(objId);
                     }}
                   />
                 </g>
@@ -1832,15 +1832,9 @@ export function WorkbenchStage() {
       {/* Zoom controls */}
       <ZoomControls />
 
-      {/* Context menu */}
-      {contextMenu && (
-        <ContextMenu
-          x={contextMenu.x}
-          y={contextMenu.y}
-          objectId={contextMenu.objectId}
-          onClose={() => setContextMenu(null)}
-        />
-      )}
     </div>
+    </ContextMenuTrigger>
+    <CanvasContextMenu targetObjectId={contextTargetId} />
+    </ContextMenuRoot>
   );
 }
