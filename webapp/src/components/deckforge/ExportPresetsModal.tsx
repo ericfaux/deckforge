@@ -143,24 +143,27 @@ interface ExportPresetsModalProps {
 
 export function ExportPresetsModal({ open, onClose }: ExportPresetsModalProps) {
   const [exporting, setExporting] = useState<string | null>(null);
-  const { objects, designName } = useDeckForgeStore();
+  const { objects, designName, backgroundColor, backgroundFillType, backgroundGradient } = useDeckForgeStore();
+
+  const bgOpts = { backgroundColor, backgroundFillType, backgroundGradient };
 
   const handleExport = async (preset: ExportPreset) => {
     setExporting(preset.id);
-    
+
     try {
       toast.info(`Exporting ${preset.name}...`, {
         description: 'This may take a moment for high-resolution exports',
       });
 
       let blob: Blob;
-      
+
       if (preset.format === 'pdf') {
         // PDF export
         blob = await exportToPDF(objects, {
           scale: preset.scale,
           includeBackground: true,
           title: designName || 'Fingerboard Design',
+          ...bgOpts,
         });
       } else {
         // PNG/JPG export
@@ -168,6 +171,7 @@ export function ExportPresetsModal({ open, onClose }: ExportPresetsModalProps) {
           scale: preset.scale,
           format: preset.format as 'png' | 'jpeg',
           includeBackground: true,
+          ...bgOpts,
         });
       }
 

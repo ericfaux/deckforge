@@ -204,8 +204,15 @@ interface DeckForgeState {
   showHardwareGuide: boolean;
   showRulers: boolean; // Ruler overlay toggle
 
-  // Background color
+  // Background color & gradient
   backgroundColor: string;
+  backgroundFillType: 'solid' | 'gradient';
+  backgroundGradient: {
+    startColor: string;
+    endColor: string;
+    direction: 'linear' | 'radial';
+    angle: number; // 0, 45, 90, 135, 180, 225, 270, 315
+  };
 
   // Design metadata
   currentDesignId: string | null;
@@ -253,6 +260,8 @@ interface DeckForgeState {
   toggleHardwareGuide: () => void;
   toggleRulers: () => void;
   setBackgroundColor: (color: string) => void;
+  setBackgroundFillType: (type: 'solid' | 'gradient') => void;
+  setBackgroundGradient: (gradient: Partial<DeckForgeState['backgroundGradient']>) => void;
   
   // Design management
   loadDesign: (designData: any) => void;
@@ -298,6 +307,13 @@ export const useDeckForgeStore = create<DeckForgeState>((set, get) => ({
   showHardwareGuide: false,
   showRulers: false,
   backgroundColor: '#dbdbdb',
+  backgroundFillType: 'solid',
+  backgroundGradient: {
+    startColor: '#ff6b35',
+    endColor: '#f7c948',
+    direction: 'linear',
+    angle: 180,
+  },
   currentDesignId: null,
   designName: 'Untitled Design',
   isSaving: false,
@@ -831,6 +847,16 @@ export const useDeckForgeStore = create<DeckForgeState>((set, get) => ({
     set({ backgroundColor: color });
   },
 
+  setBackgroundFillType: (type) => {
+    set({ backgroundFillType: type });
+  },
+
+  setBackgroundGradient: (gradient) => {
+    set((state) => ({
+      backgroundGradient: { ...state.backgroundGradient, ...gradient },
+    }));
+  },
+
   // Design management
   loadDesign: (designData) => {
     set({
@@ -841,6 +867,14 @@ export const useDeckForgeStore = create<DeckForgeState>((set, get) => ({
       future: [],
       designName: designData.name || 'Untitled Design',
       currentDesignId: designData.id || null,
+      backgroundColor: designData.backgroundColor || '#dbdbdb',
+      backgroundFillType: designData.backgroundFillType || 'solid',
+      backgroundGradient: designData.backgroundGradient || {
+        startColor: '#ff6b35',
+        endColor: '#f7c948',
+        direction: 'linear',
+        angle: 180,
+      },
     });
   },
 
@@ -873,6 +907,9 @@ export const useDeckForgeStore = create<DeckForgeState>((set, get) => ({
       textureOverlays: state.textureOverlays,
       name: state.designName,
       id: state.currentDesignId,
+      backgroundColor: state.backgroundColor,
+      backgroundFillType: state.backgroundFillType,
+      backgroundGradient: state.backgroundGradient,
     };
   },
 

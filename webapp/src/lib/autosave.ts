@@ -8,6 +8,13 @@ export interface AutosaveData {
   objects: CanvasObject[];
   textureOverlays: TextureOverlay[];
   backgroundColor: string;
+  backgroundFillType?: 'solid' | 'gradient';
+  backgroundGradient?: {
+    startColor: string;
+    endColor: string;
+    direction: 'linear' | 'radial';
+    angle: number;
+  };
   deckSizeId: string;
   designName: string;
 }

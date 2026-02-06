@@ -1041,6 +1041,8 @@ export function WorkbenchStage() {
     activeTool,
     setActiveTool,
     backgroundColor,
+    backgroundFillType,
+    backgroundGradient,
     copiedObjectId,
     pastedObjectId,
     undoRedoChangedIds,
@@ -1444,6 +1446,26 @@ export function WorkbenchStage() {
           <pattern id="halftone-dots-pattern" patternUnits="userSpaceOnUse" width="8" height="8">
             <circle cx="4" cy="4" r="1.5" fill="rgba(0,0,0,0.4)" />
           </pattern>
+
+          {/* Background gradient */}
+          {backgroundFillType === 'gradient' && backgroundGradient.direction === 'linear' && (
+            <linearGradient
+              id="deck-bg-gradient"
+              x1={`${50 - Math.cos(backgroundGradient.angle * Math.PI / 180) * 50}%`}
+              y1={`${50 - Math.sin(backgroundGradient.angle * Math.PI / 180) * 50}%`}
+              x2={`${50 + Math.cos(backgroundGradient.angle * Math.PI / 180) * 50}%`}
+              y2={`${50 + Math.sin(backgroundGradient.angle * Math.PI / 180) * 50}%`}
+            >
+              <stop offset="0%" stopColor={backgroundGradient.startColor} />
+              <stop offset="100%" stopColor={backgroundGradient.endColor} />
+            </linearGradient>
+          )}
+          {backgroundFillType === 'gradient' && backgroundGradient.direction === 'radial' && (
+            <radialGradient id="deck-bg-gradient" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor={backgroundGradient.startColor} />
+              <stop offset="100%" stopColor={backgroundGradient.endColor} />
+            </radialGradient>
+          )}
         </defs>
 
         {/* Group for deck content with clipping */}
@@ -1452,7 +1474,7 @@ export function WorkbenchStage() {
           <path
             d={getDeckPath(0, 0, deckWidth, deckHeight)}
             transform={`translate(${deckX}, ${deckY}) scale(${stageScale})`}
-            fill={backgroundColor}
+            fill={backgroundFillType === 'gradient' ? 'url(#deck-bg-gradient)' : backgroundColor}
             style={{ transition: 'transform 0.15s cubic-bezier(0.4, 0, 0.2, 1)' }}
           />
 
