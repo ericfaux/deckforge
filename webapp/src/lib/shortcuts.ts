@@ -24,12 +24,12 @@ export const SHORTCUTS = {
   SEND_TO_BACK: 'Ctrl+Shift+[',
   
   // Alignment
-  ALIGN_LEFT: 'Alt+L',
-  ALIGN_RIGHT: 'Alt+R',
-  ALIGN_CENTER: 'Alt+C',
-  ALIGN_TOP: 'Alt+T',
-  ALIGN_BOTTOM: 'Alt+B',
-  ALIGN_MIDDLE: 'Alt+M',
+  ALIGN_LEFT: 'Ctrl+Shift+L',
+  ALIGN_RIGHT: 'Ctrl+Shift+R',
+  ALIGN_CENTER: 'Ctrl+Shift+C',
+  ALIGN_TOP: 'Ctrl+Shift+T',
+  ALIGN_BOTTOM: 'Ctrl+Shift+B',
+  ALIGN_MIDDLE: 'Ctrl+Shift+M',
   
   // View
   ZOOM_RESET: 'Ctrl+0',
