@@ -709,9 +709,10 @@ export default function DeckForge() {
       }
 
       // === VIEW TOGGLES ===
-      
-      // Toggle rulers (Ctrl+Shift+R)
-      if (ctrl && shift && key === 'r') {
+
+      // Toggle rulers (Ctrl+Shift+R) - only when no objects selected
+      // When objects are selected, Ctrl+Shift+R is used for Align Right
+      if (ctrl && shift && key === 'r' && selectedIds.length === 0) {
         e.preventDefault();
         useDeckForgeStore.getState().toggleRulers();
         const newState = useDeckForgeStore.getState().showRulers;
@@ -755,72 +756,54 @@ export default function DeckForge() {
         return;
       }
 
-      // === ALIGNMENT (requires 2+ selected objects) ===
-      
-      if (selectedIds.length >= 2) {
-        const selectedObjects = objects.filter(obj => selectedIds.includes(obj.id));
-        
+      // === ALIGNMENT (Ctrl+Shift shortcuts, works for 1+ selected objects) ===
+
+      if (selectedIds.length >= 1 && ctrl && shift) {
         // Align Left (Ctrl+Shift+L)
-        if (ctrl && shift && key === 'l') {
+        if (key === 'l') {
           e.preventDefault();
-          saveToHistory();
-          const minX = Math.min(...selectedObjects.map(obj => obj.x));
-          selectedObjects.forEach(obj => updateObject(obj.id, { x: minX }));
-          toast.success('Aligned to left edge');
+          useDeckForgeStore.getState().alignObjects('left');
+          toast.success(selectedIds.length === 1 ? 'Aligned to left edge' : 'Aligned left');
           return;
         }
-        
-        // Align Right (Ctrl+Shift+;)
-        if (ctrl && shift && key === ';') {
+
+        // Align Right (Ctrl+Shift+R)
+        if (key === 'r') {
           e.preventDefault();
-          saveToHistory();
-          const maxX = Math.max(...selectedObjects.map(obj => obj.x + obj.width));
-          selectedObjects.forEach(obj => updateObject(obj.id, { x: maxX - obj.width }));
-          toast.success('Aligned to right edge');
+          useDeckForgeStore.getState().alignObjects('right');
+          toast.success(selectedIds.length === 1 ? 'Aligned to right edge' : 'Aligned right');
           return;
         }
-        
+
         // Align Center Horizontal (Ctrl+Shift+C)
-        if (ctrl && shift && key === 'c') {
+        if (key === 'c') {
           e.preventDefault();
-          saveToHistory();
-          const minX = Math.min(...selectedObjects.map(obj => obj.x));
-          const maxX = Math.max(...selectedObjects.map(obj => obj.x + obj.width));
-          const centerX = (minX + maxX) / 2;
-          selectedObjects.forEach(obj => updateObject(obj.id, { x: centerX - obj.width / 2 }));
-          toast.success('Aligned horizontally');
+          useDeckForgeStore.getState().alignObjects('center');
+          toast.success(selectedIds.length === 1 ? 'Centered horizontally' : 'Aligned center');
           return;
         }
-        
+
         // Align Top (Ctrl+Shift+T)
-        if (ctrl && shift && key === 't') {
+        if (key === 't') {
           e.preventDefault();
-          saveToHistory();
-          const minY = Math.min(...selectedObjects.map(obj => obj.y));
-          selectedObjects.forEach(obj => updateObject(obj.id, { y: minY }));
-          toast.success('Aligned to top edge');
+          useDeckForgeStore.getState().alignObjects('top');
+          toast.success(selectedIds.length === 1 ? 'Aligned to top edge' : 'Aligned top');
           return;
         }
-        
+
         // Align Bottom (Ctrl+Shift+B)
-        if (ctrl && shift && key === 'b') {
+        if (key === 'b') {
           e.preventDefault();
-          saveToHistory();
-          const maxY = Math.max(...selectedObjects.map(obj => obj.y + obj.height));
-          selectedObjects.forEach(obj => updateObject(obj.id, { y: maxY - obj.height }));
-          toast.success('Aligned to bottom edge');
+          useDeckForgeStore.getState().alignObjects('bottom');
+          toast.success(selectedIds.length === 1 ? 'Aligned to bottom edge' : 'Aligned bottom');
           return;
         }
-        
+
         // Align Center Vertical (Ctrl+Shift+M)
-        if (ctrl && shift && key === 'm') {
+        if (key === 'm') {
           e.preventDefault();
-          saveToHistory();
-          const minY = Math.min(...selectedObjects.map(obj => obj.y));
-          const maxY = Math.max(...selectedObjects.map(obj => obj.y + obj.height));
-          const centerY = (minY + maxY) / 2;
-          selectedObjects.forEach(obj => updateObject(obj.id, { y: centerY - obj.height / 2 }));
-          toast.success('Aligned vertically');
+          useDeckForgeStore.getState().alignObjects('middle');
+          toast.success(selectedIds.length === 1 ? 'Centered vertically' : 'Aligned middle');
           return;
         }
       }
@@ -1059,7 +1042,7 @@ export default function DeckForge() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedId, deleteObject, undo, redo, objects, handleSave, handleExport, addObject, selectObject, setActiveTool, updateObject, stageScale, setStageScale]);
+  }, [selectedId, selectedIds, deleteObject, undo, redo, objects, handleSave, handleExport, addObject, selectObject, setActiveTool, updateObject, stageScale, setStageScale]);
 
   // Show loading skeleton while initializing
   if (isInitializing) {

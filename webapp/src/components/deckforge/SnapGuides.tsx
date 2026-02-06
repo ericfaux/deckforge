@@ -15,9 +15,14 @@ interface SnapGuidesProps {
   deckX: number;
   deckY: number;
   stageScale: number;
+  deckWidth?: number;
+  deckHeight?: number;
 }
 
-export function SnapGuides({ guides, deckX, deckY, stageScale }: SnapGuidesProps) {
+export function SnapGuides({ guides, deckX, deckY, stageScale, deckWidth: propDeckWidth, deckHeight: propDeckHeight }: SnapGuidesProps) {
+  const { width: hookDeckWidth, height: hookDeckHeight } = useDeckDimensions();
+  const DECK_WIDTH = propDeckWidth ?? hookDeckWidth;
+  const DECK_HEIGHT = propDeckHeight ?? hookDeckHeight;
   if (guides.length === 0) return null;
 
   return (
@@ -94,10 +99,10 @@ export function SnapGuides({ guides, deckX, deckY, stageScale }: SnapGuidesProps
                 y1={0}
                 x2={guide.position}
                 y2={DECK_HEIGHT}
-                stroke="#ff0000"
+                stroke="#0d99ff"
                 strokeWidth={1 / stageScale}
                 strokeDasharray={`${4 / stageScale} ${2 / stageScale}`}
-                opacity={0.8}
+                opacity={0.9}
               />
               {guide.label && (
                 <g>
@@ -106,7 +111,7 @@ export function SnapGuides({ guides, deckX, deckY, stageScale }: SnapGuidesProps
                     y={10 / stageScale}
                     width={60 / stageScale}
                     height={16 / stageScale}
-                    fill="rgba(255, 0, 0, 0.9)"
+                    fill="rgba(13, 153, 255, 0.95)"
                     rx={3 / stageScale}
                   />
                   <text
@@ -131,10 +136,10 @@ export function SnapGuides({ guides, deckX, deckY, stageScale }: SnapGuidesProps
                 y1={guide.position}
                 x2={DECK_WIDTH}
                 y2={guide.position}
-                stroke="#ff0000"
+                stroke="#0d99ff"
                 strokeWidth={1 / stageScale}
                 strokeDasharray={`${4 / stageScale} ${2 / stageScale}`}
-                opacity={0.8}
+                opacity={0.9}
               />
               {guide.label && (
                 <g>
@@ -143,7 +148,7 @@ export function SnapGuides({ guides, deckX, deckY, stageScale }: SnapGuidesProps
                     y={guide.position - 8 / stageScale}
                     width={60 / stageScale}
                     height={16 / stageScale}
-                    fill="rgba(255, 0, 0, 0.9)"
+                    fill="rgba(13, 153, 255, 0.95)"
                     rx={3 / stageScale}
                   />
                   <text

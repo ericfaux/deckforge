@@ -18,6 +18,8 @@ import {
   AlignRight,
   AlignVerticalJustifyCenter,
   AlignHorizontalJustifyCenter,
+  ArrowRightLeft,
+  ArrowUpDown,
 } from 'lucide-react';
 import { toastUtils } from '@/lib/toast-utils';
 
@@ -38,6 +40,7 @@ export function QuickAccessToolbar() {
     saveToHistory,
     groupObjects,
     alignObjects,
+    distributeObjects,
   } = useDeckForgeStore();
 
   const canUndo = past.length > 0;
@@ -126,9 +129,9 @@ export function QuickAccessToolbar() {
 
   const handleAlign = (alignment: 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom') => {
     if (selectedIds.length === 0) return;
-    
+
     alignObjects(alignment);
-    
+
     // Better toast messages
     const isSingle = selectedIds.length === 1;
     const messages = {
@@ -140,6 +143,12 @@ export function QuickAccessToolbar() {
       bottom: isSingle ? 'Aligned to bottom edge' : 'Aligned bottom',
     };
     toastUtils.success(messages[alignment]);
+  };
+
+  const handleDistribute = (direction: 'horizontal' | 'vertical') => {
+    if (selectedIds.length < 3) return;
+    distributeObjects(direction);
+    toastUtils.success(direction === 'horizontal' ? 'Distributed horizontally' : 'Distributed vertically');
   };
 
   return (
@@ -313,6 +322,33 @@ export function QuickAccessToolbar() {
                   <AlignRight className="h-4 w-4 rotate-90" />
                 </Button>
               </EnhancedTooltip>
+
+              {/* Distribute - only for 3+ objects */}
+              {selectedIds.length >= 3 && (
+                <>
+                  <div className="w-px h-5 bg-border mx-1" />
+                  <EnhancedTooltip content="Distribute horizontally">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0"
+                      onClick={() => handleDistribute('horizontal')}
+                    >
+                      <ArrowRightLeft className="h-4 w-4" />
+                    </Button>
+                  </EnhancedTooltip>
+                  <EnhancedTooltip content="Distribute vertically">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0"
+                      onClick={() => handleDistribute('vertical')}
+                    >
+                      <ArrowUpDown className="h-4 w-4" />
+                    </Button>
+                  </EnhancedTooltip>
+                </>
+              )}
             </div>
           )}
         </>

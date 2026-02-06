@@ -54,12 +54,15 @@ const shortcuts: Shortcut[] = [
   { keys: ['Ctrl', 'Shift', '['], description: 'Send to back', category: 'Layers' },
   
   // Alignment
-  { keys: ['Alt', 'L'], description: 'Align left', category: 'Alignment' },
-  { keys: ['Alt', 'R'], description: 'Align right', category: 'Alignment' },
-  { keys: ['Alt', 'C'], description: 'Align center', category: 'Alignment' },
-  { keys: ['Alt', 'T'], description: 'Align top', category: 'Alignment' },
-  { keys: ['Alt', 'B'], description: 'Align bottom', category: 'Alignment' },
-  { keys: ['Alt', 'M'], description: 'Align middle', category: 'Alignment' },
+  { keys: ['Ctrl', 'Shift', 'L'], description: 'Align left', category: 'Alignment' },
+  { keys: ['Ctrl', 'Shift', 'R'], description: 'Align right', category: 'Alignment' },
+  { keys: ['Ctrl', 'Shift', 'C'], description: 'Align center horizontally', category: 'Alignment' },
+  { keys: ['Ctrl', 'Shift', 'T'], description: 'Align top', category: 'Alignment' },
+  { keys: ['Ctrl', 'Shift', 'B'], description: 'Align bottom', category: 'Alignment' },
+  { keys: ['Ctrl', 'Shift', 'M'], description: 'Align middle vertically', category: 'Alignment' },
+  { keys: ['Alt', 'L'], description: 'Align left (single object)', category: 'Alignment' },
+  { keys: ['Alt', 'C'], description: 'Center horizontally (single object)', category: 'Alignment' },
+  { keys: ['Alt', 'R'], description: 'Align right (single object)', category: 'Alignment' },
   
   // View
   { keys: ['Space', 'Drag'], description: 'Pan canvas', category: 'View' },
