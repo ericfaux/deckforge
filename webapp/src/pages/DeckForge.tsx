@@ -1596,15 +1596,17 @@ export default function DeckForge() {
         />
 
         {/* Font Upload Modal */}
-        <FontUploadModal
-          isOpen={isFontUploadModalOpen}
-          onClose={() => setIsFontUploadModalOpen(false)}
-          onFontUploaded={(font) => {
-            toast.success(`${font.name} is now available!`, {
-              description: 'You can now use this font in your text objects.',
-            });
-          }}
-        />
+        <ComponentErrorBoundary componentName="Custom Fonts" onReset={() => setIsFontUploadModalOpen(false)}>
+          <FontUploadModal
+            isOpen={isFontUploadModalOpen}
+            onClose={() => setIsFontUploadModalOpen(false)}
+            onFontUploaded={(font) => {
+              toast.success(`${font.name} is now available!`, {
+                description: 'You can now use this font in your text objects.',
+              });
+            }}
+          />
+        </ComponentErrorBoundary>
 
         {/* Array Duplicate Modal */}
         <ArrayDuplicateModal

@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { LayerList } from './LayerList';
 import { AdvancedEffects } from './AdvancedEffects';
 import { FontUploadModal } from './FontUploadModal';
+import { ComponentErrorBoundary } from '@/components/ComponentErrorBoundary';
 import { ObjectEffects } from './ObjectEffects';
 import { GradientPicker } from './GradientPicker';
 import { ColorPicker } from './ColorPicker';
@@ -1401,36 +1402,38 @@ export function Inspector() {
       <LayerList />
 
       {/* Font Upload Modal */}
-      <FontUploadModal
-        isOpen={isFontModalOpen}
-        onClose={() => setIsFontModalOpen(false)}
-        onFontUploaded={async (font) => {
-          // Add to list
-          setUserFonts([...userFonts, font]);
-          
-          // Load font dynamically so it's immediately available
-          try {
-            await loadFont(font);
-            toast.success(`Font "${font.name}" ready to use`, {
-              description: 'Select it from the font dropdown',
-              duration: 3000,
-            });
-            
-            // Auto-apply to selected text if applicable
-            if (selectedObject && selectedObject.type === 'text') {
-              updateWithHistory({ fontFamily: font.font_family });
-              toast.info('Applied to selected text', {
-                duration: 2000,
+      <ComponentErrorBoundary componentName="Custom Fonts" onReset={() => setIsFontModalOpen(false)}>
+        <FontUploadModal
+          isOpen={isFontModalOpen}
+          onClose={() => setIsFontModalOpen(false)}
+          onFontUploaded={async (font) => {
+            // Add to list
+            setUserFonts([...userFonts, font]);
+
+            // Load font dynamically so it's immediately available
+            try {
+              await loadFont(font);
+              toast.success(`Font "${font.name}" ready to use`, {
+                description: 'Select it from the font dropdown',
+                duration: 3000,
+              });
+
+              // Auto-apply to selected text if applicable
+              if (selectedObject && selectedObject.type === 'text') {
+                updateWithHistory({ fontFamily: font.font_family });
+                toast.info('Applied to selected text', {
+                  duration: 2000,
+                });
+              }
+            } catch (err) {
+              console.error('Failed to load font:', err);
+              toast.error('Font uploaded but failed to load', {
+                description: 'Try refreshing the page',
               });
             }
-          } catch (err) {
-            console.error('Failed to load font:', err);
-            toast.error('Font uploaded but failed to load', {
-              description: 'Try refreshing the page',
-            });
-          }
-        }}
-      />
+          }}
+        />
+      </ComponentErrorBoundary>
     </div>
   );
 }
