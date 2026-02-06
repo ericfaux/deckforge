@@ -487,9 +487,377 @@ export function Inspector() {
               </div>
             )}
 
-            {/* Color Tint (for images/paths) */}
-            {(selectedObject.type === 'image' || selectedObject.type === 'path') && (
-              <div data-section={selectedObject.type === 'image' ? 'image-controls' : 'path-controls'} className="space-y-2">
+            {/* Image Fill (pattern fill from image for shapes) */}
+            {selectedObject.type === 'shape' && (
+              <div className="pt-4 border-t border-border space-y-4">
+                <div className="py-2">
+                  <span className="font-display text-[10px] uppercase tracking-widest text-muted-foreground">
+                    Image Fill
+                  </span>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                      Fill with Image
+                    </Label>
+                    <button
+                      onClick={() => {
+                        if (selectedObject.fillPatternImageSrc) {
+                          updateWithHistory({ fillPatternImageSrc: undefined, fillPatternScale: undefined, fillPatternOffsetX: undefined, fillPatternOffsetY: undefined });
+                        }
+                      }}
+                      className={`px-2 py-1 text-[9px] uppercase tracking-wider border transition-colors rounded ${
+                        selectedObject.fillPatternImageSrc
+                          ? 'bg-primary text-primary-foreground border-primary'
+                          : 'bg-secondary text-muted-foreground border-border'
+                      }`}
+                    >
+                      {selectedObject.fillPatternImageSrc ? 'Clear' : 'Off'}
+                    </button>
+                  </div>
+
+                  {/* Image URL input */}
+                  <div className="space-y-1">
+                    <Label className="text-[9px] text-muted-foreground">
+                      Paste image URL or select from uploads
+                    </Label>
+                    <Input
+                      type="text"
+                      placeholder="Image URL..."
+                      value={selectedObject.fillPatternImageSrc || ''}
+                      onChange={(e) => updateWithHistory({ fillPatternImageSrc: e.target.value || undefined })}
+                      className="h-7 text-xs font-mono bg-secondary border-border"
+                    />
+                  </div>
+
+                  {selectedObject.fillPatternImageSrc && (
+                    <>
+                      {/* Tile Scale */}
+                      <div className="space-y-2">
+                        <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                          Tile Scale
+                        </Label>
+                        <div className="flex items-center gap-3">
+                          <Slider
+                            value={[selectedObject.fillPatternScale ?? 1]}
+                            onValueChange={([value]) => updateWithHistory({ fillPatternScale: value })}
+                            max={5}
+                            min={0.1}
+                            step={0.1}
+                            className="flex-1"
+                          />
+                          <span className="text-[11px] font-mono w-10 text-right">
+                            {(selectedObject.fillPatternScale ?? 1).toFixed(1)}x
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Offset X */}
+                      <div className="space-y-2">
+                        <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                          Offset X
+                        </Label>
+                        <div className="flex items-center gap-3">
+                          <Slider
+                            value={[selectedObject.fillPatternOffsetX ?? 0]}
+                            onValueChange={([value]) => updateWithHistory({ fillPatternOffsetX: value })}
+                            max={100}
+                            min={-100}
+                            step={1}
+                            className="flex-1"
+                          />
+                          <span className="text-[11px] font-mono w-10 text-right">
+                            {selectedObject.fillPatternOffsetX ?? 0}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Offset Y */}
+                      <div className="space-y-2">
+                        <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                          Offset Y
+                        </Label>
+                        <div className="flex items-center gap-3">
+                          <Slider
+                            value={[selectedObject.fillPatternOffsetY ?? 0]}
+                            onValueChange={([value]) => updateWithHistory({ fillPatternOffsetY: value })}
+                            max={100}
+                            min={-100}
+                            step={1}
+                            className="flex-1"
+                          />
+                          <span className="text-[11px] font-mono w-10 text-right">
+                            {selectedObject.fillPatternOffsetY ?? 0}
+                          </span>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  <p className="text-[9px] text-muted-foreground">
+                    Fill shape with a repeating image pattern
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Image Controls */}
+            {selectedObject.type === 'image' && (
+              <div data-section="image-controls" className="pt-4 border-t border-border space-y-4">
+                <div className="py-2">
+                  <span className="font-display text-[10px] uppercase tracking-widest text-muted-foreground">
+                    Image Options
+                  </span>
+                </div>
+
+                {/* Clip to Deck */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                      Clip to Deck
+                    </Label>
+                    <button
+                      onClick={() => updateWithHistory({ clipToDeck: !selectedObject.clipToDeck })}
+                      className={`w-10 h-5 rounded-full transition-colors relative ${
+                        selectedObject.clipToDeck ? 'bg-primary' : 'bg-muted'
+                      }`}
+                    >
+                      <span
+                        className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-transform ${
+                          selectedObject.clipToDeck ? 'translate-x-5' : 'translate-x-0.5'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                  <p className="text-[9px] text-muted-foreground">
+                    Clip image to the deck outline shape
+                  </p>
+                </div>
+
+                {/* Fit to Deck / Center on Deck */}
+                <div className="space-y-2">
+                  <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                    Position & Size
+                  </Label>
+                  <div className="grid grid-cols-2 gap-1">
+                    <button
+                      onClick={() => {
+                        saveToHistory();
+                        // Scale image to fill deck while maintaining aspect ratio
+                        const imgAspect = selectedObject.width / selectedObject.height;
+                        const deckAspect = DECK_WIDTH / DECK_HEIGHT;
+                        let newWidth, newHeight;
+                        if (imgAspect > deckAspect) {
+                          // Image is wider - fit to height
+                          newHeight = DECK_HEIGHT;
+                          newWidth = DECK_HEIGHT * imgAspect;
+                        } else {
+                          // Image is taller - fit to width
+                          newWidth = DECK_WIDTH;
+                          newHeight = DECK_WIDTH / imgAspect;
+                        }
+                        updateObject(selectedId!, {
+                          width: newWidth,
+                          height: newHeight,
+                          scaleX: 1,
+                          scaleY: 1,
+                          x: (DECK_WIDTH - newWidth) / 2,
+                          y: (DECK_HEIGHT - newHeight) / 2,
+                        });
+                      }}
+                      className="flex items-center justify-center gap-1 px-2 py-1.5 text-xs bg-secondary hover:bg-secondary/80 border border-border transition-colors"
+                      title="Scale and position image to fill the deck"
+                    >
+                      <span className="text-[9px] uppercase">Fit to Deck</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        saveToHistory();
+                        const w = selectedObject.width * selectedObject.scaleX;
+                        const h = selectedObject.height * selectedObject.scaleY;
+                        updateObject(selectedId!, {
+                          x: (DECK_WIDTH - w) / 2,
+                          y: (DECK_HEIGHT - h) / 2,
+                        });
+                      }}
+                      className="flex items-center justify-center gap-1 px-2 py-1.5 text-xs bg-secondary hover:bg-secondary/80 border border-border transition-colors"
+                      title="Center image on the deck"
+                    >
+                      <span className="text-[9px] uppercase">Center</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Flip H / Flip V */}
+                <div className="space-y-2">
+                  <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                    Flip
+                  </Label>
+                  <div className="grid grid-cols-2 gap-1">
+                    <button
+                      onClick={() => updateWithHistory({ flipH: !selectedObject.flipH })}
+                      className={`flex items-center justify-center gap-1 px-2 py-1.5 text-xs border transition-colors ${
+                        selectedObject.flipH
+                          ? 'bg-primary text-primary-foreground border-primary'
+                          : 'bg-secondary hover:bg-secondary/80 border-border'
+                      }`}
+                    >
+                      <span className="text-[9px] uppercase">Flip H</span>
+                    </button>
+                    <button
+                      onClick={() => updateWithHistory({ flipV: !selectedObject.flipV })}
+                      className={`flex items-center justify-center gap-1 px-2 py-1.5 text-xs border transition-colors ${
+                        selectedObject.flipV
+                          ? 'bg-primary text-primary-foreground border-primary'
+                          : 'bg-secondary hover:bg-secondary/80 border-border'
+                      }`}
+                    >
+                      <span className="text-[9px] uppercase">Flip V</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Image Adjustments */}
+                <div className="space-y-2">
+                  <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                    Brightness
+                  </Label>
+                  <div className="flex items-center gap-3">
+                    <Slider
+                      value={[selectedObject.brightness ?? 100]}
+                      onValueChange={([value]) => updateWithHistory({ brightness: value })}
+                      max={200}
+                      min={0}
+                      step={5}
+                      className="flex-1"
+                    />
+                    <span className="text-[11px] font-mono w-10 text-right">
+                      {selectedObject.brightness ?? 100}%
+                    </span>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                    Contrast
+                  </Label>
+                  <div className="flex items-center gap-3">
+                    <Slider
+                      value={[selectedObject.contrast ?? 100]}
+                      onValueChange={([value]) => updateWithHistory({ contrast: value })}
+                      max={200}
+                      min={0}
+                      step={5}
+                      className="flex-1"
+                    />
+                    <span className="text-[11px] font-mono w-10 text-right">
+                      {selectedObject.contrast ?? 100}%
+                    </span>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                    Hue Rotate
+                  </Label>
+                  <div className="flex items-center gap-3">
+                    <Slider
+                      value={[selectedObject.hueRotate ?? 0]}
+                      onValueChange={([value]) => updateWithHistory({ hueRotate: value })}
+                      max={360}
+                      min={0}
+                      step={5}
+                      className="flex-1"
+                    />
+                    <span className="text-[11px] font-mono w-10 text-right">
+                      {selectedObject.hueRotate ?? 0}°
+                    </span>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                    Saturation
+                  </Label>
+                  <div className="flex items-center gap-3">
+                    <Slider
+                      value={[selectedObject.saturate ?? 100]}
+                      onValueChange={([value]) => updateWithHistory({ saturate: value })}
+                      max={200}
+                      min={0}
+                      step={5}
+                      className="flex-1"
+                    />
+                    <span className="text-[11px] font-mono w-10 text-right">
+                      {selectedObject.saturate ?? 100}%
+                    </span>
+                  </div>
+                </div>
+
+                {/* Color Tint */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                      Color Tint
+                    </Label>
+                    <button
+                      onClick={() => updateWithHistory({
+                        colorize: selectedObject.colorize ? null : '#ccff00'
+                      })}
+                      className={`px-2 py-1 text-[9px] uppercase tracking-wider border transition-colors rounded ${
+                        selectedObject.colorize
+                          ? 'bg-primary text-primary-foreground border-primary'
+                          : 'bg-secondary text-muted-foreground border-border hover:border-primary'
+                      }`}
+                    >
+                      {selectedObject.colorize ? 'On' : 'Off'}
+                    </button>
+                  </div>
+                  {selectedObject.colorize && (
+                    <UnifiedColorPicker
+                      color={selectedObject.colorize}
+                      onColorChange={(color) => updateWithHistory({ colorize: color })}
+                      showGradients={false}
+                      showEyedropper={true}
+                    />
+                  )}
+                </div>
+
+                {/* Remove Background */}
+                <div className="space-y-2">
+                  <button
+                    onClick={async () => {
+                      if (!selectedObject.src) return;
+                      toast.loading('Removing background...', { id: 'bg-remove' });
+                      try {
+                        const { removeBackground } = await import('@imgly/background-removal');
+                        const response = await fetch(selectedObject.src);
+                        const blob = await response.blob();
+                        const resultBlob = await removeBackground(blob);
+                        const url = URL.createObjectURL(resultBlob);
+                        saveToHistory();
+                        updateObject(selectedId!, { src: url });
+                        toast.success('Background removed', { id: 'bg-remove' });
+                      } catch (err) {
+                        console.error('Background removal failed:', err);
+                        toast.error('Background removal failed', { id: 'bg-remove', description: 'Try a different image or check your connection' });
+                      }
+                    }}
+                    className="w-full border border-border hover:border-primary transition-colors py-1.5 px-3 text-[10px] uppercase tracking-wider flex items-center justify-center gap-2"
+                  >
+                    Remove Background
+                  </button>
+                  <p className="text-[9px] text-muted-foreground">
+                    AI-powered background removal (may take a moment)
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Path Controls (color tint + stroke) */}
+            {selectedObject.type === 'path' && (
+              <div data-section="path-controls" className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
                     Color Tint
@@ -515,18 +883,15 @@ export function Inspector() {
                     showEyedropper={true}
                   />
                 )}
-                {/* Pen/Path stroke color */}
-                {selectedObject.type === 'path' && (
-                  <UnifiedColorPicker
-                    label="Stroke Color"
-                    color={selectedObject.stroke || '#ffffff'}
-                    onColorChange={(color) => updateWithHistory({ stroke: color })}
-                    showGradients={false}
-                    showEyedropper={true}
-                  />
-                )}
+                <UnifiedColorPicker
+                  label="Stroke Color"
+                  color={selectedObject.stroke || '#ffffff'}
+                  onColorChange={(color) => updateWithHistory({ stroke: color })}
+                  showGradients={false}
+                  showEyedropper={true}
+                />
                 <p className="text-[9px] text-muted-foreground">
-                  Apply a color overlay to the {selectedObject.type}
+                  Apply a color overlay to the path
                 </p>
               </div>
             )}

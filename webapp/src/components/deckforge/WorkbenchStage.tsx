@@ -703,7 +703,10 @@ const CanvasObjectItem = memo(function CanvasObjectItem({
     
     // Generate gradient ID if gradient exists
     const gradientId = obj.gradientStops ? `gradient-${obj.id}` : null;
-    const fillValue = gradientId ? `url(#${gradientId})` : (obj.fill || '#ffffff');
+    // Support image pattern fill, gradient fill, or solid fill
+    const fillValue = obj.fillPatternImageSrc
+      ? `url(#imgfill-${obj.id})`
+      : gradientId ? `url(#${gradientId})` : (obj.fill || '#ffffff');
     
     // If we have a pattern, render using foreignObject with CSS background
     if (patternBackground) {
@@ -1217,9 +1220,16 @@ const CanvasObjectItem = memo(function CanvasObjectItem({
 
   // Render image (regular images + imported SVGs)
   if (obj.type === 'image' && obj.src) {
-    const width = obj.width * obj.scaleX;
-    const height = obj.height * obj.scaleY;
+    const width = obj.width * Math.abs(obj.scaleX);
+    const height = obj.height * Math.abs(obj.scaleY);
     const imgOutline = getOutlineStrokeProps(obj, false);
+
+    // Compute flip transform
+    const flipScaleX = obj.flipH ? -1 : 1;
+    const flipScaleY = obj.flipV ? -1 : 1;
+    const flipTransform = (obj.flipH || obj.flipV)
+      ? `translate(${obj.flipH ? width : 0}, ${obj.flipV ? height : 0}) scale(${flipScaleX}, ${flipScaleY})`
+      : '';
 
     const el = (
       <g
@@ -1227,13 +1237,16 @@ const CanvasObjectItem = memo(function CanvasObjectItem({
         opacity={obj.opacity}
         style={{ cursor, filter: filterStyle }}
         onMouseDown={handleMouseDown}
+        clipPath={obj.clipToDeck ? `url(#deck-clip-local)` : undefined}
       >
-        <image
-          href={obj.src}
-          width={width}
-          height={height}
-          preserveAspectRatio="xMidYMid meet"
-        />
+        <g transform={flipTransform}>
+          <image
+            href={obj.src}
+            width={width}
+            height={height}
+            preserveAspectRatio="xMidYMid meet"
+          />
+        </g>
         {/* Outline stroke border */}
         {obj.outlineStroke?.enabled && (
           <rect
@@ -1735,6 +1748,108 @@ export function WorkbenchStage() {
             <path d={getDeckPath(0, 0, deckWidth, deckHeight)} transform={`translate(${deckX}, ${deckY}) scale(${stageScale})`} />
           </clipPath>
 
+          {/* Clip path for deck shape in local coordinates (used by clipToDeck on images) */}
+          <clipPath id="deck-clip-local">
+            <path d={getDeckPath(0, 0, deckWidth, deckHeight)} />
+          </clipPath>
+
+          {/* Shape mask clip paths - shapes that act as masks for images above them */}
+          {visibleObjects.map((obj) => {
+            if (!obj.isMask) return null;
+            const w = obj.width * obj.scaleX;
+            const h = obj.height * obj.scaleY;
+            let clipContent: React.ReactNode = null;
+
+            if (obj.type === 'shape') {
+              if (obj.shapeType === 'circle') {
+                clipContent = (
+                  <ellipse
+                    cx={obj.x + w / 2}
+                    cy={obj.y + h / 2}
+                    rx={w / 2}
+                    ry={h / 2}
+                    transform={obj.rotation ? `rotate(${obj.rotation}, ${obj.x + w / 2}, ${obj.y + h / 2})` : undefined}
+                  />
+                );
+              } else if (obj.shapeType === 'star') {
+                const cx = obj.x + w / 2;
+                const cy = obj.y + h / 2;
+                const outerR = w / 2;
+                const innerR = outerR * 0.4;
+                const points: string[] = [];
+                for (let i = 0; i < 10; i++) {
+                  const r = i % 2 === 0 ? outerR : innerR;
+                  const angle = (Math.PI / 5) * i - Math.PI / 2;
+                  points.push(`${cx + r * Math.cos(angle)},${cy + r * Math.sin(angle)}`);
+                }
+                clipContent = (
+                  <polygon
+                    points={points.join(' ')}
+                    transform={obj.rotation ? `rotate(${obj.rotation}, ${cx}, ${cy})` : undefined}
+                  />
+                );
+              } else if (obj.shapeType === 'polygon' && obj.polygonSides) {
+                const cx = obj.x + w / 2;
+                const cy = obj.y + h / 2;
+                const r = w / 2;
+                const sides = obj.polygonSides;
+                const points: string[] = [];
+                for (let i = 0; i < sides; i++) {
+                  const angle = (2 * Math.PI / sides) * i - Math.PI / 2;
+                  points.push(`${cx + r * Math.cos(angle)},${cy + r * Math.sin(angle)}`);
+                }
+                clipContent = (
+                  <polygon
+                    points={points.join(' ')}
+                    transform={obj.rotation ? `rotate(${obj.rotation}, ${cx}, ${cy})` : undefined}
+                  />
+                );
+              } else {
+                // Default rect
+                clipContent = (
+                  <rect
+                    x={obj.x}
+                    y={obj.y}
+                    width={w}
+                    height={h}
+                    transform={obj.rotation ? `rotate(${obj.rotation}, ${obj.x + w / 2}, ${obj.y + h / 2})` : undefined}
+                  />
+                );
+              }
+            }
+            if (!clipContent) return null;
+            return (
+              <clipPath key={`mask-${obj.id}`} id={`mask-${obj.id}`}>
+                {clipContent}
+              </clipPath>
+            );
+          })}
+
+          {/* Pattern fill definitions for shapes with fillPatternImageSrc */}
+          {visibleObjects.map((obj) => {
+            if (!obj.fillPatternImageSrc) return null;
+            const scale = obj.fillPatternScale || 1;
+            const patternSize = 50 * scale;
+            return (
+              <pattern
+                key={`imgfill-${obj.id}`}
+                id={`imgfill-${obj.id}`}
+                patternUnits="userSpaceOnUse"
+                width={patternSize}
+                height={patternSize}
+                x={obj.fillPatternOffsetX || 0}
+                y={obj.fillPatternOffsetY || 0}
+              >
+                <image
+                  href={obj.fillPatternImageSrc}
+                  width={patternSize}
+                  height={patternSize}
+                  preserveAspectRatio="xMidYMid slice"
+                />
+              </pattern>
+            );
+          })}
+
           {/* Texture patterns */}
           <pattern id="scratched-wood-pattern" patternUnits="userSpaceOnUse" width="40" height="40">
             <line x1="0" y1="5" x2="40" y2="6" stroke="rgba(0,0,0,0.3)" strokeWidth="0.5" />
@@ -1839,6 +1954,10 @@ export function WorkbenchStage() {
             style={{ transition: 'transform 0.15s cubic-bezier(0.4, 0, 0.2, 1)' }}
           >
             {visibleObjects.map((obj) => {
+              // Skip mask shapes from normal rendering - they're rendered as part of clip defs
+              // but still show a dimmed version for visual reference
+              const isMaskShape = obj.isMask && obj.type === 'shape';
+
               // Apply visual feedback classes
               const visualClasses = [
                 obj.id === copiedObjectId ? 'copy-flash' : '',
@@ -1846,8 +1965,11 @@ export function WorkbenchStage() {
                 undoRedoChangedIds.includes(obj.id) ? 'undo-highlight' : '',
               ].filter(Boolean).join(' ');
 
+              // Determine if this image has a mask applied
+              const maskClipPath = obj.maskTargetId ? `url(#mask-${obj.maskTargetId})` : undefined;
+
               return (
-                <g key={obj.id} className={visualClasses}>
+                <g key={obj.id} className={visualClasses} clipPath={maskClipPath} style={isMaskShape ? { opacity: 0.3 } : undefined}>
                   <CanvasObjectItem
                     obj={obj}
                     isSelected={selectedIds.includes(obj.id)}

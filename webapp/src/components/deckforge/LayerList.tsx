@@ -1,4 +1,4 @@
-import { GripVertical, Eye, EyeOff, Lock, Unlock, Trash2, Type, ImageIcon, Square, Circle, Star, Sticker, Minus, Pen, Mountain, Layers as LayersIcon, Info, Search, X, Filter } from 'lucide-react';
+import { GripVertical, Eye, EyeOff, Lock, Unlock, Trash2, Type, ImageIcon, Square, Circle, Star, Sticker, Minus, Pen, Mountain, Layers as LayersIcon, Info, Search, X, Filter, Scissors } from 'lucide-react';
 import { useDeckForgeStore, CanvasObject } from '@/store/deckforge';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -80,6 +80,8 @@ interface LayerItemProps {
   onMoveDown: () => void;
   isFirst: boolean;
   isLast: boolean;
+  canMask?: boolean; // true if this shape can act as a mask (has image above it)
+  onToggleMask?: () => void; // callback to toggle mask state
 }
 
 // Check which effects/filters are active on an object
@@ -112,6 +114,8 @@ function LayerItem({
   isSelected,
   onSelect,
   onDelete,
+  canMask,
+  onToggleMask,
 }: LayerItemProps) {
   const Icon = getObjectIcon(obj);
   const { updateObject } = useDeckForgeStore();
@@ -200,6 +204,46 @@ function LayerItem({
           <p className="text-xs">{obj.locked ? 'Unlock' : 'Lock'} layer</p>
         </TooltipContent>
       </Tooltip>
+
+      {/* Use as Mask Button (for shapes with image above) */}
+      {canMask && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleMask?.();
+              }}
+              className={cn(
+                "w-6 h-6 flex items-center justify-center hover:scale-110 active:scale-95 transition-all duration-200 rounded",
+                obj.isMask
+                  ? "bg-primary/20 text-primary"
+                  : "opacity-0 group-hover:opacity-100 text-muted-foreground hover:bg-secondary"
+              )}
+              title={obj.isMask ? "Remove mask" : "Use as Mask"}
+            >
+              <Scissors className="w-3.5 h-3.5" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="left">
+            <p className="text-xs">{obj.isMask ? 'Remove mask' : 'Use as Mask'}</p>
+          </TooltipContent>
+        </Tooltip>
+      )}
+
+      {/* Mask indicator for masked images */}
+      {obj.maskTargetId && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="w-6 h-6 flex items-center justify-center">
+              <Scissors className="w-3 h-3 text-primary" />
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="left">
+            <p className="text-xs">Masked by shape below</p>
+          </TooltipContent>
+        </Tooltip>
+      )}
 
       {/* Delete Button */}
       <Tooltip>
@@ -435,6 +479,34 @@ export function LayerList() {
         ) : (
           reversedObjects.map((obj, idx) => {
             const realIndex = objects.length - 1 - idx;
+
+            // Check if this shape can act as a mask:
+            // It must be a shape, and the layer directly above it (realIndex + 1) must be an image
+            const canMask = obj.type === 'shape' && realIndex < objects.length - 1 && objects[realIndex + 1]?.type === 'image';
+
+            const handleToggleMask = () => {
+              const { updateObject, saveToHistory } = useDeckForgeStore.getState();
+              saveToHistory();
+
+              if (obj.isMask) {
+                // Remove mask
+                const imageAbove = objects[realIndex + 1];
+                if (imageAbove) {
+                  updateObject(imageAbove.id, { maskTargetId: undefined });
+                }
+                updateObject(obj.id, { isMask: false });
+                toast.success('Mask removed');
+              } else {
+                // Set as mask
+                const imageAbove = objects[realIndex + 1];
+                if (imageAbove) {
+                  updateObject(obj.id, { isMask: true });
+                  updateObject(imageAbove.id, { maskTargetId: obj.id });
+                  toast.success('Shape set as mask for image above');
+                }
+              }
+            };
+
             return (
               <LayerItem
                 key={obj.id}
@@ -447,6 +519,8 @@ export function LayerList() {
                 onMoveDown={() => moveLayer(obj.id, 'down')}
                 isFirst={idx === 0}
                 isLast={idx === reversedObjects.length - 1}
+                canMask={canMask}
+                onToggleMask={handleToggleMask}
               />
             );
           })

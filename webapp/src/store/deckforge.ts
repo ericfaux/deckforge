@@ -83,6 +83,17 @@ export interface CanvasObject {
   gradientRadius?: number; // 0-1 for radial gradient radius
   // For images
   src?: string;
+  clipToDeck?: boolean; // Clip image to deck outline shape
+  flipH?: boolean; // Flip horizontally
+  flipV?: boolean; // Flip vertically
+  // Shape masking
+  isMask?: boolean; // This shape acts as a clipping mask for the image above it
+  maskTargetId?: string; // ID of the shape that masks this image
+  // Pattern fill from image
+  fillPatternImageSrc?: string; // Image URL for pattern fill
+  fillPatternScale?: number; // 0.1-5, default 1
+  fillPatternOffsetX?: number; // px offset
+  fillPatternOffsetY?: number; // px offset
   // For shapes
   shapeType?: 'rect' | 'circle' | 'star' | 'polygon';
   polygonSides?: number; // For polygon: 3-20 sides
