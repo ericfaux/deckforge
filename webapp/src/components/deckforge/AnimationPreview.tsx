@@ -1,10 +1,16 @@
 import { useState, useRef, useEffect } from 'react';
-import { X, Play, Pause, RotateCw, Settings } from 'lucide-react';
+import { X, Play, Pause, RotateCw, Settings, Loader2 } from 'lucide-react';
 import { useDeckForgeStore } from '@/store/deckforge';
-import { WorkbenchStage } from './WorkbenchStage';
+import { exportToPNG } from '@/lib/export';
 import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
 import { getDeckSize } from '@/lib/deck-sizes';
+
+// Deck outline SVG path generator (matches WorkbenchStage getDeckPath)
+function getDeckPathSvg(w: number, h: number): string {
+  const r = w / 2;
+  return `M 0 ${r} Q 0 0 ${w / 2} 0 Q ${w} 0 ${w} ${r} L ${w} ${h - r} Q ${w} ${h} ${w / 2} ${h} Q 0 ${h} 0 ${h - r} Z`;
+}
 
 interface AnimationPreviewProps {
   isOpen: boolean;
@@ -16,26 +22,22 @@ export function AnimationPreview({ isOpen, onClose }: AnimationPreviewProps) {
   const [rotationSpeed, setRotationSpeed] = useState(2); // degrees per frame
   const [currentRotation, setCurrentRotation] = useState(0);
   const [showSettings, setShowSettings] = useState(false);
+  const [designImage, setDesignImage] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   const animationRef = useRef<number>();
 
+  const objects = useDeckForgeStore(state => state.objects);
   const backgroundColor = useDeckForgeStore(state => state.backgroundColor);
+  const backgroundFillType = useDeckForgeStore(state => state.backgroundFillType);
+  const backgroundGradient = useDeckForgeStore(state => state.backgroundGradient);
   const deckSizeId = useDeckForgeStore(state => state.deckSizeId);
   const currentDeckSize = getDeckSize(deckSizeId);
   const deckWidth = currentDeckSize.canvasWidth;
   const deckHeight = currentDeckSize.canvasHeight;
 
-  // Calculate display scale so deck is at least 350px tall and fits viewport
-  const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 800;
-  const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 600;
-  const maxHeight = viewportHeight * 0.6;
-  const maxWidth = viewportWidth * 0.5;
-  const scaleByHeight = maxHeight / deckHeight;
-  const scaleByWidth = maxWidth / deckWidth;
-  const displayScale = Math.max(Math.min(scaleByHeight, scaleByWidth), 350 / deckHeight);
-
-  // Container dimensions for WorkbenchStage (before CSS scale)
-  const containerW = deckWidth + 20;
-  const containerH = deckHeight + 20;
+  // Display dimensions: scale so the deck is ~350px tall on screen
+  const displayH = 380;
+  const displayW = displayH * (deckWidth / deckHeight);
 
   // Determine if the deck background is dark to choose contrasting preview bg
   const bgLuminance = (() => {
@@ -47,6 +49,39 @@ export function AnimationPreview({ isOpen, onClose }: AnimationPreviewProps) {
     return 0.299 * r + 0.587 * g + 0.114 * b;
   })();
   const isDarkDeck = bgLuminance < 0.4;
+
+  // Capture the canvas design as an image when opened
+  useEffect(() => {
+    if (!isOpen) return;
+    setLoading(true);
+
+    const capture = async () => {
+      try {
+        const blob = await exportToPNG(objects, {
+          scale: 4,
+          width: deckWidth,
+          height: deckHeight,
+          backgroundColor,
+          backgroundFillType,
+          backgroundGradient: backgroundGradient as any,
+          includeBackground: true,
+        });
+        const url = URL.createObjectURL(blob);
+        setDesignImage(url);
+      } catch {
+        setDesignImage(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+    capture();
+
+    return () => {
+      if (designImage) {
+        URL.revokeObjectURL(designImage);
+      }
+    };
+  }, [isOpen, objects, deckWidth, deckHeight, backgroundColor, backgroundFillType, backgroundGradient]);
 
   useEffect(() => {
     if (isOpen && isPlaying) {
@@ -173,46 +208,82 @@ export function AnimationPreview({ isOpen, onClose }: AnimationPreviewProps) {
           }}
         />
 
-        {/* Perspective container - perspective on parent for proper 3D */}
-        <div style={{ perspective: '1200px', perspectiveOrigin: '50% 50%' }}>
-          {/* Rotating element */}
-          <div
-            style={{
-              transform: `rotateY(${currentRotation}deg)`,
-              transformStyle: 'preserve-3d',
-              transition: isPlaying ? 'none' : 'transform 0.3s ease',
-            }}
-          >
-            {/* Shadow under deck */}
-            <div
-              className="absolute left-1/2 -translate-x-1/2"
-              style={{
-                bottom: `-${16 * displayScale}px`,
-                width: `${containerW * displayScale * 0.8}px`,
-                height: `${20 * displayScale}px`,
-                borderRadius: '50%',
-                background: 'radial-gradient(ellipse, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0) 70%)',
-                filter: `blur(${8 * displayScale}px)`,
-              }}
-            />
-
-            {/* Deck preview - explicit dimensions for WorkbenchStage */}
+        {loading ? (
+          <div className="flex flex-col items-center gap-3 text-white/60">
+            <Loader2 className="w-8 h-8 animate-spin" />
+            <span className="text-sm">Rendering preview...</span>
+          </div>
+        ) : (
+          /* Perspective container - perspective on parent for proper 3D */
+          <div style={{ perspective: '1200px', perspectiveOrigin: '50% 50%' }}>
+            {/* Rotating element */}
             <div
               style={{
-                width: `${containerW}px`,
-                height: `${containerH}px`,
-                transform: `scale(${displayScale})`,
-                transformOrigin: 'center center',
-                filter: 'drop-shadow(0 10px 30px rgba(0,0,0,0.4)) drop-shadow(0 4px 12px rgba(0,0,0,0.3))',
-                overflow: 'hidden',
-                pointerEvents: 'none',
-                userSelect: 'none',
+                transform: `rotateY(${currentRotation}deg)`,
+                transformStyle: 'preserve-3d',
+                transition: isPlaying ? 'none' : 'transform 0.3s ease',
               }}
             >
-              <WorkbenchStage />
+              {/* Shadow under deck */}
+              <div
+                className="absolute left-1/2 -translate-x-1/2"
+                style={{
+                  bottom: '-20px',
+                  width: `${displayW * 0.8}px`,
+                  height: '20px',
+                  borderRadius: '50%',
+                  background: 'radial-gradient(ellipse, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0) 70%)',
+                  filter: 'blur(10px)',
+                }}
+              />
+
+              {/* Deck preview - captured design image clipped to deck shape */}
+              <div
+                style={{
+                  width: `${displayW}px`,
+                  height: `${displayH}px`,
+                  position: 'relative',
+                  filter: 'drop-shadow(0 10px 30px rgba(0,0,0,0.4)) drop-shadow(0 4px 12px rgba(0,0,0,0.3))',
+                  pointerEvents: 'none',
+                  userSelect: 'none',
+                }}
+              >
+                <svg
+                  width={displayW}
+                  height={displayH}
+                  viewBox={`0 0 ${displayW} ${displayH}`}
+                >
+                  <defs>
+                    <clipPath id="anim-deck-clip">
+                      <path d={getDeckPathSvg(displayW, displayH)} />
+                    </clipPath>
+                  </defs>
+                  <g clipPath="url(#anim-deck-clip)">
+                    {designImage ? (
+                      <image
+                        href={designImage}
+                        x={0}
+                        y={0}
+                        width={displayW}
+                        height={displayH}
+                        preserveAspectRatio="none"
+                      />
+                    ) : (
+                      <rect x={0} y={0} width={displayW} height={displayH} fill={backgroundColor} />
+                    )}
+                  </g>
+                  {/* Deck outline */}
+                  <path
+                    d={getDeckPathSvg(displayW, displayH)}
+                    fill="none"
+                    stroke="rgba(255,255,255,0.1)"
+                    strokeWidth="1"
+                  />
+                </svg>
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Instructions */}
