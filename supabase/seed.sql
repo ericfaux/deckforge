@@ -212,104 +212,89 @@ ON CONFLICT (user_id) DO NOTHING;
 -- ─── 4. DESIGNS (Gallery) ───────────────────────────────────────────────────────
 -- These appear in the public gallery. References profiles(id).
 
-INSERT INTO public.designs (id, user_id, title, description, design_data, thumbnail_url, is_public, tags, category, deck_size, view_count, like_count) VALUES
+INSERT INTO public.designs (id, user_id, title, description, design_data, thumbnail_url, is_public, tags, category, deck_size) VALUES
   -- NeonArtist designs
   ('b0000000-0000-0000-0000-000000000001', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a01',
    'Midnight Bloom', 'Dark floral design with neon petals blooming against a midnight background.',
    '{"version":1,"background":"#0a0a1a","layers":[{"type":"shape","shape":"ellipse","x":50,"y":30,"width":200,"height":200,"fill":"#ff00ff","opacity":0.6},{"type":"shape","shape":"ellipse","x":150,"y":50,"width":180,"height":180,"fill":"#00ffcc","opacity":0.5},{"type":"text","content":"BLOOM","x":60,"y":280,"fontSize":48,"fill":"#ffffff","fontFamily":"Impact"}]}',
-   NULL, TRUE, ARRAY['floral','neon','dark','nature'], 'edgy', '32mm',
-   1247, 156),
+   NULL, TRUE, ARRAY['floral','neon','dark','nature'], 'edgy', '32mm'),
 
   ('b0000000-0000-0000-0000-000000000002', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a01',
    'Electric Pulse', 'Pulsing electric lines across a deep purple field. Feel the energy.',
    '{"version":1,"background":"#1a0033","layers":[{"type":"shape","shape":"rect","x":0,"y":140,"width":300,"height":4,"fill":"#00ffff","opacity":0.9},{"type":"shape","shape":"rect","x":0,"y":160,"width":300,"height":2,"fill":"#ff00ff","opacity":0.7},{"type":"shape","shape":"rect","x":0,"y":180,"width":300,"height":6,"fill":"#ffff00","opacity":0.5}]}',
-   NULL, TRUE, ARRAY['electric','neon','lines','energy'], 'edgy', '34mm',
-   834, 92),
+   NULL, TRUE, ARRAY['electric','neon','lines','energy'], 'edgy', '34mm'),
 
   -- TokyoDesigns designs
   ('b0000000-0000-0000-0000-000000000003', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a02',
    'Tokyo Drift', 'Japanese-inspired street design with speed line accents. Built for the streets.',
    '{"version":1,"background":"#1a1a2e","layers":[{"type":"shape","shape":"rect","x":20,"y":20,"width":260,"height":360,"fill":"transparent","stroke":"#e94560","strokeWidth":3},{"type":"text","content":"DRIFT","x":40,"y":200,"fontSize":56,"fill":"#e94560","fontFamily":"Impact"},{"type":"shape","shape":"rect","x":0,"y":300,"width":300,"height":2,"fill":"#ffffff","opacity":0.3}]}',
-   NULL, TRUE, ARRAY['japanese','street','drift','speed'], 'street', '32mm',
-   2103, 234),
+   NULL, TRUE, ARRAY['japanese','street','drift','speed'], 'street', '32mm'),
 
   ('b0000000-0000-0000-0000-000000000004', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a02',
    'Sakura Season', 'Delicate cherry blossom petals drifting across a soft pink gradient.',
    '{"version":1,"background":"linear-gradient(#fce4ec,#f8bbd0)","layers":[{"type":"shape","shape":"ellipse","x":80,"y":60,"width":20,"height":20,"fill":"#f48fb1","opacity":0.8},{"type":"shape","shape":"ellipse","x":200,"y":120,"width":16,"height":16,"fill":"#f48fb1","opacity":0.6},{"type":"shape","shape":"ellipse","x":140,"y":250,"width":22,"height":22,"fill":"#f48fb1","opacity":0.7},{"type":"text","content":"桜","x":100,"y":180,"fontSize":72,"fill":"#ad1457","fontFamily":"serif"}]}',
-   NULL, TRUE, ARRAY['sakura','japanese','floral','pink'], 'minimal', '32mm',
-   1456, 187),
+   NULL, TRUE, ARRAY['sakura','japanese','floral','pink'], 'minimal', '32mm'),
 
   -- WaveCreative designs
   ('b0000000-0000-0000-0000-000000000005', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a03',
    'Pastel Waves', 'Soft pastel gradient waves flowing across the deck. Smooth, calming, stylish.',
    '{"version":1,"background":"#f5f0ff","layers":[{"type":"shape","shape":"rect","x":0,"y":100,"width":300,"height":60,"fill":"#c3aed6","opacity":0.6},{"type":"shape","shape":"rect","x":0,"y":170,"width":300,"height":50,"fill":"#b8d4e3","opacity":0.5},{"type":"shape","shape":"rect","x":0,"y":230,"width":300,"height":40,"fill":"#ffd6e0","opacity":0.4}]}',
-   NULL, TRUE, ARRAY['pastel','waves','gradient','calm'], 'minimal', '34mm',
-   891, 178),
+   NULL, TRUE, ARRAY['pastel','waves','gradient','calm'], 'minimal', '34mm'),
 
   ('b0000000-0000-0000-0000-000000000006', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a03',
    'Cloud Nine', 'Floating above it all. Soft white forms on a sky blue canvas.',
    '{"version":1,"background":"#87ceeb","layers":[{"type":"shape","shape":"ellipse","x":60,"y":100,"width":120,"height":60,"fill":"#ffffff","opacity":0.9},{"type":"shape","shape":"ellipse","x":160,"y":220,"width":100,"height":50,"fill":"#ffffff","opacity":0.8},{"type":"text","content":"9","x":120,"y":160,"fontSize":96,"fill":"#ffffff","fontFamily":"serif","opacity":0.3}]}',
-   NULL, TRUE, ARRAY['clouds','sky','white','clean'], 'minimal', '32mm',
-   543, 89),
+   NULL, TRUE, ARRAY['clouds','sky','white','clean'], 'minimal', '32mm'),
 
   -- RetroRipper designs
   ('b0000000-0000-0000-0000-000000000007', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a04',
    'Retro Cassette', 'Nostalgic 80s cassette tape design with mixtape label. Rewind the good times.',
    '{"version":1,"background":"#2d1b69","layers":[{"type":"shape","shape":"rect","x":40,"y":80,"width":220,"height":140,"fill":"#1a1a2e","stroke":"#ffd700","strokeWidth":2},{"type":"shape","shape":"ellipse","x":100,"y":150,"width":50,"height":50,"fill":"transparent","stroke":"#ffffff","strokeWidth":2},{"type":"shape","shape":"ellipse","x":200,"y":150,"width":50,"height":50,"fill":"transparent","stroke":"#ffffff","strokeWidth":2},{"type":"text","content":"MIX TAPE","x":80,"y":260,"fontSize":28,"fill":"#ffd700","fontFamily":"monospace"}]}',
-   NULL, TRUE, ARRAY['retro','cassette','80s','music','nostalgia'], 'retro', '32mm',
-   1556, 201),
+   NULL, TRUE, ARRAY['retro','cassette','80s','music','nostalgia'], 'retro', '32mm'),
 
   ('b0000000-0000-0000-0000-000000000008', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a04',
    'VHS Glitch', 'Tracking errors and scan lines from a bygone era of analog media.',
    '{"version":1,"background":"#0d0d0d","layers":[{"type":"shape","shape":"rect","x":0,"y":50,"width":300,"height":3,"fill":"#00ffff","opacity":0.8},{"type":"shape","shape":"rect","x":0,"y":150,"width":300,"height":2,"fill":"#ff0000","opacity":0.6},{"type":"shape","shape":"rect","x":0,"y":250,"width":300,"height":4,"fill":"#ffff00","opacity":0.5},{"type":"text","content":"PLAY ▶","x":20,"y":340,"fontSize":18,"fill":"#ffffff","fontFamily":"monospace","opacity":0.7}]}',
-   NULL, TRUE, ARRAY['vhs','glitch','retro','analog'], 'retro', '34mm',
-   978, 134),
+   NULL, TRUE, ARRAY['vhs','glitch','retro','analog'], 'retro', '34mm'),
 
   -- ProDecks designs
   ('b0000000-0000-0000-0000-000000000009', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a05',
    'Carbon Fiber Pro', 'Premium carbon fiber texture with precision-cut accent lines. Built for performance.',
    '{"version":1,"background":"#1a1a1a","layers":[{"type":"shape","shape":"rect","x":0,"y":0,"width":300,"height":400,"fill":"#2a2a2a","opacity":0.5},{"type":"shape","shape":"rect","x":140,"y":0,"width":4,"height":400,"fill":"#ccff00","opacity":0.9},{"type":"text","content":"PRO","x":40,"y":350,"fontSize":64,"fill":"#ccff00","fontFamily":"Impact"}]}',
-   NULL, TRUE, ARRAY['carbon','pro','competition','premium','texture'], 'pro', '34mm',
-   3210, 445),
+   NULL, TRUE, ARRAY['carbon','pro','competition','premium','texture'], 'pro', '34mm'),
 
   ('b0000000-0000-0000-0000-000000000010', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a05',
    'Stealth Matte', 'Murdered-out matte black with subtle geometric etching. Silent but deadly.',
    '{"version":1,"background":"#0a0a0a","layers":[{"type":"shape","shape":"rect","x":50,"y":50,"width":200,"height":300,"fill":"transparent","stroke":"#333333","strokeWidth":1},{"type":"shape","shape":"rect","x":70,"y":70,"width":160,"height":260,"fill":"transparent","stroke":"#222222","strokeWidth":1},{"type":"text","content":"STEALTH","x":55,"y":210,"fontSize":32,"fill":"#333333","fontFamily":"Impact"}]}',
-   NULL, TRUE, ARRAY['black','matte','stealth','minimal'], 'pro', '32mm',
-   2187, 312),
+   NULL, TRUE, ARRAY['black','matte','stealth','minimal'], 'pro', '32mm'),
 
   -- GlitchArt designs
   ('b0000000-0000-0000-0000-000000000011', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a06',
    'Glitch Matrix', 'Corrupted pixel patterns and matrix-style code rain. Error has never looked so good.',
    '{"version":1,"background":"#0d1117","layers":[{"type":"text","content":"01001","x":20,"y":40,"fontSize":14,"fill":"#00ff00","fontFamily":"monospace","opacity":0.4},{"type":"text","content":"11010","x":80,"y":80,"fontSize":14,"fill":"#00ff00","fontFamily":"monospace","opacity":0.3},{"type":"text","content":"GLITCH","x":30,"y":200,"fontSize":48,"fill":"#ff0040","fontFamily":"Impact"},{"type":"shape","shape":"rect","x":0,"y":195,"width":300,"height":8,"fill":"#00ffff","opacity":0.3}]}',
-   NULL, TRUE, ARRAY['glitch','digital','matrix','pixel','cyber'], 'edgy', '32mm',
-   1823, 267),
+   NULL, TRUE, ARRAY['glitch','digital','matrix','pixel','cyber'], 'edgy', '32mm'),
 
   -- LineWork designs
   ('b0000000-0000-0000-0000-000000000012', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a07',
    'Botanical Line Art', 'Delicate botanical illustrations with fine line work on cream. Nature meets minimalism.',
    '{"version":1,"background":"#fdf6e3","layers":[{"type":"shape","shape":"ellipse","x":100,"y":60,"width":100,"height":140,"fill":"transparent","stroke":"#2d4a3e","strokeWidth":1.5},{"type":"shape","shape":"rect","x":148,"y":200,"width":2,"height":120,"fill":"#2d4a3e"},{"type":"shape","shape":"ellipse","x":120,"y":140,"width":60,"height":80,"fill":"transparent","stroke":"#2d4a3e","strokeWidth":1}]}',
-   NULL, TRUE, ARRAY['botanical','line-art','nature','minimal','illustration'], 'minimal', '32mm',
-   756, 134),
+   NULL, TRUE, ARRAY['botanical','line-art','nature','minimal','illustration'], 'minimal', '32mm'),
 
   ('b0000000-0000-0000-0000-000000000013', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a07',
    'Geometric Fauna', 'Low-poly animal portraits built from triangles and clean lines.',
    '{"version":1,"background":"#ffffff","layers":[{"type":"shape","shape":"rect","x":80,"y":60,"width":140,"height":120,"fill":"transparent","stroke":"#1a1a1a","strokeWidth":1},{"type":"shape","shape":"rect","x":120,"y":100,"width":60,"height":80,"fill":"transparent","stroke":"#1a1a1a","strokeWidth":1},{"type":"text","content":"FAUNA","x":80,"y":280,"fontSize":36,"fill":"#1a1a1a","fontFamily":"serif"}]}',
-   NULL, TRUE, ARRAY['geometric','animals','line-art','polygon'], 'minimal', '34mm',
-   412, 67),
+   NULL, TRUE, ARRAY['geometric','animals','line-art','polygon'], 'minimal', '34mm'),
 
   -- AcidArt designs
   ('b0000000-0000-0000-0000-000000000014', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a08',
    'Acid Drip', 'Psychedelic acid-washed design with dripping colors and warped typography.',
    '{"version":1,"background":"#ff6b00","layers":[{"type":"shape","shape":"ellipse","x":80,"y":40,"width":140,"height":140,"fill":"#ff00ff","opacity":0.6},{"type":"shape","shape":"ellipse","x":120,"y":120,"width":120,"height":120,"fill":"#00ffff","opacity":0.5},{"type":"shape","shape":"ellipse","x":60,"y":200,"width":160,"height":100,"fill":"#ffff00","opacity":0.4},{"type":"text","content":"ACID","x":60,"y":320,"fontSize":56,"fill":"#ffffff","fontFamily":"Impact"}]}',
-   NULL, TRUE, ARRAY['psychedelic','acid','drip','colorful','trippy'], 'retro', '34mm',
-   2456, 321),
+   NULL, TRUE, ARRAY['psychedelic','acid','drip','colorful','trippy'], 'retro', '34mm'),
 
   ('b0000000-0000-0000-0000-000000000015', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a08',
    'Neon Wave', 'Synthwave sunset with palm silhouettes and neon grid horizon.',
    '{"version":1,"background":"linear-gradient(#0a0020,#1a0040,#ff006e)","layers":[{"type":"shape","shape":"rect","x":0,"y":200,"width":300,"height":200,"fill":"#1a0040","opacity":0.8},{"type":"shape","shape":"ellipse","x":100,"y":180,"width":100,"height":100,"fill":"#ff006e","opacity":0.7},{"type":"text","content":"WAVE","x":60,"y":320,"fontSize":48,"fill":"#00ffff","fontFamily":"Impact"}]}',
-   NULL, TRUE, ARRAY['synthwave','neon','sunset','retro','vaporwave'], 'retro', '32mm',
-   1890, 256)
+   NULL, TRUE, ARRAY['synthwave','neon','sunset','retro','vaporwave'], 'retro', '32mm')
 ON CONFLICT (id) DO NOTHING;
 
 
@@ -458,7 +443,7 @@ INSERT INTO marketplace_purchases (id, design_id, buyer_id, price_paid, purchase
   ('e0000000-0000-0000-0000-000000000014', 'c0000000-0000-0000-0000-000000000003', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a05', 2.49, NOW() - INTERVAL '55 days'),
   ('e0000000-0000-0000-0000-000000000015', 'c0000000-0000-0000-0000-000000000011', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a04', 1.99, NOW() - INTERVAL '50 days'),
   ('e0000000-0000-0000-0000-000000000016', 'c0000000-0000-0000-0000-000000000002', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a08', 1.99, NOW() - INTERVAL '45 days')
-ON CONFLICT (design_id, buyer_id) DO NOTHING;
+ON CONFLICT (id) DO NOTHING;
 
 
 -- ─── 7. MARKETPLACE REVIEWS ─────────────────────────────────────────────────────
@@ -512,7 +497,7 @@ INSERT INTO marketplace_reviews (id, design_id, user_id, rating, comment, create
   -- Reviews for Mushroom Cloud (c...12)
   ('f0000000-0000-0000-0000-000000000016', 'c0000000-0000-0000-0000-000000000012', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a10',
    5, 'The bioluminescent glow effect is something else. So creative. My most complimented deck graphic by far.', NOW() - INTERVAL '8 days')
-ON CONFLICT (design_id, user_id) DO NOTHING;
+ON CONFLICT (id) DO NOTHING;
 
 
 -- ─── 8. MARKETPLACE FAVORITES ───────────────────────────────────────────────────
