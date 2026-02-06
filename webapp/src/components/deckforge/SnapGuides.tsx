@@ -171,6 +171,182 @@ export function SnapGuides({ guides, deckX, deckY, stageScale, deckWidth: propDe
   );
 }
 
+// Calculate snap position and guides - returns both snapped coordinates and visual guides
+export function calculateSnapPosition(
+  draggedObject: { x: number; y: number; width: number; height: number; scaleX: number; scaleY: number },
+  otherObjects: Array<{ id: string; x: number; y: number; width: number; height: number; scaleX: number; scaleY: number }>,
+  snapThreshold: number = 5,
+  deckWidth: number = 96,
+  deckHeight: number = 294
+): { snappedX: number; snappedY: number; guides: SnapGuide[] } {
+  const draggedWidth = draggedObject.width * draggedObject.scaleX;
+  const draggedHeight = draggedObject.height * draggedObject.scaleY;
+  const draggedCenterX = draggedObject.x + draggedWidth / 2;
+  const draggedCenterY = draggedObject.y + draggedHeight / 2;
+  const draggedRight = draggedObject.x + draggedWidth;
+  const draggedBottom = draggedObject.y + draggedHeight;
+
+  let snapX: number | null = null;
+  let snapY: number | null = null;
+  let bestSnapDistX = snapThreshold;
+  let bestSnapDistY = snapThreshold;
+  const guides: SnapGuide[] = [];
+
+  // Check deck center
+  const deckCenterX = deckWidth / 2;
+  const deckCenterY = deckHeight / 2;
+
+  // Vertical center snap
+  const centerXDist = Math.abs(draggedCenterX - deckCenterX);
+  if (centerXDist < bestSnapDistX) {
+    bestSnapDistX = centerXDist;
+    snapX = deckCenterX - draggedWidth / 2;
+    guides.push({ type: 'vertical', position: deckCenterX, label: 'Center' });
+  }
+
+  // Horizontal center snap
+  const centerYDist = Math.abs(draggedCenterY - deckCenterY);
+  if (centerYDist < bestSnapDistY) {
+    bestSnapDistY = centerYDist;
+    snapY = deckCenterY - draggedHeight / 2;
+    guides.push({ type: 'horizontal', position: deckCenterY, label: 'Center' });
+  }
+
+  // Deck edges
+  const leftDist = Math.abs(draggedObject.x);
+  if (leftDist < bestSnapDistX) {
+    bestSnapDistX = leftDist;
+    snapX = 0;
+    guides.push({ type: 'vertical', position: 0 });
+  }
+  const rightDist = Math.abs(draggedRight - deckWidth);
+  if (rightDist < bestSnapDistX) {
+    bestSnapDistX = rightDist;
+    snapX = deckWidth - draggedWidth;
+    guides.push({ type: 'vertical', position: deckWidth });
+  }
+  const topDist = Math.abs(draggedObject.y);
+  if (topDist < bestSnapDistY) {
+    bestSnapDistY = topDist;
+    snapY = 0;
+    guides.push({ type: 'horizontal', position: 0 });
+  }
+  const bottomDist = Math.abs(draggedBottom - deckHeight);
+  if (bottomDist < bestSnapDistY) {
+    bestSnapDistY = bottomDist;
+    snapY = deckHeight - draggedHeight;
+    guides.push({ type: 'horizontal', position: deckHeight });
+  }
+
+  // Check alignment with other objects
+  for (const other of otherObjects) {
+    const otherWidth = other.width * other.scaleX;
+    const otherHeight = other.height * other.scaleY;
+    const otherCenterX = other.x + otherWidth / 2;
+    const otherCenterY = other.y + otherHeight / 2;
+    const otherRight = other.x + otherWidth;
+    const otherBottom = other.y + otherHeight;
+
+    // Left edge to left edge
+    let dist = Math.abs(draggedObject.x - other.x);
+    if (dist < bestSnapDistX) { bestSnapDistX = dist; snapX = other.x; guides.push({ type: 'vertical', position: other.x }); }
+
+    // Right edge to right edge
+    dist = Math.abs(draggedRight - otherRight);
+    if (dist < bestSnapDistX) { bestSnapDistX = dist; snapX = otherRight - draggedWidth; guides.push({ type: 'vertical', position: otherRight }); }
+
+    // Center to center (X)
+    dist = Math.abs(draggedCenterX - otherCenterX);
+    if (dist < bestSnapDistX) { bestSnapDistX = dist; snapX = otherCenterX - draggedWidth / 2; guides.push({ type: 'vertical', position: otherCenterX }); }
+
+    // Left to right edge
+    dist = Math.abs(draggedObject.x - otherRight);
+    if (dist < bestSnapDistX) { bestSnapDistX = dist; snapX = otherRight; guides.push({ type: 'vertical', position: otherRight }); }
+
+    // Right to left edge
+    dist = Math.abs(draggedRight - other.x);
+    if (dist < bestSnapDistX) { bestSnapDistX = dist; snapX = other.x - draggedWidth; guides.push({ type: 'vertical', position: other.x }); }
+
+    // Top edge to top edge
+    dist = Math.abs(draggedObject.y - other.y);
+    if (dist < bestSnapDistY) { bestSnapDistY = dist; snapY = other.y; guides.push({ type: 'horizontal', position: other.y }); }
+
+    // Bottom edge to bottom edge
+    dist = Math.abs(draggedBottom - otherBottom);
+    if (dist < bestSnapDistY) { bestSnapDistY = dist; snapY = otherBottom - draggedHeight; guides.push({ type: 'horizontal', position: otherBottom }); }
+
+    // Center to center (Y)
+    dist = Math.abs(draggedCenterY - otherCenterY);
+    if (dist < bestSnapDistY) { bestSnapDistY = dist; snapY = otherCenterY - draggedHeight / 2; guides.push({ type: 'horizontal', position: otherCenterY }); }
+
+    // Top to bottom edge
+    dist = Math.abs(draggedObject.y - otherBottom);
+    if (dist < bestSnapDistY) { bestSnapDistY = dist; snapY = otherBottom; guides.push({ type: 'horizontal', position: otherBottom }); }
+
+    // Bottom to top edge
+    dist = Math.abs(draggedBottom - other.y);
+    if (dist < bestSnapDistY) { bestSnapDistY = dist; snapY = other.y - draggedHeight; guides.push({ type: 'horizontal', position: other.y }); }
+  }
+
+  // Add spacing measurements
+  const snappedObj = {
+    ...draggedObject,
+    x: snapX !== null ? snapX : draggedObject.x,
+    y: snapY !== null ? snapY : draggedObject.y,
+  };
+  const snappedRight = snappedObj.x + draggedWidth;
+  const snappedBottom = snappedObj.y + draggedHeight;
+
+  for (const other of otherObjects) {
+    const otherWidth = other.width * other.scaleX;
+    const otherHeight = other.height * other.scaleY;
+    const otherRight = other.x + otherWidth;
+    const otherBottom = other.y + otherHeight;
+
+    const hOverlap = snappedObj.y < otherBottom && snappedBottom > other.y;
+    if (hOverlap) {
+      if (snappedRight < other.x && other.x - snappedRight < 100) {
+        const distance = other.x - snappedRight;
+        const cy = Math.max(snappedObj.y, other.y) + Math.min(snappedBottom - snappedObj.y, otherBottom - other.y) / 2;
+        guides.push({ type: 'spacing', position: snappedRight + distance / 2, start: cy - 20, end: cy + 20, distance });
+      }
+      if (snappedObj.x > otherRight && snappedObj.x - otherRight < 100) {
+        const distance = snappedObj.x - otherRight;
+        const cy = Math.max(snappedObj.y, other.y) + Math.min(snappedBottom - snappedObj.y, otherBottom - other.y) / 2;
+        guides.push({ type: 'spacing', position: otherRight + distance / 2, start: cy - 20, end: cy + 20, distance });
+      }
+    }
+
+    const vOverlap = snappedObj.x < otherRight && snappedRight > other.x;
+    if (vOverlap) {
+      if (snappedBottom < other.y && other.y - snappedBottom < 100) {
+        const distance = other.y - snappedBottom;
+        const cx = Math.max(snappedObj.x, other.x) + Math.min(snappedRight - snappedObj.x, otherRight - other.x) / 2;
+        guides.push({ type: 'spacing', position: cx, start: snappedBottom, end: other.y, distance });
+      }
+      if (snappedObj.y > otherBottom && snappedObj.y - otherBottom < 100) {
+        const distance = snappedObj.y - otherBottom;
+        const cx = Math.max(snappedObj.x, other.x) + Math.min(snappedRight - snappedObj.x, otherRight - other.x) / 2;
+        guides.push({ type: 'spacing', position: cx, start: otherBottom, end: snappedObj.y, distance });
+      }
+    }
+  }
+
+  // De-duplicate guides
+  const uniqueGuides: SnapGuide[] = [];
+  for (const guide of guides) {
+    if (!uniqueGuides.some(g => g.type === guide.type && Math.abs(g.position - guide.position) < 1)) {
+      uniqueGuides.push(guide);
+    }
+  }
+
+  return {
+    snappedX: snapX !== null ? snapX : draggedObject.x,
+    snappedY: snapY !== null ? snapY : draggedObject.y,
+    guides: uniqueGuides,
+  };
+}
+
 // Helper function to calculate snap guides for an object being dragged
 export function calculateSnapGuides(
   draggedObject: { x: number; y: number; width: number; height: number; scaleX: number; scaleY: number },

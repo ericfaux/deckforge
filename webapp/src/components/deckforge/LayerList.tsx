@@ -1,4 +1,4 @@
-import { GripVertical, Eye, EyeOff, Lock, Unlock, Trash2, Type, ImageIcon, Square, Circle, Star, Sticker, Minus, Pen, Mountain, Layers as LayersIcon, Info, Search, X, Filter, Scissors, Link } from 'lucide-react';
+import { GripVertical, Eye, EyeOff, Lock, Unlock, Trash2, Type, ImageIcon, Square, Circle, Star, Sticker, Minus, Pen, Mountain, Layers as LayersIcon, Info, Search, X, Filter, Scissors, Link, ChevronRight, ChevronDown, FolderOpen, Folder } from 'lucide-react';
 import { useDeckForgeStore, CanvasObject } from '@/store/deckforge';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -18,13 +18,14 @@ function getObjectIcon(obj: CanvasObject) {
   if (obj.type === 'line') return Minus;
   if (obj.type === 'path') return Pen;
   if (obj.type === 'texture') return Mountain;
-  
+  if (obj.type === 'group') return Folder;
+
   if (obj.type === 'shape') {
     if (obj.shapeType === 'circle') return Circle;
     if (obj.shapeType === 'star') return Star;
     return Square;
   }
-  
+
   return Square;
 }
 
@@ -66,6 +67,12 @@ function getObjectLabel(obj: CanvasObject): string {
     return 'Image';
   }
   
+  // Group
+  if (obj.type === 'group') {
+    const childCount = obj.children?.length || 0;
+    return `Group (${childCount})`;
+  }
+
   // Fallback
   return obj.type.charAt(0).toUpperCase() + obj.type.slice(1);
 }
@@ -74,14 +81,17 @@ interface LayerItemProps {
   obj: CanvasObject;
   index: number;
   isSelected: boolean;
-  onSelect: () => void;
+  onSelect: (e?: React.MouseEvent) => void;
   onDelete: () => void;
   onMoveUp: () => void;
   onMoveDown: () => void;
   isFirst: boolean;
   isLast: boolean;
-  canMask?: boolean; // true if this shape can act as a mask (has image above it)
-  onToggleMask?: () => void; // callback to toggle mask state
+  canMask?: boolean;
+  onToggleMask?: () => void;
+  indent?: number; // indentation level for group children
+  isGroupExpanded?: boolean;
+  onToggleExpand?: () => void;
 }
 
 // Check which effects/filters are active on an object
@@ -116,6 +126,9 @@ function LayerItem({
   onDelete,
   canMask,
   onToggleMask,
+  indent = 0,
+  isGroupExpanded,
+  onToggleExpand,
 }: LayerItemProps) {
   const Icon = getObjectIcon(obj);
   const { updateObject } = useDeckForgeStore();
@@ -133,18 +146,37 @@ function LayerItem({
     toast.success(obj.locked ? 'Layer unlocked' : 'Layer locked');
   };
 
+  const isGroup = obj.type === 'group';
+
   return (
     <div
-      onClick={onSelect}
+      onClick={(e) => onSelect(e)}
       className={cn(
         'flex items-center gap-1.5 px-2 py-1.5 border-b border-border cursor-pointer group',
         'hover:bg-secondary hover:shadow-sm transition-all duration-200',
         isSelected && 'bg-primary/10 border-l-2 border-l-primary',
         obj.hidden && 'opacity-50'
       )}
+      style={{ paddingLeft: `${8 + indent * 16}px` }}
     >
-      <GripVertical className="w-3 h-3 text-muted-foreground cursor-grab" />
-      <Icon className="w-4 h-4 text-foreground" />
+      {isGroup ? (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleExpand?.();
+          }}
+          className="w-4 h-4 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors shrink-0"
+        >
+          {isGroupExpanded ? (
+            <ChevronDown className="w-3 h-3" />
+          ) : (
+            <ChevronRight className="w-3 h-3" />
+          )}
+        </button>
+      ) : (
+        <GripVertical className="w-3 h-3 text-muted-foreground cursor-grab shrink-0" />
+      )}
+      <Icon className="w-4 h-4 text-foreground shrink-0" />
       <span className="flex-1 text-xs truncate font-medium">
         {getObjectLabel(obj)}
       </span>
@@ -273,13 +305,14 @@ function LayerItem({
 }
 
 export function LayerList() {
-  const { objects, selectedId, selectedIds, selectObject, deleteObject, moveLayer, updateObject, saveToHistory } = useDeckForgeStore();
-  
+  const { objects, selectedId, selectedIds, selectObject, toggleSelectObject, deleteObject, moveLayer, updateObject, saveToHistory, enterIsolationMode } = useDeckForgeStore();
+
   // Filter state
   const [searchQuery, setSearchQuery] = useState('');
   const [showVisibleOnly, setShowVisibleOnly] = useState(false);
   const [showLockedOnly, setShowLockedOnly] = useState(false);
   const [showSelectedOnly, setShowSelectedOnly] = useState(false);
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
 
   // Filter objects based on search and filters
   const filteredObjects = objects.filter(obj => {
@@ -545,21 +578,75 @@ export function LayerList() {
               }
             };
 
+            const isSelected = selectedId === obj.id || selectedIds.includes(obj.id);
+            const isGroup = obj.type === 'group';
+            const isExpanded = expandedGroups.has(obj.id);
+
+            const handleSelect = (e?: React.MouseEvent) => {
+              if (e?.shiftKey) {
+                toggleSelectObject(obj.id);
+              } else {
+                selectObject(obj.id);
+              }
+            };
+
             return (
-              <LayerItem
-                key={obj.id}
-                obj={obj}
-                index={realIndex}
-                isSelected={selectedId === obj.id}
-                onSelect={() => selectObject(obj.id)}
-                onDelete={() => deleteObject(obj.id)}
-                onMoveUp={() => moveLayer(obj.id, 'up')}
-                onMoveDown={() => moveLayer(obj.id, 'down')}
-                isFirst={idx === 0}
-                isLast={idx === reversedObjects.length - 1}
-                canMask={canMask}
-                onToggleMask={handleToggleMask}
-              />
+              <div key={obj.id}>
+                <LayerItem
+                  obj={obj}
+                  index={realIndex}
+                  isSelected={isSelected}
+                  onSelect={handleSelect}
+                  onDelete={() => deleteObject(obj.id)}
+                  onMoveUp={() => moveLayer(obj.id, 'up')}
+                  onMoveDown={() => moveLayer(obj.id, 'down')}
+                  isFirst={idx === 0}
+                  isLast={idx === reversedObjects.length - 1}
+                  canMask={canMask}
+                  onToggleMask={handleToggleMask}
+                  isGroupExpanded={isGroup ? isExpanded : undefined}
+                  onToggleExpand={isGroup ? () => {
+                    setExpandedGroups(prev => {
+                      const next = new Set(prev);
+                      if (next.has(obj.id)) {
+                        next.delete(obj.id);
+                      } else {
+                        next.add(obj.id);
+                      }
+                      return next;
+                    });
+                  } : undefined}
+                />
+                {/* Render group children when expanded */}
+                {isGroup && isExpanded && obj.children && obj.children.length > 0 && (
+                  <div className="bg-muted/20">
+                    {[...obj.children].reverse().map((child, childIdx) => (
+                      <LayerItem
+                        key={child.id}
+                        obj={child}
+                        index={childIdx}
+                        isSelected={false}
+                        onSelect={() => {
+                          // Double-click on child enters isolation mode
+                          enterIsolationMode(obj.id);
+                        }}
+                        onDelete={() => {
+                          // Remove child from group
+                          saveToHistory();
+                          const newChildren = obj.children!.filter(c => c.id !== child.id);
+                          updateObject(obj.id, { children: newChildren });
+                          toast.success('Removed from group');
+                        }}
+                        onMoveUp={() => {}}
+                        onMoveDown={() => {}}
+                        isFirst={childIdx === 0}
+                        isLast={childIdx === obj.children!.length - 1}
+                        indent={1}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
             );
           })
         )}

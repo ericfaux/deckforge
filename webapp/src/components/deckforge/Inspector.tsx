@@ -28,8 +28,144 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 
+// Helper to check if all values are the same, or return 'mixed'
+function getSharedValue<T>(values: T[]): T | 'mixed' {
+  if (values.length === 0) return 'mixed';
+  const first = values[0];
+  return values.every(v => v === first) ? first : 'mixed';
+}
+
+function MultiSelectInspector() {
+  const { objects, selectedIds, updateObject, saveToHistory } = useDeckForgeStore();
+  const selectedObjects = objects.filter(obj => selectedIds.includes(obj.id));
+
+  if (selectedObjects.length < 2) return null;
+
+  const opacities = selectedObjects.map(obj => obj.opacity);
+  const blendModes = selectedObjects.map(obj => obj.mixBlendMode || 'normal');
+
+  const sharedOpacity = getSharedValue(opacities);
+  const sharedBlendMode = getSharedValue(blendModes);
+
+  const types = selectedObjects.map(obj => obj.type);
+  const typeCount: Record<string, number> = {};
+  types.forEach(t => { typeCount[t] = (typeCount[t] || 0) + 1; });
+
+  const updateAll = (updates: Partial<CanvasObject>) => {
+    saveToHistory();
+    selectedIds.forEach(id => updateObject(id, updates));
+  };
+
+  const blendModeOptions: Array<{ value: string; label: string }> = [
+    { value: 'normal', label: 'Normal' },
+    { value: 'multiply', label: 'Multiply' },
+    { value: 'screen', label: 'Screen' },
+    { value: 'overlay', label: 'Overlay' },
+    { value: 'darken', label: 'Darken' },
+    { value: 'lighten', label: 'Lighten' },
+    { value: 'color-dodge', label: 'Color Dodge' },
+    { value: 'color-burn', label: 'Color Burn' },
+    { value: 'hard-light', label: 'Hard Light' },
+    { value: 'soft-light', label: 'Soft Light' },
+    { value: 'difference', label: 'Difference' },
+    { value: 'exclusion', label: 'Exclusion' },
+  ];
+
+  return (
+    <div className="p-3 space-y-4">
+      <div className="py-2 border-b border-border">
+        <span className="font-display text-[10px] uppercase tracking-widest text-muted-foreground">
+          {selectedIds.length} Objects Selected
+        </span>
+      </div>
+
+      {/* Type breakdown */}
+      <div className="space-y-1">
+        <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Selection</Label>
+        <div className="flex flex-wrap gap-1">
+          {Object.entries(typeCount).map(([type, count]) => (
+            <span key={type} className="px-2 py-0.5 text-[10px] font-medium bg-secondary rounded border border-border">
+              {count} {type}{count > 1 ? 's' : ''}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* Shared Opacity */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Opacity</Label>
+          {sharedOpacity === 'mixed' ? (
+            <span className="text-[10px] text-muted-foreground italic">Mixed</span>
+          ) : (
+            <span className="text-[10px] text-muted-foreground font-mono">{Math.round(sharedOpacity * 100)}%</span>
+          )}
+        </div>
+        <Slider
+          min={0}
+          max={1}
+          step={0.01}
+          value={[sharedOpacity === 'mixed' ? 1 : sharedOpacity]}
+          onValueChange={([v]) => updateAll({ opacity: v })}
+        />
+      </div>
+
+      {/* Shared Blend Mode */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Blend Mode</Label>
+          {sharedBlendMode === 'mixed' && (
+            <span className="text-[10px] text-muted-foreground italic">Mixed</span>
+          )}
+        </div>
+        <select
+          value={sharedBlendMode === 'mixed' ? '' : sharedBlendMode}
+          onChange={(e) => updateAll({ mixBlendMode: e.target.value as any })}
+          className="w-full h-8 px-2 text-xs bg-background border border-border rounded"
+        >
+          {sharedBlendMode === 'mixed' && <option value="">Mixed values</option>}
+          {blendModeOptions.map(opt => (
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
+          ))}
+        </select>
+      </div>
+
+      {/* Quick actions */}
+      <div className="space-y-2 pt-2 border-t border-border">
+        <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Quick Actions</Label>
+        <div className="grid grid-cols-2 gap-1">
+          <button
+            onClick={() => updateAll({ hidden: true })}
+            className="px-2 py-1.5 text-[10px] bg-secondary hover:bg-secondary/80 border border-border rounded transition-colors"
+          >
+            Hide All
+          </button>
+          <button
+            onClick={() => updateAll({ hidden: false })}
+            className="px-2 py-1.5 text-[10px] bg-secondary hover:bg-secondary/80 border border-border rounded transition-colors"
+          >
+            Show All
+          </button>
+          <button
+            onClick={() => updateAll({ locked: true })}
+            className="px-2 py-1.5 text-[10px] bg-secondary hover:bg-secondary/80 border border-border rounded transition-colors"
+          >
+            Lock All
+          </button>
+          <button
+            onClick={() => updateAll({ locked: false })}
+            className="px-2 py-1.5 text-[10px] bg-secondary hover:bg-secondary/80 border border-border rounded transition-colors"
+          >
+            Unlock All
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function Inspector() {
-  const { objects, selectedId, updateObject, saveToHistory, generatePattern, moveLayer, bringToFront, sendToBack } = useDeckForgeStore();
+  const { objects, selectedId, selectedIds, updateObject, saveToHistory, generatePattern, moveLayer, bringToFront, sendToBack } = useDeckForgeStore();
   const { isAuthenticated } = useAuthStore();
   
   // Get current deck dimensions (dynamic based on selected size)
@@ -2142,6 +2278,8 @@ export function Inspector() {
               </div>
             )}
           </div>
+        ) : selectedIds.length > 1 ? (
+          <MultiSelectInspector />
         ) : (
           <div className="p-4 text-center">
             <span className="text-[10px] text-muted-foreground uppercase tracking-widest">

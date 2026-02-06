@@ -20,7 +20,8 @@ const shortcuts: Shortcut[] = [
   // Selection & Navigation
   { keys: ['Click'], description: 'Select object', category: 'Selection' },
   { keys: ['Shift', 'Click'], description: 'Multi-select', category: 'Selection' },
-  { keys: ['Esc'], description: 'Deselect all', category: 'Selection' },
+  { keys: ['Click', 'Drag'], description: 'Rubber-band select (on empty area)', category: 'Selection' },
+  { keys: ['Esc'], description: 'Deselect all / exit group isolation', category: 'Selection' },
   { keys: ['Tab'], description: 'Select next object', category: 'Selection' },
   { keys: ['Shift', 'Tab'], description: 'Select previous object', category: 'Selection' },
   
@@ -33,10 +34,11 @@ const shortcuts: Shortcut[] = [
   { keys: ['Ctrl', 'Shift', 'D'], description: 'Array duplicate (custom grid)', category: 'Editing' },
   { keys: ['Ctrl', 'C'], description: 'Copy to clipboard', category: 'Editing' },
   { keys: ['Ctrl', 'V'], description: 'Paste from clipboard', category: 'Editing' },
-  { keys: ['Ctrl', 'A'], description: 'Select all (top object)', category: 'Editing' },
+  { keys: ['Ctrl', 'A'], description: 'Select all objects', category: 'Editing' },
   { keys: ['Ctrl', 'L'], description: 'Lock/unlock object', category: 'Editing' },
   { keys: ['Ctrl', 'G'], description: 'Group selected objects', category: 'Editing' },
   { keys: ['Ctrl', 'Shift', 'G'], description: 'Ungroup selected group', category: 'Editing' },
+  { keys: ['Double-Click'], description: 'Enter group isolation mode', category: 'Editing' },
   
   // Transform
   { keys: ['Drag'], description: 'Move object', category: 'Transform' },
@@ -46,6 +48,8 @@ const shortcuts: Shortcut[] = [
   { keys: ['Alt', 'Scale'], description: 'Scale from center', category: 'Transform' },
   { keys: ['Rotate', 'Handle'], description: 'Rotate object', category: 'Transform' },
   { keys: ['Shift', 'Rotate'], description: 'Rotate in 15° increments', category: 'Transform' },
+  { keys: ['Arrow Keys'], description: 'Nudge 1px (all selected objects)', category: 'Transform' },
+  { keys: ['Shift', 'Arrow'], description: 'Nudge 10px', category: 'Transform' },
   
   // Layers
   { keys: ['Ctrl', ']'], description: 'Bring forward', category: 'Layers' },

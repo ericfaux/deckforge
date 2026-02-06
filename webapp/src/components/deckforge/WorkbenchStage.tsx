@@ -5,11 +5,12 @@ import { PenTool } from './PenTool';
 import { BrushTool, renderBrushStroke } from './BrushTool';
 import type { BrushStrokeData } from './BrushTool';
 import { TransformHandles } from './TransformHandles';
-import { SnapGuides, calculateSnapGuides } from './SnapGuides';
+import { SnapGuides, calculateSnapGuides, calculateSnapPosition } from './SnapGuides';
 import { RulerOverlay } from './RulerOverlay';
 import { CanvasContextMenu } from './ContextMenu';
 import { ContextMenu as ContextMenuRoot, ContextMenuTrigger } from '@/components/ui/context-menu';
 import { SelectionBox } from './SelectionBox';
+import { MultiSelectBoundingBox } from './MultiSelectBoundingBox';
 import type { LucideIcon } from 'lucide-react';
 import { Skull, Flame, Zap, Sword, Ghost, Bug, Eye, Target, Radio, Disc3, Music2, Rocket, Crown, Anchor, Sun, Moon, Triangle, Hexagon, Circle, Square, Star, Heart, Sparkles, Hand, Cat, Dog, Fish, Bird, Leaf, Cloud, Undo2, Redo2 } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -224,6 +225,9 @@ const CanvasObjectItem = memo(function CanvasObjectItem({
   onDragMove,
   onDragEnd,
   onContextMenu,
+  onMultiDrag,
+  isPartOfMultiSelect,
+  onDoubleClick,
 }: {
   obj: CanvasObject;
   isSelected: boolean;
@@ -236,6 +240,9 @@ const CanvasObjectItem = memo(function CanvasObjectItem({
   onDragMove?: (obj: CanvasObject) => void;
   onDragEnd?: () => void;
   onContextMenu?: (e: React.MouseEvent, objId: string) => void;
+  onMultiDrag?: (deltaX: number, deltaY: number) => void;
+  isPartOfMultiSelect?: boolean;
+  onDoubleClick?: () => void;
 }) {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ objX: 0, objY: 0, clientX: 0, clientY: 0 });
@@ -326,18 +333,23 @@ const CanvasObjectItem = memo(function CanvasObjectItem({
       // Calculate delta in screen space, then convert to deck space
       const deltaX = (e.clientX - dragStart.clientX) / stageScale;
       const deltaY = (e.clientY - dragStart.clientY) / stageScale;
-      
+
       const newX = dragStart.objX + deltaX;
       const newY = dragStart.objY + deltaY;
-      
+
       onChange({
         x: newX,
         y: newY,
       });
-      
+
+      // If this object is part of a multi-selection, move all other selected objects too
+      if (isPartOfMultiSelect && onMultiDrag) {
+        onMultiDrag(deltaX, deltaY);
+      }
+
       onDragMove?.({ ...obj, x: newX, y: newY });
     }
-  }, [isDragging, dragStart, stageScale, onChange, onDragMove, obj]);
+  }, [isDragging, dragStart, stageScale, onChange, onDragMove, obj, isPartOfMultiSelect, onMultiDrag]);
 
   const handleMouseUp = useCallback(() => {
     if (isDragging) {
@@ -397,6 +409,10 @@ const CanvasObjectItem = memo(function CanvasObjectItem({
           transition: 'opacity 0.2s ease-out, transform 0.15s cubic-bezier(0.4, 0, 0.2, 1)',
         }}
         onMouseDown={handleMouseDown}
+        onDoubleClick={(e: React.MouseEvent) => {
+          e.stopPropagation();
+          onDoubleClick?.();
+        }}
         onContextMenu={handleRightClick}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
@@ -412,7 +428,7 @@ const CanvasObjectItem = memo(function CanvasObjectItem({
               onSelect={() => {}} // Group handles selection
               onChange={(updates) => {
                 // When child is modified, update it within the group
-                const newChildren = obj.children!.map(c => 
+                const newChildren = obj.children!.map(c =>
                   c.id === child.id ? { ...c, ...updates } : c
                 );
                 onChange({ children: newChildren });
@@ -1351,6 +1367,8 @@ export function WorkbenchStage() {
   const [snapGuides, setSnapGuides] = useState<Array<{ type: 'vertical' | 'horizontal'; position: number; label?: string }>>([]);
   const [isDraggingObject, setIsDraggingObject] = useState(false);
   const [contextTargetId, setContextTargetId] = useState<string | null>(null);
+  // Multi-drag: track initial positions for all selected objects
+  const multiDragStartRef = useRef<Map<string, { x: number; y: number }>>(new Map());
   const [isDraggingFiles, setIsDraggingFiles] = useState(false);
   const [swipeFeedback, setSwipeFeedback] = useState<'undo' | 'redo' | null>(null);
 
@@ -1381,6 +1399,9 @@ export function WorkbenchStage() {
     redo,
     past,
     future,
+    isolatedGroupId,
+    enterIsolationMode,
+    exitIsolationMode,
   } = useDeckForgeStore();
 
   // Get current deck dimensions based on selected size
@@ -1583,9 +1604,14 @@ export function WorkbenchStage() {
       return;
     }
     if (e.target === e.currentTarget) {
-      selectObject(null);
+      // Exit isolation mode if clicking on empty space
+      if (isolatedGroupId) {
+        exitIsolationMode();
+      } else {
+        selectObject(null);
+      }
     }
-  }, [selectObject, activeTool]);
+  }, [selectObject, activeTool, isolatedGroupId, exitIsolationMode]);
 
   const handleObjectSelect = useCallback((objId: string, e?: React.MouseEvent) => {
     // Check if object is locked
@@ -2022,6 +2048,11 @@ export function WorkbenchStage() {
               // but still show a dimmed version for visual reference
               const isMaskShape = obj.isMask && obj.type === 'shape';
 
+              // In isolation mode, dim objects that are not the isolated group
+              const isIsolated = isolatedGroupId !== null;
+              const isIsolatedGroup = obj.id === isolatedGroupId;
+              const dimForIsolation = isIsolated && !isIsolatedGroup;
+
               // Apply visual feedback classes
               const visualClasses = [
                 obj.id === copiedObjectId ? 'copy-flash' : '',
@@ -2032,8 +2063,18 @@ export function WorkbenchStage() {
               // Determine if this image has a mask applied
               const maskClipPath = obj.maskTargetId ? `url(#mask-${obj.maskTargetId})` : undefined;
 
+              const isPartOfMultiSelect = selectedIds.length > 1 && selectedIds.includes(obj.id);
+
               return (
-                <g key={obj.id} className={visualClasses} clipPath={maskClipPath} style={isMaskShape ? { opacity: 0.3 } : undefined}>
+                <g
+                  key={obj.id}
+                  className={visualClasses}
+                  clipPath={maskClipPath}
+                  style={{
+                    ...(isMaskShape ? { opacity: 0.3 } : {}),
+                    ...(dimForIsolation ? { opacity: 0.15, pointerEvents: 'none' as const } : {}),
+                  }}
+                >
                   <CanvasObjectItem
                     obj={obj}
                     isSelected={selectedIds.includes(obj.id)}
@@ -2047,30 +2088,74 @@ export function WorkbenchStage() {
                     onDragStart={() => {
                       saveToHistory();
                       setIsDraggingObject(true);
+                      // Store initial positions of all selected objects for multi-drag
+                      if (selectedIds.length > 1) {
+                        const startPositions = new Map<string, { x: number; y: number }>();
+                        selectedIds.forEach(id => {
+                          const o = objects.find(ob => ob.id === id);
+                          if (o) startPositions.set(id, { x: o.x, y: o.y });
+                        });
+                        multiDragStartRef.current = startPositions;
+                      }
                     }}
                     onDragMove={(draggedObj) => {
-                      // Calculate snap guides
-                      const otherObjects = objects.filter(o => o.id !== draggedObj.id);
-                      const guides = calculateSnapGuides(draggedObj, otherObjects, 5, deckWidth, deckHeight);
-                      setSnapGuides(guides);
+                      // Calculate snap position and guides
+                      const otherObjects = objects.filter(o => o.id !== draggedObj.id && !selectedIds.includes(o.id));
+                      const snap = calculateSnapPosition(draggedObj, otherObjects, 5, deckWidth, deckHeight);
+                      setSnapGuides(snap.guides);
+
+                      // Apply snapping
+                      const snapDeltaX = snap.snappedX - draggedObj.x;
+                      const snapDeltaY = snap.snappedY - draggedObj.y;
+                      if (snapDeltaX !== 0 || snapDeltaY !== 0) {
+                        updateObject(obj.id, { x: snap.snappedX, y: snap.snappedY });
+                        // Also snap multi-selected objects
+                        if (selectedIds.length > 1) {
+                          selectedIds.forEach(id => {
+                            if (id !== obj.id) {
+                              const o = objects.find(ob => ob.id === id);
+                              if (o) {
+                                updateObject(id, { x: o.x + snapDeltaX, y: o.y + snapDeltaY });
+                              }
+                            }
+                          });
+                        }
+                      }
                     }}
                     onDragEnd={() => {
                       setIsDraggingObject(false);
                       setSnapGuides([]);
+                      multiDragStartRef.current = new Map();
                     }}
                     onContextMenu={(_e, objId) => {
                       setContextTargetId(objId);
                       selectObject(objId);
                     }}
+                    isPartOfMultiSelect={isPartOfMultiSelect}
+                    onMultiDrag={isPartOfMultiSelect ? (deltaX, deltaY) => {
+                      // Move all other selected objects by the same delta
+                      selectedIds.forEach(id => {
+                        if (id !== obj.id) {
+                          const startPos = multiDragStartRef.current.get(id);
+                          if (startPos) {
+                            updateObject(id, {
+                              x: startPos.x + deltaX,
+                              y: startPos.y + deltaY,
+                            });
+                          }
+                        }
+                      });
+                    } : undefined}
+                    onDoubleClick={obj.type === 'group' ? () => enterIsolationMode(obj.id) : undefined}
                   />
                 </g>
               );
             })}
 
-            {/* Transform handles for selected object */}
-            {selectedId && activeTool !== 'pen' && activeTool !== 'brush' && !isDraggingObject && (() => {
+            {/* Transform handles for single selected object */}
+            {selectedId && selectedIds.length === 1 && activeTool !== 'pen' && activeTool !== 'brush' && !isDraggingObject && (() => {
               if (!selectedObject || selectedObject.locked) return null;
-              
+
               return (
                 <TransformHandles
                   object={selectedObject}
@@ -2083,9 +2168,19 @@ export function WorkbenchStage() {
                   onStartTransform={() => {
                     saveToHistory();
                   }}
-                  onEndTransform={() => {
-                    // Optional: could trigger another history save or validation
-                  }}
+                  onEndTransform={() => {}}
+                />
+              );
+            })()}
+
+            {/* Multi-select bounding box */}
+            {selectedIds.length > 1 && activeTool !== 'pen' && activeTool !== 'brush' && (() => {
+              const selectedObjects = objects.filter(o => selectedIds.includes(o.id));
+              if (selectedObjects.length < 2) return null;
+              return (
+                <MultiSelectBoundingBox
+                  objects={selectedObjects}
+                  stageScale={stageScale}
                 />
               );
             })()}
@@ -2380,6 +2475,20 @@ export function WorkbenchStage() {
 
       {/* Zoom controls */}
       <ZoomControls />
+
+      {/* Isolation mode banner */}
+      {isolatedGroupId && (
+        <div className="absolute top-2 left-1/2 -translate-x-1/2 z-50 bg-blue-600 text-white px-4 py-1.5 rounded-full shadow-lg flex items-center gap-2 text-xs font-medium">
+          <span>Editing Group</span>
+          <span className="text-blue-200">|</span>
+          <button
+            onClick={exitIsolationMode}
+            className="text-blue-100 hover:text-white underline"
+          >
+            Exit (Esc)
+          </button>
+        </div>
+      )}
 
     </div>
     </ContextMenuTrigger>
