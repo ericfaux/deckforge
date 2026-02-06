@@ -1,4 +1,4 @@
-import { ZoomIn, ZoomOut, Undo, Redo, Wrench, Scan, Ruler, FlipVertical2 } from 'lucide-react';
+import { ZoomIn, ZoomOut, Undo, Redo, Wrench, Scan, Ruler, FlipVertical2, Maximize2 } from 'lucide-react';
 import { useDeckForgeStore } from '@/store/deckforge';
 import { cn } from '@/lib/utils';
 import { EnhancedTooltip } from '@/components/ui/enhanced-tooltip';
@@ -76,9 +76,14 @@ export function ZoomControls() {
         </button>
       </EnhancedTooltip>
 
-      <span className="text-xs md:text-[10px] font-mono w-12 md:w-10 text-center text-muted-foreground">
-        {Math.round(stageScale * 100)}%
-      </span>
+      <EnhancedTooltip content="Reset Zoom" shortcut="Ctrl+0" side="top">
+        <button
+          onClick={() => { vibrate(10); setStageScale(1); }}
+          className="text-xs md:text-[10px] font-mono w-12 md:w-10 text-center text-muted-foreground hover:text-foreground hover:bg-secondary active:scale-95 transition-all rounded cursor-pointer h-8 flex items-center justify-center touch-target"
+        >
+          {Math.round(stageScale * 100)}%
+        </button>
+      </EnhancedTooltip>
 
       <EnhancedTooltip content="Zoom In" shortcut="Ctrl+=" side="top">
         <button
@@ -86,6 +91,15 @@ export function ZoomControls() {
           className={cn(btnClass, btnDefault)}
         >
           <ZoomIn className="w-5 h-5 md:w-4 md:h-4" />
+        </button>
+      </EnhancedTooltip>
+
+      <EnhancedTooltip content="Fit to Screen" shortcut="Ctrl+0" side="top">
+        <button
+          onClick={() => { vibrate(10); setStageScale(1); }}
+          className={cn(btnClass, btnDefault)}
+        >
+          <Maximize2 className="w-5 h-5 md:w-4 md:h-4" />
         </button>
       </EnhancedTooltip>
 
