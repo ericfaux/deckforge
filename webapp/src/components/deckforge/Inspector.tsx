@@ -1,4 +1,4 @@
-import { Download, Grid3X3, RotateCcw, ChevronDown, Type, Lock, Unlock, ArrowUp, ArrowDown, ChevronsUp, ChevronsDown, GripVertical } from 'lucide-react';
+import { Download, Grid3X3, RotateCcw, ChevronDown, Lock, Unlock, ArrowUp, ArrowDown, ChevronsUp, ChevronsDown, GripVertical } from 'lucide-react';
 import { useState, useEffect, memo, useMemo, useRef } from 'react';
 import { usePanelResize } from '@/hooks/use-panel-resize';
 import { useDeckForgeStore, CanvasObject } from '@/store/deckforge';
@@ -10,12 +10,14 @@ import { Label } from '@/components/ui/label';
 import { LayerList } from './LayerList';
 import { AdvancedEffects } from './AdvancedEffects';
 import { FontUploadModal } from './FontUploadModal';
+import { GoogleFontPicker } from './GoogleFontPicker';
 import { ComponentErrorBoundary } from '@/components/ComponentErrorBoundary';
 import { ObjectEffects } from './ObjectEffects';
 import { GradientPicker } from './GradientPicker';
 import { ColorPicker } from './ColorPicker';
 import { useDeckDimensions } from './WorkbenchStage';
 import { preloadUserFonts, Font, loadFont } from '@/lib/fonts';
+import { preloadTopFonts, loadGoogleFont, getGoogleFonts } from '@/lib/google-fonts';
 import toast from 'react-hot-toast';
 import {
   Accordion,
@@ -81,6 +83,22 @@ export function Inspector() {
       preloadUserFonts().then(setUserFonts);
     }
   }, [isAuthenticated]);
+
+  // Preload top Google Fonts on mount
+  useEffect(() => {
+    preloadTopFonts();
+  }, []);
+
+  // When a text object is selected, ensure its Google Font is loaded
+  useEffect(() => {
+    if (selectedObject?.type === 'text' && selectedObject.fontFamily) {
+      const gFonts = getGoogleFonts();
+      const gFont = gFonts.find(f => f.family === selectedObject.fontFamily);
+      if (gFont) {
+        loadGoogleFont(gFont.family, gFont.variants);
+      }
+    }
+  }, [selectedObject?.fontFamily]);
 
   const handleExport = () => {
     // Export functionality - placeholder for now
@@ -953,47 +971,15 @@ export function Inspector() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                      Font Family {userFonts.length > 0 && (
-                        <span className="text-accent font-normal">
-                          ({userFonts.length} custom)
-                        </span>
-                      )}
-                    </Label>
-                    <button
-                      onClick={() => setIsFontModalOpen(true)}
-                      className="text-[10px] uppercase tracking-widest text-accent hover:text-accent/80 transition-colors flex items-center gap-1"
-                    >
-                      <Type className="w-3 h-3" />
-                      {userFonts.length > 0 ? 'Manage' : 'Upload'}
-                    </button>
-                  </div>
-                  <select
-                    value={selectedObject.fontFamily || 'Arial'}
-                    onChange={(e) => updateWithHistory({ fontFamily: e.target.value })}
-                    className="w-full h-8 text-xs bg-secondary border border-border px-2 cursor-pointer hover:border-primary transition-colors"
-                  >
-                    {userFonts.length > 0 && (
-                      <optgroup label="✨ Your Custom Fonts">
-                        {userFonts.map((font) => (
-                          <option key={font.id} value={font.font_family}>
-                            {font.name}
-                          </option>
-                        ))}
-                      </optgroup>
-                    )}
-                    <optgroup label="System Fonts">
-                      <option value="Arial">Arial</option>
-                      <option value="Helvetica">Helvetica</option>
-                      <option value="Times New Roman">Times New Roman</option>
-                      <option value="Courier New">Courier New</option>
-                      <option value="Georgia">Georgia</option>
-                      <option value="Verdana">Verdana</option>
-                      <option value="Impact">Impact</option>
-                      <option value="Comic Sans MS">Comic Sans MS</option>
-                    </optgroup>
-                  </select>
+                  <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                    Font Family
+                  </Label>
+                  <GoogleFontPicker
+                    value={selectedObject.fontFamily || 'Roboto'}
+                    onChange={(fontFamily) => updateWithHistory({ fontFamily })}
+                    userFonts={userFonts}
+                    onUploadClick={() => setIsFontModalOpen(true)}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">

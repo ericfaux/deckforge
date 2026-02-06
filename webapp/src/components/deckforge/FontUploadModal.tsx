@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Upload, X, Loader2, CheckCircle, Trash2, Type } from 'lucide-react';
 import { fontsApi, Font, loadFont } from '@/lib/fonts';
 import { Label } from '@/components/ui/label';
@@ -20,11 +20,11 @@ export function FontUploadModal({ isOpen, onClose, onFontUploaded }: FontUploadM
   const [isLoadingFonts, setIsLoadingFonts] = useState(false);
 
   // Load user's fonts when modal opens
-  useState(() => {
+  useEffect(() => {
     if (isOpen) {
       loadUserFonts();
     }
-  });
+  }, [isOpen]);
 
   const loadUserFonts = async () => {
     setIsLoadingFonts(true);
