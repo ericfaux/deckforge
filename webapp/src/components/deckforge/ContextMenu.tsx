@@ -1,405 +1,320 @@
-import { useEffect, useState } from 'react';
-import { Copy, Scissors, Clipboard, Trash2, Lock, Unlock, Eye, EyeOff, ChevronUp, ChevronDown, ChevronsUp, ChevronsDown, Group, Ungroup, Wand2, Palette, ImageIcon, RotateCcw } from 'lucide-react';
-import { useDeckForgeStore, CanvasObject } from '@/store/deckforge';
+import {
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuShortcut,
+} from '@/components/ui/context-menu';
+import {
+  Scissors,
+  Copy,
+  ClipboardPaste,
+  Trash2,
+  Lock,
+  Unlock,
+  Eye,
+  EyeOff,
+  ChevronUp,
+  ChevronDown,
+  ChevronsUp,
+  ChevronsDown,
+  Group,
+  Ungroup,
+  MousePointerSquareDashed,
+  Maximize,
+} from 'lucide-react';
+import { useDeckForgeStore } from '@/store/deckforge';
 import toast from 'react-hot-toast';
-import { toastUtils } from '@/lib/toast-utils';
 
-interface ContextMenuProps {
-  x: number;
-  y: number;
-  objectId: string | null;
-  onClose: () => void;
+interface CanvasContextMenuProps {
+  targetObjectId: string | null;
 }
 
-interface MenuItem {
-  label: string;
-  icon: React.ReactNode;
-  shortcut?: string;
-  action: () => void;
-  disabled?: boolean;
-  divider?: boolean;
-  destructive?: boolean;
-}
+export function CanvasContextMenu({ targetObjectId }: CanvasContextMenuProps) {
+  const {
+    objects,
+    selectedIds,
+    updateObject,
+    deleteObject,
+    saveToHistory,
+    addObject,
+    selectObject,
+    setSelectedIds,
+    groupObjects,
+    ungroupObject,
+    setStageScale,
+  } = useDeckForgeStore();
 
-export function ContextMenu({ x, y, objectId, onClose }: ContextMenuProps) {
-  const { objects, selectedIds, updateObject, deleteObject, saveToHistory, addObject, selectObject, groupObjects, ungroupObject } = useDeckForgeStore();
-  const [menuPosition, setMenuPosition] = useState({ x, y });
+  const obj = targetObjectId ? objects.find((o) => o.id === targetObjectId) : null;
+  const hasClipboard = !!sessionStorage.getItem('deckforge_clipboard');
+  const canGroup = selectedIds.length >= 2;
+  const isGroup = obj?.type === 'group';
 
-  const obj = objectId ? objects.find(o => o.id === objectId) : null;
-
-  useEffect(() => {
-    // Adjust position to keep menu in viewport
-    const menuWidth = 220;
-    const menuHeight = 400; // approximate max height
-
-    let adjustedX = x;
-    let adjustedY = y;
-
-    if (x + menuWidth > window.innerWidth) {
-      adjustedX = window.innerWidth - menuWidth - 10;
-    }
-
-    if (y + menuHeight > window.innerHeight) {
-      adjustedY = window.innerHeight - menuHeight - 10;
-    }
-
-    setMenuPosition({ x: adjustedX, y: adjustedY });
-  }, [x, y]);
-
-  useEffect(() => {
-    // Close on click outside
-    const handleClick = () => onClose();
-    const handleScroll = () => onClose();
-    
-    setTimeout(() => {
-      document.addEventListener('click', handleClick);
-      document.addEventListener('scroll', handleScroll, true);
-    }, 0);
-
-    return () => {
-      document.removeEventListener('click', handleClick);
-      document.removeEventListener('scroll', handleScroll, true);
-    };
-  }, [onClose]);
-
-  if (!obj) return null;
+  // --- Action handlers ---
 
   const handleCopy = () => {
+    if (!obj) return;
     sessionStorage.setItem('deckforge_clipboard', JSON.stringify(obj));
     toast.success('Copied to clipboard');
-    onClose();
   };
 
   const handleCut = () => {
+    if (!obj) return;
     sessionStorage.setItem('deckforge_clipboard', JSON.stringify(obj));
+    saveToHistory();
     deleteObject(obj.id);
     toast.success('Cut to clipboard');
-    onClose();
   };
 
   const handlePaste = () => {
     const clipboardData = sessionStorage.getItem('deckforge_clipboard');
-    if (clipboardData) {
-      try {
-        const copiedObj = JSON.parse(clipboardData);
-        const { id, ...objWithoutId } = copiedObj;
-        addObject({
-          ...objWithoutId,
-          x: copiedObj.x + 20,
-          y: copiedObj.y + 20,
-        });
-        toast.success('Pasted from clipboard');
-      } catch (err) {
-        toast.error('Failed to paste');
-      }
+    if (!clipboardData) return;
+    try {
+      const copiedObj = JSON.parse(clipboardData);
+      const { id, ...rest } = copiedObj;
+      saveToHistory();
+      addObject({ ...rest, x: copiedObj.x + 20, y: copiedObj.y + 20 });
+      toast.success('Pasted from clipboard');
+    } catch {
+      toast.error('Failed to paste');
     }
-    onClose();
   };
 
   const handleDuplicate = () => {
-    const { id, ...objWithoutId } = obj;
+    if (!obj) return;
+    const { id, ...rest } = obj;
     saveToHistory();
-    addObject({
-      ...objWithoutId,
-      x: obj.x + 10,
-      y: obj.y + 10,
-    });
+    addObject({ ...rest, x: obj.x + 10, y: obj.y + 10 });
     toast.success('Object duplicated');
-    onClose();
   };
 
   const handleDelete = () => {
+    if (!obj) return;
+    saveToHistory();
     deleteObject(obj.id);
     toast.success('Object deleted');
-    onClose();
   };
 
-  const handleLock = () => {
-    updateObject(obj.id, { locked: !obj.locked });
-    toast.success(obj.locked ? 'Object unlocked' : 'Object locked');
-    onClose();
-  };
-
-  const handleVisibility = () => {
-    updateObject(obj.id, { opacity: obj.opacity === 0 ? 1 : 0 });
-    toast.success(obj.opacity === 0 ? 'Object visible' : 'Object hidden');
-    onClose();
-  };
+  // Layer controls
 
   const handleBringForward = () => {
-    const currentIndex = objects.findIndex(o => o.id === obj.id);
-    if (currentIndex < objects.length - 1) {
+    if (!obj) return;
+    const idx = objects.findIndex((o) => o.id === obj.id);
+    if (idx < objects.length - 1) {
       saveToHistory();
-      const newObjects = [...objects];
-      [newObjects[currentIndex], newObjects[currentIndex + 1]] = [newObjects[currentIndex + 1], newObjects[currentIndex]];
-      useDeckForgeStore.setState({ objects: newObjects });
+      const next = [...objects];
+      [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
+      useDeckForgeStore.setState({ objects: next });
       toast.success('Brought forward');
     }
-    onClose();
   };
 
   const handleSendBackward = () => {
-    const currentIndex = objects.findIndex(o => o.id === obj.id);
-    if (currentIndex > 0) {
+    if (!obj) return;
+    const idx = objects.findIndex((o) => o.id === obj.id);
+    if (idx > 0) {
       saveToHistory();
-      const newObjects = [...objects];
-      [newObjects[currentIndex], newObjects[currentIndex - 1]] = [newObjects[currentIndex - 1], newObjects[currentIndex]];
-      useDeckForgeStore.setState({ objects: newObjects });
+      const next = [...objects];
+      [next[idx], next[idx - 1]] = [next[idx - 1], next[idx]];
+      useDeckForgeStore.setState({ objects: next });
       toast.success('Sent backward');
     }
-    onClose();
   };
 
   const handleBringToFront = () => {
-    const currentIndex = objects.findIndex(o => o.id === obj.id);
+    if (!obj) return;
     saveToHistory();
-    const newObjects = objects.filter(o => o.id !== obj.id);
-    newObjects.push(objects[currentIndex]);
-    useDeckForgeStore.setState({ objects: newObjects });
+    const next = objects.filter((o) => o.id !== obj.id);
+    next.push(obj);
+    useDeckForgeStore.setState({ objects: next });
     toast.success('Brought to front');
-    onClose();
   };
 
   const handleSendToBack = () => {
-    const currentIndex = objects.findIndex(o => o.id === obj.id);
+    if (!obj) return;
     saveToHistory();
-    const newObjects = objects.filter(o => o.id !== obj.id);
-    newObjects.unshift(objects[currentIndex]);
-    useDeckForgeStore.setState({ objects: newObjects });
+    const next = objects.filter((o) => o.id !== obj.id);
+    next.unshift(obj);
+    useDeckForgeStore.setState({ objects: next });
     toast.success('Sent to back');
-    onClose();
   };
+
+  // Lock / Hide
+
+  const handleLock = () => {
+    if (!obj) return;
+    updateObject(obj.id, { locked: !obj.locked });
+    toast.success(obj.locked ? 'Object unlocked' : 'Object locked');
+  };
+
+  const handleVisibility = () => {
+    if (!obj) return;
+    updateObject(obj.id, { hidden: !obj.hidden });
+    toast.success(obj.hidden ? 'Object visible' : 'Object hidden');
+  };
+
+  // Group / Ungroup
 
   const handleGroup = () => {
     if (selectedIds.length >= 2) {
       groupObjects(selectedIds);
       toast.success(`Grouped ${selectedIds.length} objects`);
     }
-    onClose();
   };
 
   const handleUngroup = () => {
-    if (obj.type === 'group') {
+    if (obj && obj.type === 'group') {
       ungroupObject(obj.id);
       toast.success('Ungrouped objects');
     }
-    onClose();
   };
 
-  const handleHighContrast = () => {
-    updateObject(obj.id, {
-      contrast: 2,
-      brightness: 1.2,
-    });
-    toastUtils.success('High Contrast applied', 'Punk zine effect');
-    onClose();
-  };
+  // Canvas-level actions
 
-  const handleBlackAndWhite = () => {
-    updateObject(obj.id, {
-      grayscale: 100,
-    });
-    toastUtils.success('Black & White applied');
-    onClose();
-  };
-
-  const handleInvert = () => {
-    updateObject(obj.id, {
-      invert: !(obj.invert || false),
-    });
-    toastUtils.success('Colors inverted');
-    onClose();
-  };
-
-  const handleResetFilters = () => {
-    updateObject(obj.id, {
-      contrast: 1,
-      brightness: 1,
-      grayscale: 0,
-      invert: false,
-      blur: 0,
-    });
-    toastUtils.success('Filters reset');
-    onClose();
-  };
-
-  const handleRemoveBackground = () => {
-    toastUtils.info('Remove Background', 'This feature will use AI to remove backgrounds from images. Coming soon!');
-    onClose();
-  };
-
-  const hasClipboard = !!sessionStorage.getItem('deckforge_clipboard');
-  const isGroup = obj.type === 'group';
-  const canGroup = selectedIds.length >= 2;
-  const isImage = obj.type === 'image';
-  const hasFilters = obj.contrast !== 1 || obj.brightness !== 1 || obj.grayscale !== 0 || obj.invert || obj.blur;
-
-  const menuItems: MenuItem[] = [
-    {
-      label: 'Copy',
-      icon: <Copy className="w-4 h-4" />,
-      shortcut: 'Ctrl+C',
-      action: handleCopy,
-    },
-    {
-      label: 'Cut',
-      icon: <Scissors className="w-4 h-4" />,
-      shortcut: 'Ctrl+X',
-      action: handleCut,
-    },
-    {
-      label: 'Paste',
-      icon: <Clipboard className="w-4 h-4" />,
-      shortcut: 'Ctrl+V',
-      action: handlePaste,
-      disabled: !hasClipboard,
-    },
-    {
-      label: 'Duplicate',
-      icon: <Copy className="w-4 h-4" />,
-      shortcut: 'Ctrl+D',
-      action: handleDuplicate,
-      divider: true,
-    },
-    {
-      label: obj.locked ? 'Unlock' : 'Lock',
-      icon: obj.locked ? <Unlock className="w-4 h-4" /> : <Lock className="w-4 h-4" />,
-      shortcut: 'Ctrl+L',
-      action: handleLock,
-    },
-    {
-      label: obj.opacity === 0 ? 'Show' : 'Hide',
-      icon: obj.opacity === 0 ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />,
-      action: handleVisibility,
-      divider: true,
-    },
-    {
-      label: 'Bring Forward',
-      icon: <ChevronUp className="w-4 h-4" />,
-      shortcut: 'Ctrl+]',
-      action: handleBringForward,
-    },
-    {
-      label: 'Send Backward',
-      icon: <ChevronDown className="w-4 h-4" />,
-      shortcut: 'Ctrl+[',
-      action: handleSendBackward,
-    },
-    {
-      label: 'Bring to Front',
-      icon: <ChevronsUp className="w-4 h-4" />,
-      shortcut: 'Ctrl+Shift+]',
-      action: handleBringToFront,
-    },
-    {
-      label: 'Send to Back',
-      icon: <ChevronsDown className="w-4 h-4" />,
-      shortcut: 'Ctrl+Shift+[',
-      action: handleSendToBack,
-      divider: true,
-    },
-  ];
-
-  // Add group/ungroup
-  if (canGroup && !isGroup) {
-    menuItems.push({
-      label: 'Group',
-      icon: <Group className="w-4 h-4" />,
-      shortcut: 'Ctrl+G',
-      action: handleGroup,
-    });
-  }
-
-  if (isGroup) {
-    menuItems.push({
-      label: 'Ungroup',
-      icon: <Ungroup className="w-4 h-4" />,
-      shortcut: 'Ctrl+Shift+G',
-      action: handleUngroup,
-    });
-  }
-
-  // Image-specific menu items
-  if (isImage) {
-    menuItems.push({
-      label: 'High Contrast',
-      icon: <Palette className="w-4 h-4" />,
-      action: handleHighContrast,
-      divider: false,
-    });
-    menuItems.push({
-      label: 'Black & White',
-      icon: <Palette className="w-4 h-4" />,
-      action: handleBlackAndWhite,
-    });
-    menuItems.push({
-      label: 'Invert Colors',
-      icon: <Palette className="w-4 h-4" />,
-      action: handleInvert,
-    });
-    if (hasFilters) {
-      menuItems.push({
-        label: 'Reset Filters',
-        icon: <RotateCcw className="w-4 h-4" />,
-        action: handleResetFilters,
-      });
+  const handleSelectAll = () => {
+    const allIds = objects.filter((o) => !o.hidden).map((o) => o.id);
+    if (allIds.length > 0) {
+      selectObject(allIds[0]);
+      setSelectedIds(allIds);
+      toast.success(`Selected ${allIds.length} objects`);
     }
-    menuItems.push({
-      label: 'Remove Background',
-      icon: <Wand2 className="w-4 h-4" />,
-      action: handleRemoveBackground,
-      divider: true,
-    });
+  };
+
+  const handleZoomToFit = () => {
+    setStageScale(0.8);
+    toast.success('Zoom to fit');
+  };
+
+  // --- Empty canvas menu ---
+  if (!obj) {
+    return (
+      <ContextMenuContent className="w-52 bg-popover border-border">
+        <ContextMenuItem
+          disabled={!hasClipboard}
+          onSelect={handlePaste}
+          className="gap-2"
+        >
+          <ClipboardPaste className="h-4 w-4 shrink-0" />
+          Paste
+          <ContextMenuShortcut>Ctrl+V</ContextMenuShortcut>
+        </ContextMenuItem>
+        <ContextMenuItem
+          onSelect={handleSelectAll}
+          disabled={objects.length === 0}
+          className="gap-2"
+        >
+          <MousePointerSquareDashed className="h-4 w-4 shrink-0" />
+          Select All
+          <ContextMenuShortcut>Ctrl+A</ContextMenuShortcut>
+        </ContextMenuItem>
+        <ContextMenuItem onSelect={handleZoomToFit} className="gap-2">
+          <Maximize className="h-4 w-4 shrink-0" />
+          Zoom to Fit
+          <ContextMenuShortcut>Ctrl+1</ContextMenuShortcut>
+        </ContextMenuItem>
+      </ContextMenuContent>
+    );
   }
 
-  // Delete at the end
-  menuItems.push({
-    label: 'Delete',
-    icon: <Trash2 className="w-4 h-4" />,
-    shortcut: 'Delete',
-    action: handleDelete,
-    destructive: true,
-    divider: true,
-  });
-
+  // --- Object context menu ---
   return (
-    <div
-      className="fixed z-[9999] bg-card border border-border rounded-lg shadow-2xl py-1 min-w-[220px] animate-in fade-in-0 zoom-in-95 duration-100"
-      style={{
-        left: menuPosition.x,
-        top: menuPosition.y,
-      }}
-      onClick={(e) => e.stopPropagation()}
-    >
-      {menuItems.map((item, index) => (
-        <div key={index}>
-          {item.divider && index > 0 && (
-            <div className="h-px bg-border my-1" />
-          )}
-          <button
-            onClick={item.action}
-            disabled={item.disabled}
-            className={`
-              w-full flex items-center gap-3 px-3 py-2 text-sm
-              transition-colors text-left
-              ${item.disabled
-                ? 'opacity-50 cursor-not-allowed'
-                : item.destructive
-                  ? 'hover:bg-destructive/10 text-destructive'
-                  : 'hover:bg-accent'
-              }
-            `}
-          >
-            <span className="flex-shrink-0">{item.icon}</span>
-            <span className="flex-1">{item.label}</span>
-            {item.shortcut && (
-              <span className="text-xs text-muted-foreground font-mono">
-                {item.shortcut}
-              </span>
-            )}
-          </button>
-        </div>
-      ))}
-    </div>
+    <ContextMenuContent className="w-56 bg-popover border-border">
+      {/* Clipboard actions */}
+      <ContextMenuItem onSelect={handleCut} className="gap-2">
+        <Scissors className="h-4 w-4 shrink-0" />
+        Cut
+        <ContextMenuShortcut>Ctrl+X</ContextMenuShortcut>
+      </ContextMenuItem>
+      <ContextMenuItem onSelect={handleCopy} className="gap-2">
+        <Copy className="h-4 w-4 shrink-0" />
+        Copy
+        <ContextMenuShortcut>Ctrl+C</ContextMenuShortcut>
+      </ContextMenuItem>
+      <ContextMenuItem
+        disabled={!hasClipboard}
+        onSelect={handlePaste}
+        className="gap-2"
+      >
+        <ClipboardPaste className="h-4 w-4 shrink-0" />
+        Paste
+        <ContextMenuShortcut>Ctrl+V</ContextMenuShortcut>
+      </ContextMenuItem>
+
+      <ContextMenuSeparator />
+
+      <ContextMenuItem onSelect={handleDuplicate} className="gap-2">
+        <Copy className="h-4 w-4 shrink-0" />
+        Duplicate
+        <ContextMenuShortcut>Ctrl+D</ContextMenuShortcut>
+      </ContextMenuItem>
+      <ContextMenuItem
+        onSelect={handleDelete}
+        className="gap-2 text-destructive focus:text-destructive"
+      >
+        <Trash2 className="h-4 w-4 shrink-0" />
+        Delete
+        <ContextMenuShortcut>Del</ContextMenuShortcut>
+      </ContextMenuItem>
+
+      <ContextMenuSeparator />
+
+      {/* Layer controls */}
+      <ContextMenuItem onSelect={handleBringToFront} className="gap-2">
+        <ChevronsUp className="h-4 w-4 shrink-0" />
+        Bring to Front
+        <ContextMenuShortcut>Ctrl+Shift+]</ContextMenuShortcut>
+      </ContextMenuItem>
+      <ContextMenuItem onSelect={handleBringForward} className="gap-2">
+        <ChevronUp className="h-4 w-4 shrink-0" />
+        Bring Forward
+        <ContextMenuShortcut>Ctrl+]</ContextMenuShortcut>
+      </ContextMenuItem>
+      <ContextMenuItem onSelect={handleSendBackward} className="gap-2">
+        <ChevronDown className="h-4 w-4 shrink-0" />
+        Send Backward
+        <ContextMenuShortcut>Ctrl+[</ContextMenuShortcut>
+      </ContextMenuItem>
+      <ContextMenuItem onSelect={handleSendToBack} className="gap-2">
+        <ChevronsDown className="h-4 w-4 shrink-0" />
+        Send to Back
+        <ContextMenuShortcut>Ctrl+Shift+[</ContextMenuShortcut>
+      </ContextMenuItem>
+
+      <ContextMenuSeparator />
+
+      {/* Lock / Hide */}
+      <ContextMenuItem onSelect={handleLock} className="gap-2">
+        {obj.locked ? (
+          <Unlock className="h-4 w-4 shrink-0" />
+        ) : (
+          <Lock className="h-4 w-4 shrink-0" />
+        )}
+        {obj.locked ? 'Unlock' : 'Lock'}
+      </ContextMenuItem>
+      <ContextMenuItem onSelect={handleVisibility} className="gap-2">
+        {obj.hidden ? (
+          <Eye className="h-4 w-4 shrink-0" />
+        ) : (
+          <EyeOff className="h-4 w-4 shrink-0" />
+        )}
+        {obj.hidden ? 'Show' : 'Hide'}
+      </ContextMenuItem>
+
+      {/* Group / Ungroup (conditional) */}
+      {(canGroup || isGroup) && <ContextMenuSeparator />}
+      {canGroup && !isGroup && (
+        <ContextMenuItem onSelect={handleGroup} className="gap-2">
+          <Group className="h-4 w-4 shrink-0" />
+          Group
+          <ContextMenuShortcut>Ctrl+G</ContextMenuShortcut>
+        </ContextMenuItem>
+      )}
+      {isGroup && (
+        <ContextMenuItem onSelect={handleUngroup} className="gap-2">
+          <Ungroup className="h-4 w-4 shrink-0" />
+          Ungroup
+          <ContextMenuShortcut>Ctrl+Shift+G</ContextMenuShortcut>
+        </ContextMenuItem>
+      )}
+    </ContextMenuContent>
   );
 }
