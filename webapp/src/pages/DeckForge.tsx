@@ -680,6 +680,13 @@ export default function DeckForge() {
         return;
       }
 
+      // Brush tool (B)
+      if (key === 'b' && !ctrl && !alt && !shift) {
+        e.preventDefault();
+        setActiveTool(activeTool === 'brush' ? null : 'brush');
+        return;
+      }
+
       // Graphics/Shapes (G)
       if (key === 'g' && !ctrl && !alt) {
         e.preventDefault();
