@@ -637,60 +637,85 @@ function LinesContent({ onAddObject, deckCenterX, deckCenterY }: {
 }
 
 // ============ UPLOADS CONTENT ============
-function UploadsContent({ onAddObject, deckCenterX, deckCenterY }: {
+
+interface LocalUpload {
+  id: string;
+  name: string;
+  dataUrl: string;
+  width: number;
+  height: number;
+}
+
+function readFileAsDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(new Error('Failed to read file'));
+    reader.readAsDataURL(file);
+  });
+}
+
+function getImageDimensions(src: string): Promise<{ width: number; height: number }> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve({ width: img.width, height: img.height });
+    img.onerror = () => reject(new Error('Failed to load image'));
+    img.src = src;
+  });
+}
+
+function LocalUploads({ onAddObject, deckCenterX, deckCenterY }: {
   onAddObject: (obj: Omit<CanvasObject, 'id'>) => void;
   deckCenterX: number;
   deckCenterY: number;
 }) {
-  const [assets, setAssets] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [localUploads, setLocalUploads] = useState<LocalUpload[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
   const [imageUrl, setImageUrl] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { isAuthenticated } = useAuthStore();
 
-  // Load user assets on mount
-  useState(() => {
-    if (isAuthenticated) {
-      loadAssets();
-    }
-  });
+  const addImageToCanvas = (src: string, width: number, height: number) => {
+    const maxDim = 120;
+    const scale = Math.min(maxDim / width, maxDim / height);
 
-  const loadAssets = async () => {
-    if (!isAuthenticated) return;
-    
-    setIsLoading(true);
-    try {
-      const data = await assetsAPI.list();
-      setAssets(data.assets || []);
-    } catch (err) {
-      console.error('Failed to load assets:', err);
-    } finally {
-      setIsLoading(false);
-    }
+    onAddObject({
+      type: 'image',
+      x: deckCenterX - (width * scale) / 2,
+      y: deckCenterY - (height * scale) / 2,
+      width,
+      height,
+      rotation: 0,
+      opacity: 1,
+      scaleX: scale,
+      scaleY: scale,
+      src,
+    });
   };
 
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-
+  const processFiles = async (files: File[]) => {
     setIsUploading(true);
     let svgCount = 0;
     let imageCount = 0;
     let totalSvgObjects = 0;
-    
+
     try {
-      for (const file of Array.from(files)) {
-        // Check if it's an SVG file
+      for (const file of files) {
+        const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/svg+xml', 'image/webp'];
+        if (!allowedTypes.includes(file.type) && !file.name.match(/\.(png|jpe?g|svg|webp)$/i)) {
+          toast.error(`Unsupported file: ${file.name}`, {
+            description: 'Use PNG, JPG, SVG, or WebP files',
+          });
+          continue;
+        }
+
         if (validateSVGFile(file)) {
           try {
-            // Import SVG and add objects directly to canvas
             const objects = await importSVG(file);
             objects.forEach(obj => onAddObject(obj));
             svgCount++;
             totalSvgObjects += objects.length;
-            
-            // Show detailed feedback
+
             if (objects.length > 0) {
               toast.success(`Imported ${file.name}`, {
                 description: `${objects.length} shape${objects.length !== 1 ? 's' : ''} added to canvas`,
@@ -710,22 +735,334 @@ function UploadsContent({ onAddObject, deckCenterX, deckCenterY }: {
             });
           }
         } else {
-          // Regular image upload
+          try {
+            const dataUrl = await readFileAsDataUrl(file);
+            const { width, height } = await getImageDimensions(dataUrl);
+
+            const upload: LocalUpload = {
+              id: `local-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+              name: file.name,
+              dataUrl,
+              width,
+              height,
+            };
+
+            setLocalUploads(prev => [upload, ...prev]);
+            addImageToCanvas(dataUrl, width, height);
+            imageCount++;
+
+            toast.success(`Added ${file.name}`, {
+              description: 'Image added to canvas',
+            });
+          } catch (err) {
+            console.error('File read failed:', err);
+            toast.error(`Failed to load ${file.name}`, {
+              description: 'Could not read the image file',
+            });
+          }
+        }
+      }
+
+      if (files.length > 1) {
+        const summary = [];
+        if (svgCount > 0) summary.push(`${svgCount} SVG${svgCount !== 1 ? 's' : ''} (${totalSvgObjects} shapes)`);
+        if (imageCount > 0) summary.push(`${imageCount} image${imageCount !== 1 ? 's' : ''}`);
+        if (summary.length > 0) {
+          toast.success('Batch upload complete', {
+            description: summary.join(' + '),
+          });
+        }
+      }
+    } catch (err) {
+      console.error('Upload failed:', err);
+      toast.error('Upload failed', {
+        description: 'Please try again or check your files',
+      });
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    processFiles(Array.from(files));
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      processFiles(Array.from(files));
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  };
+
+  const handleUrlSubmit = async () => {
+    if (!imageUrl.trim()) {
+      toastUtils.error('Enter an image URL', 'Paste a link to any public image');
+      return;
+    }
+
+    try {
+      setIsUploading(true);
+      toastUtils.info('Loading image...', 'Fetching from URL');
+
+      const { width, height } = await getImageDimensions(imageUrl);
+      addImageToCanvas(imageUrl, width, height);
+
+      toastUtils.success('Image added from URL!', 'Image loaded successfully');
+      setImageUrl('');
+    } catch (err) {
+      console.error('URL load failed:', err);
+      toastUtils.error('Failed to load image', 'Check URL and try again. Image must be publicly accessible.');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const removeLocalUpload = (id: string) => {
+    setLocalUploads(prev => prev.filter(u => u.id !== id));
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Login banner for guests */}
+      <div className="bg-muted/50 border border-border px-3 py-2 text-center">
+        <p className="text-[10px] text-muted-foreground">
+          Login to save your uploads across sessions
+        </p>
+      </div>
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".png,.jpg,.jpeg,.svg,.webp"
+        multiple
+        className="hidden"
+        onChange={handleFileSelect}
+      />
+
+      <div
+        onClick={() => fileInputRef.current?.click()}
+        onDrop={handleDrop}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        className={cn(
+          'border-2 border-dashed p-6 text-center transition-colors cursor-pointer',
+          isDragOver
+            ? 'border-primary bg-primary/5'
+            : 'border-border hover:border-primary'
+        )}
+      >
+        {isUploading ? (
+          <>
+            <Loader2 className="w-6 h-6 mx-auto mb-2 animate-spin text-primary" />
+            <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
+              Processing...
+            </span>
+          </>
+        ) : isDragOver ? (
+          <>
+            <Upload className="w-6 h-6 mx-auto mb-2 text-primary" />
+            <span className="text-[10px] uppercase tracking-widest text-primary block">
+              Drop to add
+            </span>
+          </>
+        ) : (
+          <>
+            <Upload className="w-6 h-6 mx-auto mb-2 text-muted-foreground" />
+            <span className="text-[10px] uppercase tracking-widest text-muted-foreground block mb-1">
+              Upload Images
+            </span>
+            <span className="text-xs text-muted-foreground">
+              PNG, JPG, SVG, WebP or drag & drop
+            </span>
+          </>
+        )}
+      </div>
+
+      {/* URL Input */}
+      <div className="space-y-2">
+        <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-muted-foreground">
+          <Link className="w-3 h-3" />
+          <span>Or paste image URL</span>
+        </div>
+        <div className="flex gap-2">
+          <Input
+            type="url"
+            placeholder="https://example.com/image.png"
+            value={imageUrl}
+            onChange={(e) => setImageUrl(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                handleUrlSubmit();
+              }
+            }}
+            className="h-9 text-xs"
+            disabled={isUploading}
+          />
+          <Button
+            size="sm"
+            onClick={handleUrlSubmit}
+            disabled={isUploading || !imageUrl.trim()}
+            className="px-3"
+          >
+            {isUploading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              'Add'
+            )}
+          </Button>
+        </div>
+        <p className="text-[9px] text-muted-foreground">
+          Works with any public image URL (Google Images, Pinterest, etc.)
+        </p>
+      </div>
+
+      {/* Local uploads gallery */}
+      {localUploads.length > 0 ? (
+        <>
+          <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-muted-foreground">
+            <FileImage className="w-3 h-3" />
+            <span>Session Uploads</span>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            {localUploads.map((upload) => (
+              <div
+                key={upload.id}
+                className="relative group border border-border hover:border-primary transition-colors overflow-hidden aspect-square cursor-pointer"
+                onClick={() => addImageToCanvas(upload.dataUrl, upload.width, upload.height)}
+              >
+                <img
+                  src={upload.dataUrl}
+                  alt={upload.name}
+                  className="w-full h-full object-cover"
+                />
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    removeLocalUpload(upload.id);
+                  }}
+                  className="absolute top-1 right-1 p-1 bg-destructive text-destructive-foreground rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <Trash2 className="w-3 h-3" />
+                </button>
+              </div>
+            ))}
+          </div>
+        </>
+      ) : (
+        <div className="text-center py-8 animate-in fade-in-50 duration-500">
+          <div className="relative group inline-block mb-3">
+            <div className="absolute inset-0 rounded-full bg-primary/5 blur-xl group-hover:bg-primary/10 transition-all duration-500" />
+            <div className="relative rounded-full bg-gradient-to-br from-muted/80 to-muted/40 p-3">
+              <Upload className="w-6 h-6 text-muted-foreground/70 group-hover:text-primary/80 transition-colors duration-300" />
+            </div>
+          </div>
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+            No Uploads Yet
+          </p>
+          <p className="text-[10px] text-muted-foreground/80 max-w-[200px] mx-auto leading-relaxed">
+            Upload images from your device. Click above or drag & drop!
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CloudUploads({ onAddObject, deckCenterX, deckCenterY }: {
+  onAddObject: (obj: Omit<CanvasObject, 'id'>) => void;
+  deckCenterX: number;
+  deckCenterY: number;
+}) {
+  const [assets, setAssets] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [imageUrl, setImageUrl] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Load user assets on mount
+  useState(() => {
+    loadAssets();
+  });
+
+  const loadAssets = async () => {
+    setIsLoading(true);
+    try {
+      const data = await assetsAPI.list();
+      setAssets(data.assets || []);
+    } catch (err) {
+      console.error('Failed to load assets:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setIsUploading(true);
+    let svgCount = 0;
+    let imageCount = 0;
+    let totalSvgObjects = 0;
+
+    try {
+      for (const file of Array.from(files)) {
+        if (validateSVGFile(file)) {
+          try {
+            const objects = await importSVG(file);
+            objects.forEach(obj => onAddObject(obj));
+            svgCount++;
+            totalSvgObjects += objects.length;
+
+            if (objects.length > 0) {
+              toast.success(`Imported ${file.name}`, {
+                description: `${objects.length} shape${objects.length !== 1 ? 's' : ''} added to canvas`,
+                duration: 3000,
+              });
+            } else {
+              toast.warning(`${file.name} imported but no shapes found`, {
+                description: 'The SVG may be empty or use unsupported features',
+                duration: 3000,
+              });
+            }
+          } catch (svgErr) {
+            console.error('SVG import failed:', svgErr);
+            toast.error(`Failed to import ${file.name}`, {
+              description: 'Invalid SVG file or unsupported format',
+              duration: 4000,
+            });
+          }
+        } else {
           try {
             const result = await assetsAPI.upload(file);
             imageCount++;
-            
-            // Show compression savings if applicable
+
             let description = 'Image added to your library';
             if (result.originalSize && result.compressedSize && result.compressedSize < result.originalSize) {
               const savings = ((1 - result.compressedSize / result.originalSize) * 100).toFixed(0);
               description = `Compressed ${savings}% • ${description}`;
             }
-            
+
             toast.success(`Uploaded ${file.name}`, {
               description,
             });
-            // Add to assets list
             await loadAssets();
           } catch (uploadErr) {
             console.error('Image upload failed:', uploadErr);
@@ -735,13 +1072,12 @@ function UploadsContent({ onAddObject, deckCenterX, deckCenterY }: {
           }
         }
       }
-      
-      // Summary toast for multiple files
+
       if (files.length > 1) {
         const summary = [];
         if (svgCount > 0) summary.push(`${svgCount} SVG${svgCount !== 1 ? 's' : ''} (${totalSvgObjects} shapes)`);
         if (imageCount > 0) summary.push(`${imageCount} image${imageCount !== 1 ? 's' : ''}`);
-        
+
         if (summary.length > 0) {
           toast.success('Batch upload complete', {
             description: summary.join(' + '),
@@ -791,10 +1127,9 @@ function UploadsContent({ onAddObject, deckCenterX, deckCenterY }: {
       setIsUploading(true);
       toastUtils.info('Loading image...', 'Fetching from URL');
 
-      // Create a temporary image to get dimensions
       const img = new Image();
       img.crossOrigin = 'anonymous';
-      
+
       await new Promise((resolve, reject) => {
         img.onload = resolve;
         img.onerror = reject;
@@ -829,7 +1164,7 @@ function UploadsContent({ onAddObject, deckCenterX, deckCenterY }: {
 
   const deleteAsset = async (id: string) => {
     if (!confirm('Delete this asset?')) return;
-    
+
     try {
       await assetsAPI.delete(id);
       await loadAssets();
@@ -837,19 +1172,6 @@ function UploadsContent({ onAddObject, deckCenterX, deckCenterY }: {
       console.error('Delete failed:', err);
     }
   };
-
-  if (!isAuthenticated) {
-    return (
-      <div className="text-center py-8 space-y-4">
-        <p className="text-xs text-muted-foreground">
-          Login to upload custom images
-        </p>
-        <Button size="sm" onClick={() => window.location.href = '/auth'}>
-          Login
-        </Button>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-4">
@@ -956,15 +1278,12 @@ function UploadsContent({ onAddObject, deckCenterX, deckCenterY }: {
       ) : (
         <div className="text-center py-8 animate-in fade-in-50 duration-500">
           <div className="relative group inline-block mb-3">
-            {/* Subtle glow effect */}
             <div className="absolute inset-0 rounded-full bg-primary/5 blur-xl group-hover:bg-primary/10 transition-all duration-500" />
-            
-            {/* Icon with gradient background */}
             <div className="relative rounded-full bg-gradient-to-br from-muted/80 to-muted/40 p-3">
               <Upload className="w-6 h-6 text-muted-foreground/70 group-hover:text-primary/80 transition-colors duration-300" />
             </div>
           </div>
-          
+
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
             No Uploads Yet
           </p>
@@ -975,6 +1294,20 @@ function UploadsContent({ onAddObject, deckCenterX, deckCenterY }: {
       )}
     </div>
   );
+}
+
+function UploadsContent({ onAddObject, deckCenterX, deckCenterY }: {
+  onAddObject: (obj: Omit<CanvasObject, 'id'>) => void;
+  deckCenterX: number;
+  deckCenterY: number;
+}) {
+  const { isAuthenticated } = useAuthStore();
+
+  if (isAuthenticated) {
+    return <CloudUploads onAddObject={onAddObject} deckCenterX={deckCenterX} deckCenterY={deckCenterY} />;
+  }
+
+  return <LocalUploads onAddObject={onAddObject} deckCenterX={deckCenterX} deckCenterY={deckCenterY} />;
 }
 
 // ============ FINISHES CONTENT ============
