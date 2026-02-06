@@ -11,6 +11,7 @@ import { OptimizedImage } from '@/components/OptimizedImage';
 import { BackToTop } from '@/components/BackToTop';
 import { EmptyState } from '@/components/EmptyState';
 import { ErrorState } from '@/components/ErrorState';
+import { DeckThumbnail } from '@/components/deckforge/DeckThumbnail';
 import toast from 'react-hot-toast';
 
 function filterSeedDesigns(params: {
@@ -278,19 +279,13 @@ function DesignCard({ design }: { design: MarketplaceDesign }) {
       className="group border border-border rounded-lg overflow-hidden hover:shadow-xl hover:border-primary/50 hover:-translate-y-1 transition-all duration-200 cursor-pointer bg-card"
     >
       {/* Thumbnail */}
-      <div className="aspect-[3/8] bg-gradient-to-br from-muted to-muted/50 relative overflow-hidden">
-        {design.thumbnail_url ? (
-          <OptimizedImage
-            src={design.thumbnail_url}
-            alt={design.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-            lazy={true}
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-6xl">
-            🎨
-          </div>
-        )}
+      <div className="aspect-[3/8] bg-gradient-to-br from-muted to-muted/50 relative overflow-hidden flex items-center justify-center p-3 group-hover:scale-[1.02] transition-transform duration-300">
+        <DeckThumbnail
+          designId={design.id}
+          category={design.category}
+          title={design.title}
+          thumbnailUrl={design.thumbnail_url}
+        />
         
         {/* Favorite button */}
         <Tooltip>
