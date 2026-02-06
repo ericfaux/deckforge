@@ -140,7 +140,7 @@ INSERT INTO auth.identities (
   ('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a08', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a08', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a08', 'email', '{"sub":"a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a08","email":"acidart@deckforge.demo"}', NOW(), NOW() - INTERVAL '100 days', NOW()),
   ('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a09', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a09', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a09', 'email', '{"sub":"a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a09","email":"skaterkid@deckforge.demo"}', NOW(), NOW() - INTERVAL '25 days', NOW()),
   ('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a10', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a10', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a10', 'email', '{"sub":"a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a10","email":"deckcollector@deckforge.demo"}', NOW(), NOW() - INTERVAL '40 days', NOW())
-ON CONFLICT (id, provider) DO NOTHING;
+ON CONFLICT (provider_id, provider) DO NOTHING;
 
 
 -- ─── 2. PROFILES ────────────────────────────────────────────────────────────────
