@@ -2,7 +2,15 @@ import { create } from 'zustand';
 import { getDeckSize } from '@/lib/deck-sizes';
 import { loadFontsForObjects } from '@/lib/google-fonts';
 
-export type ToolType = 'templates' | 'graphics' | 'text' | 'uploads' | 'background' | 'finishes' | 'stickers' | 'patterns' | 'textures' | 'lines' | 'pen';
+export type ToolType = 'templates' | 'graphics' | 'text' | 'uploads' | 'background' | 'finishes' | 'stickers' | 'patterns' | 'textures' | 'lines' | 'pen' | 'brush';
+
+export type BrushType = 'pencil' | 'marker' | 'spray' | 'calligraphy';
+
+export interface BrushPoint {
+  x: number;
+  y: number;
+  pressure: number;
+}
 
 export type TextureType = 'scratched-wood' | 'grip-tape-dust' | 'halftone-dots';
 
@@ -86,6 +94,12 @@ export interface CanvasObject {
   // For paths (pen tool / bezier curves)
   pathPoints?: PathPoint[];
   pathClosed?: boolean; // Whether path is closed (connects back to start)
+  // For brush strokes
+  brushType?: BrushType;
+  brushPoints?: BrushPoint[]; // Raw points with pressure data
+  brushSize?: number; // 1-50
+  brushHardness?: number; // 0-100
+  sprayDots?: Array<{ x: number; y: number; r: number }>; // For spray paint effect
   // For stickers (Lucide icons)
   iconName?: string;
   strokeWidth?: number;

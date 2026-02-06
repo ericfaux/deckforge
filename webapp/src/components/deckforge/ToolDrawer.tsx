@@ -1299,16 +1299,17 @@ const toolLabels: Record<ToolType, string> = {
   textures: 'Textures',
   lines: 'Lines',
   pen: 'Pen Tool',
+  brush: 'Brush',
 };
 
 export function ToolDrawer() {
   const { activeTool, drawerOpen, toggleDrawer, addObject } = useDeckForgeStore();
-  
+
   // Get current deck dimensions (dynamic based on selected size)
   const { width: DECK_WIDTH, height: DECK_HEIGHT } = useDeckDimensions();
 
-  // Hide drawer for pen tool (uses overlay interface instead)
-  if (!drawerOpen || !activeTool || activeTool === 'pen') return null;
+  // Hide drawer for pen/brush tools (they use overlay interface instead)
+  if (!drawerOpen || !activeTool || activeTool === 'pen' || activeTool === 'brush') return null;
 
   const deckCenterX = DECK_WIDTH / 2;
   const deckCenterY = DECK_HEIGHT / 2;

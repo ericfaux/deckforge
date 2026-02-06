@@ -2,6 +2,8 @@ import { useRef, useEffect, useState, useCallback, memo, useMemo } from 'react';
 import { useDeckForgeStore, CanvasObject } from '@/store/deckforge';
 import { ZoomControls } from './ZoomControls';
 import { PenTool } from './PenTool';
+import { BrushTool, renderBrushStroke } from './BrushTool';
+import type { BrushStrokeData } from './BrushTool';
 import { TransformHandles } from './TransformHandles';
 import { SnapGuides, calculateSnapGuides } from './SnapGuides';
 import { RulerOverlay } from './RulerOverlay';
@@ -517,6 +519,66 @@ const CanvasObjectItem = memo(function CanvasObjectItem({
       </>
     );
     return textEl;
+  }
+
+  // Render brush stroke objects
+  if (obj.type === 'path' && obj.brushType) {
+    const centerX = obj.x + obj.width / 2;
+    const centerY = obj.y + obj.height / 2;
+    return (
+      <g transform={`rotate(${obj.rotation} ${centerX} ${centerY})`}>
+        {/* Invisible thick stroke for easier clicking/dragging */}
+        {obj.pathPoints && obj.pathPoints.length >= 2 && (
+          <path
+            d={(() => {
+              const pts = obj.pathPoints!;
+              let d = `M ${pts[0].x} ${pts[0].y}`;
+              for (let i = 1; i < pts.length; i++) d += ` L ${pts[i].x} ${pts[i].y}`;
+              return d;
+            })()}
+            fill="none"
+            stroke="transparent"
+            strokeWidth={Math.max(obj.brushSize || obj.strokeWidth || 4, 12)}
+            style={{ cursor }}
+            onMouseDown={handleMouseDown}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        )}
+        {obj.brushType === 'spray' && obj.sprayDots && (
+          <rect
+            x={obj.x}
+            y={obj.y}
+            width={obj.width}
+            height={obj.height}
+            fill="transparent"
+            style={{ cursor }}
+            onMouseDown={handleMouseDown}
+          />
+        )}
+        {/* Visible brush stroke */}
+        {renderBrushStroke(obj)}
+        {/* Selection highlight */}
+        {isSelected && obj.pathPoints && obj.pathPoints.length >= 2 && (
+          <path
+            d={(() => {
+              const pts = obj.pathPoints!;
+              let d = `M ${pts[0].x} ${pts[0].y}`;
+              for (let i = 1; i < pts.length; i++) d += ` L ${pts[i].x} ${pts[i].y}`;
+              return d;
+            })()}
+            fill="none"
+            stroke="#ccff00"
+            strokeWidth={(obj.brushSize || obj.strokeWidth || 4) + 2}
+            strokeDasharray="6 4"
+            opacity={0.6}
+            style={{ pointerEvents: 'none' }}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        )}
+      </g>
+    );
   }
 
   // Render path objects (pen tool / bezier curves)
@@ -1439,8 +1501,8 @@ export function WorkbenchStage() {
   }, []);
 
   const handleStageClick = useCallback((e: React.MouseEvent) => {
-    // Don't interfere with pen tool
-    if (activeTool === 'pen') {
+    // Don't interfere with pen/brush tools
+    if (activeTool === 'pen' || activeTool === 'brush') {
       return;
     }
     if (e.target === e.currentTarget) {
@@ -1548,6 +1610,62 @@ export function WorkbenchStage() {
       // For 'click' mode, addObject auto-selects, so transform handles will appear
     }
   }, [addObject, setActiveTool, selectObject]);
+
+  // Handle brush tool stroke completion
+  const handleBrushToolComplete = useCallback((data: BrushStrokeData) => {
+    const points = data.smoothedPoints;
+    if (points.length < 2 && (!data.sprayDots || data.sprayDots.length === 0)) return;
+
+    // Calculate bounding box
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+
+    if (data.brushType === 'spray' && data.sprayDots && data.sprayDots.length > 0) {
+      for (const dot of data.sprayDots) {
+        minX = Math.min(minX, dot.x - dot.r);
+        maxX = Math.max(maxX, dot.x + dot.r);
+        minY = Math.min(minY, dot.y - dot.r);
+        maxY = Math.max(maxY, dot.y + dot.r);
+      }
+    } else {
+      for (const pt of points) {
+        minX = Math.min(minX, pt.x);
+        maxX = Math.max(maxX, pt.x);
+        minY = Math.min(minY, pt.y);
+        maxY = Math.max(maxY, pt.y);
+      }
+    }
+
+    const padding = data.brushSize * 2;
+    const actualWidth = (maxX - minX) || data.brushSize;
+    const actualHeight = (maxY - minY) || data.brushSize;
+
+    const pathPoints = points.map((p) => ({ x: p.x, y: p.y }));
+
+    const newObj = {
+      type: 'path' as const,
+      x: minX - padding,
+      y: minY - padding,
+      width: actualWidth + padding * 2,
+      height: actualHeight + padding * 2,
+      rotation: 0,
+      opacity: data.opacity,
+      scaleX: 1,
+      scaleY: 1,
+      pathPoints,
+      pathClosed: false,
+      stroke: data.strokeColor,
+      strokeWidth: data.brushSize,
+      fill: 'none',
+      brushType: data.brushType,
+      brushPoints: data.brushPoints,
+      brushSize: data.brushSize,
+      brushHardness: data.hardness,
+      sprayDots: data.sprayDots,
+    };
+
+    addObject(newObj);
+    selectObject(null);
+  }, [addObject, selectObject]);
 
   // Get enabled textures
   const enabledTextures = textureOverlays.filter((t) => t.enabled);
@@ -1764,7 +1882,7 @@ export function WorkbenchStage() {
             })}
 
             {/* Transform handles for selected object */}
-            {selectedId && activeTool !== 'pen' && !isDraggingObject && (() => {
+            {selectedId && activeTool !== 'pen' && activeTool !== 'brush' && !isDraggingObject && (() => {
               if (!selectedObject || selectedObject.locked) return null;
               
               return (
@@ -1844,7 +1962,7 @@ export function WorkbenchStage() {
         />
 
         {/* Hardware Guide Overlay - Visual only, not exported */}
-        {showHardwareGuide && activeTool !== 'pen' && (
+        {showHardwareGuide && activeTool !== 'pen' && activeTool !== 'brush' && (
           <g transform={`translate(${deckX}, ${deckY}) scale(${stageScale})`} pointerEvents="none">
             {/* Front Truck Baseplate */}
             <rect
@@ -1905,7 +2023,7 @@ export function WorkbenchStage() {
         )}
 
         {/* Improved empty state with onboarding */}
-        {objects.length === 0 && activeTool !== 'pen' && (
+        {objects.length === 0 && activeTool !== 'pen' && activeTool !== 'brush' && (
           <g transform={`translate(${deckX}, ${deckY}) scale(${stageScale})`} pointerEvents="none">
             {/* Welcome message */}
             <text
@@ -2055,6 +2173,17 @@ export function WorkbenchStage() {
         <PenTool
           isActive={activeTool === 'pen'}
           onComplete={handlePenToolComplete}
+          onCancel={() => setActiveTool(null)}
+          stageRef={svgRef}
+          deckX={deckX}
+          deckY={deckY}
+          stageScale={stageScale}
+        />
+
+        {/* Brush Tool */}
+        <BrushTool
+          isActive={activeTool === 'brush'}
+          onComplete={handleBrushToolComplete}
           onCancel={() => setActiveTool(null)}
           stageRef={svgRef}
           deckX={deckX}

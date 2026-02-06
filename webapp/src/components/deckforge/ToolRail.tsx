@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { LayoutTemplate, ImageIcon, Type, Upload, Palette, Layers, Sticker, Grid3X3, Mountain, Minus, Pen } from 'lucide-react';
+import { LayoutTemplate, ImageIcon, Type, Upload, Palette, Layers, Sticker, Grid3X3, Mountain, Minus, Pen, Paintbrush } from 'lucide-react';
 import { useDeckForgeStore, ToolType } from '@/store/deckforge';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -18,12 +18,19 @@ interface ToolItem {
 }
 
 const tools: ToolItem[] = [
-  { 
-    id: 'pen', 
-    icon: Pen, 
+  {
+    id: 'pen',
+    icon: Pen,
     label: 'Pen Tool',
     shortcut: 'P',
     description: 'Draw custom shapes with click-to-point or free draw'
+  },
+  {
+    id: 'brush',
+    icon: Paintbrush,
+    label: 'Brush',
+    shortcut: 'B',
+    description: 'Freehand drawing with pencil, marker, spray paint & calligraphy'
   },
   { 
     id: 'stickers', 
