@@ -661,3 +661,23 @@ body.keyboard-nav select:focus-visible {
 .swipe-redo-feedback {
   animation: swipe-redo-feedback 0.4s ease-out;
 }
+
+/* Thin scrollbar for toolbars */
+.toolbar-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--border)) transparent;
+  -webkit-overflow-scrolling: touch;
+}
+
+.toolbar-scroll::-webkit-scrollbar {
+  height: 3px;
+}
+
+.toolbar-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.toolbar-scroll::-webkit-scrollbar-thumb {
+  background-color: hsl(var(--border));
+  border-radius: 3px;
+}
