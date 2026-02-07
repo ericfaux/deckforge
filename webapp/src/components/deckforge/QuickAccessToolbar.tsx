@@ -152,9 +152,9 @@ export function QuickAccessToolbar() {
   };
 
   return (
-    <div className="flex items-center gap-1 px-2 py-1.5 bg-card border-b border-border">
+    <div className="flex items-center gap-1 px-2 py-1.5 bg-card border-b border-border overflow-x-auto toolbar-scroll">
       {/* Always visible: Undo/Redo */}
-      <div className="flex items-center gap-1 border-r border-border pr-2">
+      <div className="flex items-center gap-1 border-r border-border pr-2 shrink-0">
         <EnhancedTooltip content="Undo" shortcut="Ctrl+Z">
           <Button
             variant="ghost"
@@ -183,7 +183,7 @@ export function QuickAccessToolbar() {
       {/* Selection-dependent actions */}
       {hasSelection && (
         <>
-          <div className="flex items-center gap-1 border-r border-border pr-2">
+          <div className="flex items-center gap-1 border-r border-border pr-2 shrink-0">
             <EnhancedTooltip content="Duplicate" shortcut="Ctrl+D">
               <Button
                 variant="ghost"
@@ -207,7 +207,7 @@ export function QuickAccessToolbar() {
             </EnhancedTooltip>
           </div>
 
-          <div className="flex items-center gap-1 border-r border-border pr-2">
+          <div className="flex items-center gap-1 border-r border-border pr-2 shrink-0">
             <EnhancedTooltip content={allLocked ? 'Unlock' : 'Lock'}>
               <Button
                 variant="ghost"
@@ -240,7 +240,7 @@ export function QuickAccessToolbar() {
           </div>
 
           {multipleSelected && (
-            <div className="flex items-center gap-1 border-r border-border pr-2">
+            <div className="flex items-center gap-1 border-r border-border pr-2 shrink-0">
               <EnhancedTooltip content="Group" shortcut="Ctrl+G">
                 <Button
                   variant="ghost"
@@ -256,7 +256,7 @@ export function QuickAccessToolbar() {
 
           {/* Alignment - available for single or multiple selection */}
           {hasSelection && (
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 shrink-0">
               <EnhancedTooltip content={multipleSelected ? "Align objects left" : "Align to left edge"}>
                 <Button
                   variant="ghost"
