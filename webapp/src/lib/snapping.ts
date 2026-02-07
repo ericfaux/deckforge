@@ -1,9 +1,22 @@
-import { CanvasObject } from '@/store/deckforge';
+import { CanvasObject, Guide } from '@/store/deckforge';
 
 export interface SnapGuide {
   position: number;
   orientation: 'horizontal' | 'vertical';
-  type: 'center' | 'edge' | 'object';
+  type: 'center' | 'edge' | 'object' | 'guide';
+}
+
+/**
+ * Convert custom Guide objects to snap targets compatible with SnapGuides.calculateSnapPosition
+ */
+export function guidesToSnapTargets(guides: Guide[]): Array<{ position: number; orientation: 'horizontal' | 'vertical'; label: string }> {
+  return guides
+    .filter(g => !g.locked)
+    .map(g => ({
+      position: g.position,
+      orientation: g.orientation,
+      label: `Guide ${g.orientation === 'horizontal' ? 'Y' : 'X'}: ${Math.round(g.position)}`,
+    }));
 }
 
 const SNAP_THRESHOLD = 5; // pixels

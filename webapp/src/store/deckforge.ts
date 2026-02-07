@@ -37,7 +37,19 @@ export interface PathPoint {
   cp1y?: number; // Control point 1 y
   cp2x?: number; // Control point 2 x (for bezier curves)
   cp2y?: number; // Control point 2 y
+  pointType?: 'smooth' | 'corner' | 'asymmetric'; // Node editing behavior
 }
+
+// Custom guide for rulers/guides system
+export interface Guide {
+  id: string;
+  orientation: 'horizontal' | 'vertical';
+  position: number; // in deck coordinates
+  locked: boolean;
+  color: string; // default: '#00d4ff'
+}
+
+export type BooleanOp = 'union' | 'subtract' | 'intersect' | 'exclude';
 
 export interface CanvasObject {
   id: string;
@@ -276,6 +288,13 @@ interface DeckForgeState {
   // Group isolation mode
   isolatedGroupId: string | null;
 
+  // Custom guides (rulers/guides system)
+  guides: Guide[];
+  showGuides: boolean;
+
+  // Path editing mode
+  editingPathId: string | null;
+
   // Actions
   addObject: (obj: Omit<CanvasObject, 'id'>) => void;
   addObjects: (objs: Omit<CanvasObject, 'id'>[]) => void;
@@ -334,6 +353,19 @@ interface DeckForgeState {
   // Group isolation mode
   enterIsolationMode: (groupId: string) => void;
   exitIsolationMode: () => void;
+
+  // Custom guides
+  addGuide: (orientation: 'horizontal' | 'vertical', position: number) => void;
+  updateGuide: (id: string, updates: Partial<Guide>) => void;
+  removeGuide: (id: string) => void;
+  clearAllGuides: () => void;
+  toggleGuides: () => void;
+
+  // Path editing
+  setEditingPath: (id: string | null) => void;
+
+  // Boolean operations
+  booleanOperation: (ids: string[], operation: BooleanOp) => void;
 }
 
 const generateId = () => `obj_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -386,6 +418,9 @@ export const useDeckForgeStore = create<DeckForgeState>((set, get) => ({
   undoRedoChangedIds: [],
   lastAction: null,
   isolatedGroupId: null,
+  guides: [],
+  showGuides: true,
+  editingPathId: null,
 
   saveToHistory: () => {
     const { objects, past } = get();
@@ -1078,6 +1113,65 @@ export const useDeckForgeStore = create<DeckForgeState>((set, get) => ({
     const { isolatedGroupId } = get();
     if (isolatedGroupId) {
       set({ isolatedGroupId: null, selectedId: isolatedGroupId, selectedIds: [isolatedGroupId] });
+    }
+  },
+
+  // Custom guides
+  addGuide: (orientation, position) => {
+    const id = `guide_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    set((state) => ({
+      guides: [...state.guides, { id, orientation, position, locked: false, color: '#00d4ff' }],
+    }));
+  },
+
+  updateGuide: (id, updates) => {
+    set((state) => ({
+      guides: state.guides.map((g) => (g.id === id ? { ...g, ...updates } : g)),
+    }));
+  },
+
+  removeGuide: (id) => {
+    set((state) => ({
+      guides: state.guides.filter((g) => g.id !== id),
+    }));
+  },
+
+  clearAllGuides: () => {
+    set({ guides: [] });
+  },
+
+  toggleGuides: () => {
+    set((state) => ({ showGuides: !state.showGuides }));
+  },
+
+  // Path editing
+  setEditingPath: (id) => {
+    set({ editingPathId: id });
+  },
+
+  // Boolean operations
+  booleanOperation: async (ids, operation) => {
+    const state = get();
+    const selectedObjects = state.objects.filter((obj) => ids.includes(obj.id));
+    if (selectedObjects.length < 2) return;
+
+    try {
+      const { booleanOperationOnObjects } = await import('@/lib/boolean-ops');
+      const result = booleanOperationOnObjects(selectedObjects, operation);
+      if (!result) return;
+
+      state.saveToHistory();
+
+      // Remove original objects and add the result
+      const remainingObjects = state.objects.filter((obj) => !ids.includes(obj.id));
+      const newObj = { ...result, id: generateId() };
+      set({
+        objects: [...remainingObjects, newObj],
+        selectedId: newObj.id,
+        selectedIds: [newObj.id],
+      });
+    } catch (err) {
+      console.error('[DeckForge] Boolean operation failed:', err);
     }
   },
 }));

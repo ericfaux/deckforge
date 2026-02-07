@@ -1,16 +1,21 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Check, X, Undo, MousePointer2 } from 'lucide-react';
 
 interface Point {
   x: number;
   y: number;
+  // Control handles for bezier curves (set by click+drag)
+  cpOutX?: number;
+  cpOutY?: number;
+  cpInX?: number;
+  cpInY?: number;
 }
 
 type DashStyle = 'solid' | 'dashed' | 'dotted';
 
 interface PenToolProps {
   isActive: boolean;
-  onComplete: (pathData: string, strokeWidth: number, strokeColor: string, opacity: number, dashStyle: DashStyle, mode: 'click' | 'draw') => void;
+  onComplete: (pathData: string, strokeWidth: number, strokeColor: string, opacity: number, dashStyle: DashStyle, mode: 'click' | 'draw', pathPoints?: Array<{ x: number; y: number; cp1x?: number; cp1y?: number; cp2x?: number; cp2y?: number }>) => void;
   onCancel: () => void;
   stageRef: React.RefObject<SVGSVGElement>;
   deckX: number;
@@ -27,6 +32,9 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef, deckX, deckY
   const [strokeColor, setStrokeColor] = useState('#ffffff');
   const [opacity, setOpacity] = useState(1.0);
   const [dashStyle, setDashStyle] = useState<DashStyle>('solid');
+  // Click+drag curve creation state
+  const [isDraggingHandle, setIsDraggingHandle] = useState(false);
+  const [dragStartPoint, setDragStartPoint] = useState<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     if (!isActive) {
@@ -34,10 +42,81 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef, deckX, deckY
       setCurrentPoint(null);
       setIsDrawing(false);
       setMode('click');
+      setIsDraggingHandle(false);
+      setDragStartPoint(null);
     }
   }, [isActive]);
 
-  // ESC to cancel
+  const getCoords = useCallback((e: React.MouseEvent | MouseEvent) => {
+    if (!stageRef.current) return null;
+    const rect = stageRef.current.getBoundingClientRect();
+    return {
+      x: (e.clientX - rect.left - deckX) / stageScale,
+      y: (e.clientY - rect.top - deckY) / stageScale,
+    };
+  }, [stageRef, deckX, deckY, stageScale]);
+
+  // Build PathPoints with control point data for the store
+  const buildPathPoints = useCallback((pts: Point[]) => {
+    return pts.map((p, i) => {
+      const result: { x: number; y: number; cp1x?: number; cp1y?: number; cp2x?: number; cp2y?: number } = {
+        x: p.x,
+        y: p.y,
+      };
+      // cp1 = incoming control handle (from previous point toward this point)
+      if (p.cpInX !== undefined && p.cpInY !== undefined) {
+        result.cp1x = p.cpInX;
+        result.cp1y = p.cpInY;
+      }
+      // cp2 = outgoing control handle (from this point toward next point)
+      if (p.cpOutX !== undefined && p.cpOutY !== undefined) {
+        result.cp2x = p.cpOutX;
+        result.cp2y = p.cpOutY;
+      }
+      return result;
+    });
+  }, []);
+
+  // Generate SVG path from points (with bezier support)
+  const buildPathData = useCallback((pts: Point[], closePath = false) => {
+    if (pts.length < 2) return '';
+    let d = `M ${pts[0].x} ${pts[0].y}`;
+
+    for (let i = 1; i < pts.length; i++) {
+      const prev = pts[i - 1];
+      const curr = pts[i];
+      const hasPrevOut = prev.cpOutX !== undefined && prev.cpOutY !== undefined;
+      const hasCurrIn = curr.cpInX !== undefined && curr.cpInY !== undefined;
+
+      if (hasPrevOut && hasCurrIn) {
+        d += ` C ${prev.cpOutX} ${prev.cpOutY} ${curr.cpInX} ${curr.cpInY} ${curr.x} ${curr.y}`;
+      } else if (hasPrevOut) {
+        d += ` Q ${prev.cpOutX} ${prev.cpOutY} ${curr.x} ${curr.y}`;
+      } else if (hasCurrIn) {
+        d += ` Q ${curr.cpInX} ${curr.cpInY} ${curr.x} ${curr.y}`;
+      } else {
+        d += ` L ${curr.x} ${curr.y}`;
+      }
+    }
+
+    if (closePath) d += ' Z';
+    return d;
+  }, []);
+
+  const handleComplete = useCallback(() => {
+    if (points.length < 2) {
+      onCancel();
+      return;
+    }
+
+    const pathData = buildPathData(points);
+    const pathPoints = buildPathPoints(points);
+    onComplete(pathData, strokeWidth, strokeColor, opacity, dashStyle, mode, pathPoints);
+    setPoints([]);
+    setCurrentPoint(null);
+  }, [points, buildPathData, buildPathPoints, onComplete, strokeWidth, strokeColor, opacity, dashStyle, mode]);
+
+  // ESC to cancel, Enter to complete
   useEffect(() => {
     if (!isActive) return;
 
@@ -51,69 +130,119 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef, deckX, deckY
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isActive, points, onCancel]);
+  }, [isActive, points, onCancel, handleComplete]);
 
-  const handleStageClick = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent event from bubbling
-    if (!isActive || !stageRef.current || mode === 'draw') return;
-
-    const rect = stageRef.current.getBoundingClientRect();
-    // Transform screen coordinates to deck-relative coordinates
-    const x = (e.clientX - rect.left - deckX) / stageScale;
-    const y = (e.clientY - rect.top - deckY) / stageScale;
-
-    // First click - add point
-    if (points.length === 0) {
-      setPoints([{ x, y }]);
-      return;
-    }
-
-    // Second click - complete the line immediately
-    if (points.length === 1) {
-      const pathData = `M ${points[0].x} ${points[0].y} L ${x} ${y}`;
-      setPoints([]); // Clear state immediately
-      onComplete(pathData, strokeWidth, strokeColor, opacity, dashStyle, 'click');
-      return;
-    }
-  };
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent event from bubbling
-    if (!isActive || !stageRef.current || mode !== 'draw') return;
-
-    const rect = stageRef.current.getBoundingClientRect();
-    // Transform screen coordinates to deck-relative coordinates
-    const x = (e.clientX - rect.left - deckX) / stageScale;
-    const y = (e.clientY - rect.top - deckY) / stageScale;
-
-    setIsDrawing(true);
-    setPoints([{ x, y }]);
-  };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
+  // Handle click+drag for bezier curve creation
+  const handleStageMouseDown = (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (!isActive || !stageRef.current) return;
 
-    const rect = stageRef.current.getBoundingClientRect();
-    // Transform screen coordinates to deck-relative coordinates
-    const x = (e.clientX - rect.left - deckX) / stageScale;
-    const y = (e.clientY - rect.top - deckY) / stageScale;
-    setCurrentPoint({ x, y });
+    if (mode === 'draw') {
+      // Freehand draw mode
+      const coords = getCoords(e);
+      if (!coords) return;
+      setIsDrawing(true);
+      setPoints([{ x: coords.x, y: coords.y }]);
+      return;
+    }
 
-    // Free draw mode
+    // Click mode — start potential drag for curve handle
+    const coords = getCoords(e);
+    if (!coords) return;
+
+    // Check if clicking near first point to close path
+    if (points.length >= 3) {
+      const first = points[0];
+      const dist = Math.hypot(coords.x - first.x, coords.y - first.y);
+      if (dist < 8 / stageScale) {
+        // Close and complete
+        const pathData = buildPathData(points, true);
+        const pathPoints = buildPathPoints(points);
+        onComplete(pathData, strokeWidth, strokeColor, opacity, dashStyle, mode, pathPoints);
+        setPoints([]);
+        setCurrentPoint(null);
+        return;
+      }
+    }
+
+    setIsDraggingHandle(true);
+    setDragStartPoint(coords);
+  };
+
+  const handleStageMouseMove = (e: React.MouseEvent) => {
+    if (!isActive || !stageRef.current) return;
+    const coords = getCoords(e);
+    if (!coords) return;
+
+    setCurrentPoint({ x: coords.x, y: coords.y });
+
+    // Freehand draw
     if (mode === 'draw' && isDrawing) {
-      setPoints([...points, { x, y }]);
+      setPoints(prev => [...prev, { x: coords.x, y: coords.y }]);
+      return;
+    }
+
+    // Dragging handle for curve creation
+    if (isDraggingHandle && dragStartPoint) {
+      // Show the curve handle being dragged
+      setCurrentPoint({
+        x: dragStartPoint.x,
+        y: dragStartPoint.y,
+        cpOutX: coords.x,
+        cpOutY: coords.y,
+        // Mirror handle for incoming control
+        cpInX: dragStartPoint.x * 2 - coords.x,
+        cpInY: dragStartPoint.y * 2 - coords.y,
+      });
     }
   };
 
-  const handleMouseUp = () => {
+  const handleStageMouseUp = (e: React.MouseEvent) => {
+    if (!isActive) return;
+
+    // Freehand draw complete
     if (mode === 'draw' && isDrawing) {
       setIsDrawing(false);
       if (points.length >= 2) {
         handleComplete();
       } else {
-        // Not enough points, cancel
         onCancel();
       }
+      return;
+    }
+
+    // Click mode — finish placing point
+    if (isDraggingHandle && dragStartPoint) {
+      const coords = getCoords(e);
+      const dragDist = coords ? Math.hypot(coords.x - dragStartPoint.x, coords.y - dragStartPoint.y) : 0;
+
+      let newPoint: Point;
+      if (dragDist > 3) {
+        // Dragged — create smooth point with control handles
+        newPoint = {
+          x: dragStartPoint.x,
+          y: dragStartPoint.y,
+          cpOutX: coords!.x,
+          cpOutY: coords!.y,
+          cpInX: dragStartPoint.x * 2 - coords!.x,
+          cpInY: dragStartPoint.y * 2 - coords!.y,
+        };
+      } else {
+        // Just clicked — create corner point
+        newPoint = { x: dragStartPoint.x, y: dragStartPoint.y };
+      }
+
+      const newPoints = [...points, newPoint];
+      setPoints(newPoints);
+
+      // Auto-complete on second point for quick lines
+      if (newPoints.length === 2 && dragDist <= 3 && !newPoints[0].cpOutX) {
+        // Two corner points with no curves — complete as a simple line
+        // (Don't auto-complete — let user keep adding points)
+      }
+
+      setIsDraggingHandle(false);
+      setDragStartPoint(null);
     }
   };
 
@@ -121,41 +250,6 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef, deckX, deckY
     if (points.length > 0) {
       setPoints(points.slice(0, -1));
     }
-  };
-
-  const handleComplete = () => {
-    if (points.length < 2) {
-      onCancel();
-      return;
-    }
-
-    // Generate SVG path data with smooth curves
-    let pathData = `M ${points[0].x} ${points[0].y}`;
-    
-    if (mode === 'draw') {
-      // Free draw - use all points with smoothing
-      for (let i = 1; i < points.length; i++) {
-        if (i % 3 === 0 || i === points.length - 1) {
-          pathData += ` L ${points[i].x} ${points[i].y}`;
-        }
-      }
-    } else {
-      // Click mode - create smooth bezier curves
-      for (let i = 1; i < points.length; i++) {
-        const p1 = points[i - 1];
-        const p2 = points[i];
-        
-        if (i === 1) {
-          pathData += ` L ${p2.x} ${p2.y}`;
-        } else {
-          const midX = (p1.x + p2.x) / 2;
-          const midY = (p1.y + p2.y) / 2;
-          pathData += ` Q ${p1.x} ${p1.y} ${midX} ${midY}`;
-        }
-      }
-    }
-
-    onComplete(pathData, strokeWidth, strokeColor, opacity, dashStyle, mode);
   };
 
   const handleCancelClick = (e: React.MouseEvent) => {
@@ -182,100 +276,218 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef, deckX, deckY
   if (!isActive) return null;
 
   // Generate preview path
-  let previewPath = '';
-  if (points.length > 0) {
-    previewPath = `M ${points[0].x} ${points[0].y}`;
-    for (let i = 1; i < points.length; i++) {
-      previewPath += ` L ${points[i].x} ${points[i].y}`;
-    }
-    if (currentPoint && points.length > 0 && mode === 'click') {
-      previewPath += ` L ${currentPoint.x} ${currentPoint.y}`;
+  const previewPoints = [...points];
+  if (currentPoint && mode === 'click' && !isDraggingHandle) {
+    previewPoints.push(currentPoint);
+  }
+  const previewPath = previewPoints.length >= 2 ? buildPathData(previewPoints) : '';
+
+  // Simple line preview for current segment
+  let currentSegmentPreview = '';
+  if (points.length > 0 && currentPoint && mode === 'click' && !isDraggingHandle) {
+    const last = points[points.length - 1];
+    if (last.cpOutX !== undefined) {
+      currentSegmentPreview = `M ${last.x} ${last.y} Q ${last.cpOutX} ${last.cpOutY} ${currentPoint.x} ${currentPoint.y}`;
+    } else {
+      currentSegmentPreview = `M ${last.x} ${last.y} L ${currentPoint.x} ${currentPoint.y}`;
     }
   }
 
-  // Get viewport dimensions from stageRef
+  // Get viewport dimensions
   const viewportWidth = stageRef.current?.clientWidth || 3000;
   const viewportHeight = stageRef.current?.clientHeight || 3000;
 
   return (
     <g style={{ pointerEvents: 'all' }}>
-      {/* Massive overlay to capture ALL interactions */}
+      {/* Overlay to capture interactions */}
       <rect
         x={0}
         y={0}
         width={viewportWidth}
         height={viewportHeight}
         fill="rgba(0,0,0,0.01)"
-        style={{ 
-          cursor: mode === 'draw' ? 'crosshair' : 'pointer',
+        style={{
+          cursor: mode === 'draw' ? 'crosshair' : 'crosshair',
           pointerEvents: 'all'
         }}
-        onClick={handleStageClick}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
+        onMouseDown={handleStageMouseDown}
+        onMouseMove={handleStageMouseMove}
+        onMouseUp={handleStageMouseUp}
       />
 
-      {/* Draw preview path - transform to screen coordinates */}
-      {previewPath && (
-        <g 
-          transform={`translate(${deckX}, ${deckY}) scale(${stageScale})`}
-          style={{ pointerEvents: 'none' }}
-        >
+      {/* Draw path and handles in deck space */}
+      <g
+        transform={`translate(${deckX}, ${deckY}) scale(${stageScale})`}
+        style={{ pointerEvents: 'none' }}
+      >
+        {/* Preview path */}
+        {previewPath && (
           <path
             d={previewPath}
             stroke={strokeColor}
             strokeWidth={strokeWidth / stageScale}
             fill="none"
-            opacity={opacity}
-            strokeDasharray={
-              mode === 'click' 
-                ? "4 4" 
-                : dashStyle === 'dashed' 
-                  ? `${strokeWidth * 2} ${strokeWidth}`
-                  : dashStyle === 'dotted'
-                    ? `1 ${strokeWidth}`
-                    : "none"
-            }
+            opacity={opacity * 0.6}
+            strokeDasharray={`${4 / stageScale} ${4 / stageScale}`}
             strokeLinecap="round"
             strokeLinejoin="round"
           />
-          
-          {/* Draw points (only in click mode) */}
-          {mode === 'click' && points.map((point, index) => (
+        )}
+
+        {/* Current segment preview */}
+        {currentSegmentPreview && (
+          <path
+            d={currentSegmentPreview}
+            stroke={strokeColor}
+            strokeWidth={strokeWidth / stageScale}
+            fill="none"
+            opacity={opacity * 0.4}
+            strokeDasharray={`${4 / stageScale} ${4 / stageScale}`}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        )}
+
+        {/* Draw points and handles */}
+        {mode === 'click' && points.map((point, index) => (
+          <g key={index}>
+            {/* Control handle lines */}
+            {point.cpOutX !== undefined && point.cpOutY !== undefined && (
+              <>
+                <line
+                  x1={point.x}
+                  y1={point.y}
+                  x2={point.cpOutX}
+                  y2={point.cpOutY}
+                  stroke="#ff6600"
+                  strokeWidth={1 / stageScale}
+                  opacity={0.8}
+                />
+                <circle
+                  cx={point.cpOutX}
+                  cy={point.cpOutY}
+                  r={3 / stageScale}
+                  fill="#ff6600"
+                  stroke="#fff"
+                  strokeWidth={1 / stageScale}
+                />
+              </>
+            )}
+            {point.cpInX !== undefined && point.cpInY !== undefined && (
+              <>
+                <line
+                  x1={point.x}
+                  y1={point.y}
+                  x2={point.cpInX}
+                  y2={point.cpInY}
+                  stroke="#ff6600"
+                  strokeWidth={1 / stageScale}
+                  opacity={0.8}
+                />
+                <circle
+                  cx={point.cpInX}
+                  cy={point.cpInY}
+                  r={3 / stageScale}
+                  fill="#ff6600"
+                  stroke="#fff"
+                  strokeWidth={1 / stageScale}
+                />
+              </>
+            )}
+            {/* Anchor point */}
             <circle
-              key={index}
               cx={point.x}
               cy={point.y}
               r={5 / stageScale}
-              fill={index === 0 ? '#ccff00' : '#ffffff'}
-              stroke="#000000"
+              fill={index === 0 ? '#ccff00' : '#0d99ff'}
+              stroke="#ffffff"
               strokeWidth={2 / stageScale}
             />
-          ))}
-          
-          {/* Draw current point preview (click mode) */}
-          {mode === 'click' && currentPoint && (
-            <circle
-              cx={currentPoint.x}
-              cy={currentPoint.y}
-              r={4 / stageScale}
-              fill="#ccff00"
-              opacity={0.6}
-            />
-          )}
-        </g>
-      )}
+            {/* Close path indicator on first point */}
+            {index === 0 && points.length >= 3 && (
+              <circle
+                cx={point.x}
+                cy={point.y}
+                r={10 / stageScale}
+                fill="none"
+                stroke="#ccff00"
+                strokeWidth={1 / stageScale}
+                strokeDasharray={`${3 / stageScale} ${3 / stageScale}`}
+                opacity={0.6}
+              />
+            )}
+          </g>
+        ))}
 
-      {/* Canva-style floating toolbar - clean and compact */}
+        {/* Dragging handle preview */}
+        {isDraggingHandle && dragStartPoint && currentPoint && currentPoint.cpOutX !== undefined && (
+          <g>
+            <line
+              x1={dragStartPoint.x}
+              y1={dragStartPoint.y}
+              x2={currentPoint.cpOutX}
+              y2={currentPoint.cpOutY!}
+              stroke="#ff6600"
+              strokeWidth={1 / stageScale}
+              opacity={0.9}
+            />
+            <line
+              x1={dragStartPoint.x}
+              y1={dragStartPoint.y}
+              x2={currentPoint.cpInX!}
+              y2={currentPoint.cpInY!}
+              stroke="#ff6600"
+              strokeWidth={1 / stageScale}
+              opacity={0.9}
+            />
+            <circle
+              cx={currentPoint.cpOutX}
+              cy={currentPoint.cpOutY!}
+              r={4 / stageScale}
+              fill="#ff6600"
+              stroke="#fff"
+              strokeWidth={1 / stageScale}
+            />
+            <circle
+              cx={currentPoint.cpInX!}
+              cy={currentPoint.cpInY!}
+              r={4 / stageScale}
+              fill="#ff6600"
+              stroke="#fff"
+              strokeWidth={1 / stageScale}
+            />
+            <circle
+              cx={dragStartPoint.x}
+              cy={dragStartPoint.y}
+              r={5 / stageScale}
+              fill="#0d99ff"
+              stroke="#fff"
+              strokeWidth={2 / stageScale}
+            />
+          </g>
+        )}
+
+        {/* Current mouse position (click mode, not dragging) */}
+        {mode === 'click' && currentPoint && !isDraggingHandle && (
+          <circle
+            cx={currentPoint.x}
+            cy={currentPoint.y}
+            r={4 / stageScale}
+            fill="#ccff00"
+            opacity={0.6}
+          />
+        )}
+      </g>
+
+      {/* Floating toolbar */}
       <foreignObject x={20} y={100} width={240} height={420}>
-        <div 
+        <div
           className="bg-card border border-border rounded-lg p-3 shadow-2xl"
           onMouseDown={(e) => e.stopPropagation()}
           onClick={(e) => e.stopPropagation()}
         >
           <div className="flex flex-col gap-2.5">
-            {/* Mode selector - compact */}
+            {/* Mode selector */}
             <div className="flex gap-1 p-1 bg-secondary rounded">
               <button
                 onClick={(e) => handleModeSwitch('click', e)}
@@ -284,7 +496,7 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef, deckX, deckY
                     ? 'bg-accent text-accent-foreground shadow-sm'
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
-                title="Click to place points"
+                title="Click to place points (drag to create curves)"
               >
                 <MousePointer2 className="w-3.5 h-3.5 mx-auto" />
               </button>
@@ -301,7 +513,7 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef, deckX, deckY
               </button>
             </div>
 
-            {/* Stroke Width - visual */}
+            {/* Stroke Width */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs text-muted-foreground">Width</span>
@@ -322,7 +534,7 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef, deckX, deckY
               />
             </div>
 
-            {/* Color Swatches - Canva style */}
+            {/* Color Swatches */}
             <div className="space-y-2">
               <span className="text-xs text-muted-foreground">Color</span>
               <div className="grid grid-cols-6 gap-1.5">
@@ -375,7 +587,7 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef, deckX, deckY
               />
             </div>
 
-            {/* Line Style - visual previews */}
+            {/* Line Style */}
             <div className="space-y-2">
               <span className="text-xs text-muted-foreground">Style</span>
               <div className="flex gap-1.5">
@@ -395,12 +607,12 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef, deckX, deckY
                     title={style}
                   >
                     <div className="h-full flex items-center justify-center">
-                      <div 
-                        className="w-8 h-0.5" 
+                      <div
+                        className="w-8 h-0.5"
                         style={{
                           background: strokeColor,
-                          borderTop: style === 'dashed' ? `2px dashed ${strokeColor}` : 
-                                     style === 'dotted' ? `2px dotted ${strokeColor}` : 
+                          borderTop: style === 'dashed' ? `2px dashed ${strokeColor}` :
+                                     style === 'dotted' ? `2px dotted ${strokeColor}` :
                                      `2px solid ${strokeColor}`
                         }}
                       />
@@ -410,18 +622,40 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef, deckX, deckY
               </div>
             </div>
 
-            {/* Instructions - clean */}
+            {/* Instructions & actions */}
             <div className="pt-2 border-t border-border space-y-2">
               <p className="text-xs text-muted-foreground text-center leading-relaxed">
-                {mode === 'click' 
+                {mode === 'click'
                   ? points.length === 0
-                    ? 'Click to place start point'
-                    : 'Click to finish line'
+                    ? 'Click to place points. Drag to curve.'
+                    : points.length >= 3
+                      ? 'Click first point to close, or Enter to finish'
+                      : `${points.length} point${points.length !== 1 ? 's' : ''} — keep clicking`
                   : isDrawing
                     ? 'Drawing...'
                     : 'Click and drag to draw'
                 }
               </p>
+              <div className="flex gap-1.5">
+                {points.length > 0 && (
+                  <button
+                    onClick={handleUndoClick}
+                    className="flex-1 py-2 px-3 text-xs bg-secondary hover:bg-secondary/80 text-muted-foreground border border-border rounded transition-colors flex items-center justify-center gap-1"
+                  >
+                    <Undo className="w-3.5 h-3.5" />
+                    Undo
+                  </button>
+                )}
+                {points.length >= 2 && (
+                  <button
+                    onClick={handleCompleteClick}
+                    className="flex-1 py-2 px-3 text-xs bg-accent text-accent-foreground border border-accent rounded transition-colors flex items-center justify-center gap-1"
+                  >
+                    <Check className="w-3.5 h-3.5" />
+                    Done
+                  </button>
+                )}
+              </div>
               <button
                 onClick={handleCancelClick}
                 className="w-full py-2 px-3 text-xs bg-secondary hover:bg-destructive/10 text-muted-foreground hover:text-destructive border border-border hover:border-destructive/50 rounded transition-colors flex items-center justify-center gap-2"
