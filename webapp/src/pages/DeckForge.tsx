@@ -1113,11 +1113,11 @@ export default function DeckForge() {
 
       {/* Header */}
       <header className={cn(
-        "border-b border-border flex items-center px-4 bg-card shrink-0",
+        "border-b border-border flex items-center px-4 bg-card shrink-0 overflow-x-auto toolbar-scroll",
         isMobile ? "h-14" : "h-14"
       )}>
         <h1 className={cn(
-          "font-display uppercase tracking-widest text-foreground",
+          "font-display uppercase tracking-widest text-foreground shrink-0",
           isMobile ? "text-base" : "text-lg"
         )}>
           Deck<span className="text-primary">Forge</span>

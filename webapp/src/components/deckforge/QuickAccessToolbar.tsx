@@ -152,7 +152,7 @@ export function QuickAccessToolbar() {
   };
 
   return (
-    <div className="flex items-center gap-1 px-2 py-1.5 bg-card border-b border-border overflow-x-auto toolbar-scroll">
+    <div className="flex items-center gap-1 px-2 py-1.5 bg-card border-b border-border overflow-x-auto toolbar-scroll w-full max-w-full shrink-0">
       {/* Always visible: Undo/Redo */}
       <div className="flex items-center gap-1 border-r border-border pr-2 shrink-0">
         <EnhancedTooltip content="Undo" shortcut="Ctrl+Z">
