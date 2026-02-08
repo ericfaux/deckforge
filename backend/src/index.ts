@@ -1,4 +1,3 @@
-import "@vibecodeapp/proxy"; // DO NOT REMOVE OTHERWISE VIBECODE PROXY WILL NOT WORK
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import "./env";
@@ -15,7 +14,7 @@ import tagsRouter from "./routes/tags";
 import brandKitsRouter from "./routes/brand-kits";
 import { logger } from "hono/logger";
 
-const app = new Hono();
+export const app = new Hono();
 
 // CORS middleware - validates origin against allowlist
 const allowed = [

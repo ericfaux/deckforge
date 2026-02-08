@@ -1,0 +1,9 @@
+{
+  "name": "deckforge",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "@hono/node-server": "^1.19.9",
+    "hono": "^4.11.9"
+  }
+}

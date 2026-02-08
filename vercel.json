@@ -1,11 +1,9 @@
 {
   "buildCommand": "cd webapp && npm run build",
   "outputDirectory": "webapp/dist",
-  "installCommand": "cd webapp && npm install",
+  "installCommand": "npm install && cd backend && npm install && cd ../webapp && npm install",
   "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
-    }
+    { "source": "/api/(.*)", "destination": "/api/[...route]" },
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
