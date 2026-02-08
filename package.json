@@ -1,9 +1,12 @@
 {
   "name": "deckforge",
   "version": "1.0.0",
+  "type": "module",
   "private": true,
   "dependencies": {
     "@hono/node-server": "^1.19.9",
-    "hono": "^4.11.9"
+    "@supabase/supabase-js": "^2.93.2",
+    "hono": "^4.11.9",
+    "zod": "4.1.11"
   }
 }

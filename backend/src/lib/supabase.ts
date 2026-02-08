@@ -4,7 +4,7 @@ const supabaseUrl = process.env.SUPABASE_URL || 'https://hvulzgcqdwurrhaebhyy.su
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY || '';
 
 if (!supabaseServiceKey) {
-  throw new Error('SUPABASE_SERVICE_KEY is required');
+  console.warn('Warning: SUPABASE_SERVICE_KEY is not set. Admin operations will fail.');
 }
 
 export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);

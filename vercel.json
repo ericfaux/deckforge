@@ -1,7 +1,12 @@
 {
-  "buildCommand": "cd webapp && npm run build",
+  "buildCommand": "cd webapp && npm run build && cd ../backend && npx tsc -p tsconfig.vercel.json",
   "outputDirectory": "webapp/dist",
   "installCommand": "npm install && cd backend && npm install && cd ../webapp && npm install",
+  "functions": {
+    "api/[...route].js": {
+      "includeFiles": "backend/dist/**"
+    }
+  },
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/[...route]" },
     { "source": "/(.*)", "destination": "/index.html" }
