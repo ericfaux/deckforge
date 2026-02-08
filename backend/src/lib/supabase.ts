@@ -11,7 +11,7 @@ export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
 // Client with anon key for user-level operations
 export function createSupabaseClient(authToken?: string) {
-  const anonKey = process.env.SUPABASE_ANON_KEY || supabaseServiceKey;
+  const anonKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || supabaseServiceKey;
   const client = createClient(supabaseUrl, anonKey);
   
   if (authToken) {

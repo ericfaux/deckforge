@@ -2,13 +2,14 @@ import { z } from "zod";
 
 /**
  * Environment variable schema using Zod
- * This ensures all required environment variables are present and valid
+ * All fields are optional with sensible defaults so the app can start
+ * in any environment (local dev, Vercel serverless, etc.)
  */
 const envSchema = z.object({
   // Server Configuration
   PORT: z.string().optional().default("3000"),
   NODE_ENV: z.string().optional(),
-  BACKEND_URL: z.url("BACKEND_URL must be a valid URL").default("http://localhost:3000"), // Set via the Vibecode enviroment at run-time
+  BACKEND_URL: z.string().optional().default("http://localhost:3000"),
 });
 
 /**
@@ -21,14 +22,17 @@ function validateEnv() {
     return parsed;
   } catch (error) {
     if (error instanceof z.ZodError) {
-      console.error("❌ Environment variable validation failed:");
+      console.warn("⚠️ Environment variable validation issues:");
       error.issues.forEach((err: any) => {
-        console.error(`  - ${err.path.join(".")}: ${err.message}`);
+        console.warn(`  - ${err.path.join(".")}: ${err.message}`);
       });
-      console.error("\nPlease check your .env file and ensure all required variables are set.");
-      process.exit(1);
     }
-    throw error;
+    // Return defaults instead of crashing — allows serverless cold starts
+    return {
+      PORT: "3000",
+      NODE_ENV: undefined,
+      BACKEND_URL: "http://localhost:3000",
+    };
   }
 }
 
