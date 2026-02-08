@@ -1,5 +1,5 @@
 {
-  "buildCommand": "cd webapp && npm run build && cd ../backend && npx tsc -p tsconfig.vercel.json",
+  "buildCommand": "cd webapp && npm run build && cd ../backend && npx esbuild src/index.ts --bundle --platform=node --outdir=dist --format=esm --target=es2022 --packages=external",
   "outputDirectory": "webapp/dist",
   "installCommand": "npm install && cd backend && npm install && cd ../webapp && npm install",
   "functions": {
