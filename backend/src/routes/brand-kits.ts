@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { authenticateUser } from '../lib/auth';
-import { supabase } from '../lib/supabase';
+import { supabaseAdmin as supabase } from '../lib/supabase';
 
 const brandKitsRouter = new Hono();
 

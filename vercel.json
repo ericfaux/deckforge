@@ -1,7 +1,12 @@
 {
-  "buildCommand": "cd webapp && npm run build",
+  "buildCommand": "cd webapp && npm run build && cd ../backend && npx esbuild src/index.ts --bundle --platform=node --outdir=dist --format=esm --target=es2022 --packages=external",
   "outputDirectory": "webapp/dist",
   "installCommand": "npm install && cd backend && npm install && cd ../webapp && npm install",
+  "functions": {
+    "api/[...route].js": {
+      "includeFiles": "backend/dist/**"
+    }
+  },
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/[...route]" },
     { "source": "/(.*)", "destination": "/index.html" }
