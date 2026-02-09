@@ -31,6 +31,16 @@ export class ErrorBoundary extends Component<Props, State> {
       errorInfo,
     });
 
+    // If this is a chunk load failure, auto-reload once to fetch fresh assets
+    if (this.isChunkLoadError(error)) {
+      const key = 'chunk_error_reload';
+      if (!sessionStorage.getItem(key)) {
+        sessionStorage.setItem(key, '1');
+        window.location.reload();
+        return;
+      }
+    }
+
     // Auto-save canvas state to localStorage before crash
     try {
       const canvasState = localStorage.getItem('deckforge-autosave');
@@ -44,6 +54,16 @@ export class ErrorBoundary extends Component<Props, State> {
     } catch (err) {
       console.error('Failed to save crash backup:', err);
     }
+  }
+
+  private isChunkLoadError(error: Error): boolean {
+    const msg = error.message || '';
+    return (
+      msg.includes('Failed to fetch dynamically imported module') ||
+      msg.includes('Loading chunk') ||
+      msg.includes('Loading CSS chunk') ||
+      msg.includes('dynamically imported module')
+    );
   }
 
   private handleReload = () => {
