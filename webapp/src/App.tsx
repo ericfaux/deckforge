@@ -10,18 +10,38 @@ import { ShortcutDebugPanel } from "@/components/debug/ShortcutDebug";
 import { LoadingState } from "@/components/LoadingState";
 import NotFound from "./pages/NotFound";
 
+// Retry wrapper for dynamic imports to handle stale chunks after deployments.
+// If the initial import fails (e.g. hash mismatch), reload the page once to
+// get the latest HTML with updated chunk references.
+function lazyWithRetry(importFn: () => Promise<{ default: React.ComponentType<any> }>) {
+  return lazy(() =>
+    importFn().catch((error: unknown) => {
+      const key = "chunk_reload_" + (error instanceof Error ? error.message : "unknown");
+      const hasReloaded = sessionStorage.getItem(key);
+      if (!hasReloaded) {
+        sessionStorage.setItem(key, "1");
+        window.location.reload();
+        // Return a never-resolving promise so React doesn't render before reload
+        return new Promise(() => {});
+      }
+      // Already reloaded once — let ErrorBoundary handle it
+      throw error;
+    })
+  );
+}
+
 // Lazy-load route-level page components for code splitting
-const DeckForge = lazy(() => import("./pages/DeckForge"));
-const Auth = lazy(() => import("./pages/Auth"));
-const Designs = lazy(() => import("./pages/Designs"));
-const Templates = lazy(() => import("./pages/Templates"));
-const Gallery = lazy(() => import("./pages/Gallery"));
-const ShareView = lazy(() => import("./pages/ShareView"));
-const Marketplace = lazy(() => import("./pages/Marketplace"));
-const MarketplaceDesign = lazy(() => import("./pages/MarketplaceDesign"));
-const MarketplaceUpload = lazy(() => import("./pages/MarketplaceUpload"));
-const DesignerDashboard = lazy(() => import("./pages/DesignerDashboard"));
-const FingerparkBuilder = lazy(() => import("./pages/FingerparkBuilder"));
+const DeckForge = lazyWithRetry(() => import("./pages/DeckForge"));
+const Auth = lazyWithRetry(() => import("./pages/Auth"));
+const Designs = lazyWithRetry(() => import("./pages/Designs"));
+const Templates = lazyWithRetry(() => import("./pages/Templates"));
+const Gallery = lazyWithRetry(() => import("./pages/Gallery"));
+const ShareView = lazyWithRetry(() => import("./pages/ShareView"));
+const Marketplace = lazyWithRetry(() => import("./pages/Marketplace"));
+const MarketplaceDesign = lazyWithRetry(() => import("./pages/MarketplaceDesign"));
+const MarketplaceUpload = lazyWithRetry(() => import("./pages/MarketplaceUpload"));
+const DesignerDashboard = lazyWithRetry(() => import("./pages/DesignerDashboard"));
+const FingerparkBuilder = lazyWithRetry(() => import("./pages/FingerparkBuilder"));
 
 const queryClient = new QueryClient();
 

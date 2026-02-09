@@ -111,9 +111,7 @@ export default function MarketplaceDesignPage() {
     
     // Load design in DeckForge editor
     // This would require implementing a way to load .deckforge files
-    toast.info('Opening in editor...', {
-      description: 'This feature is coming soon!',
-    });
+    toast('Opening in editor... Coming soon!');
   };
 
   const handleShare = () => {
