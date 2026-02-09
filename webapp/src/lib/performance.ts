@@ -2,6 +2,8 @@
  * Performance monitoring and optimization utilities
  */
 
+import { logger } from './logger';
+
 /**
  * Debounce function - delays execution until after wait time has elapsed
  */
@@ -73,7 +75,7 @@ export const perf = {
     const start = performance.now();
     const result = fn();
     const end = performance.now();
-    console.log(`[Perf] ${name}: ${(end - start).toFixed(2)}ms`);
+    logger.log(`[Perf] ${name}: ${(end - start).toFixed(2)}ms`);
     return result;
   },
 
@@ -84,7 +86,7 @@ export const perf = {
     const start = performance.now();
     const result = await fn();
     const end = performance.now();
-    console.log(`[Perf] ${name}: ${(end - start).toFixed(2)}ms`);
+    logger.log(`[Perf] ${name}: ${(end - start).toFixed(2)}ms`);
     return result;
   },
 
@@ -101,7 +103,7 @@ export const perf = {
   measureBetween(measureName: string, startMark: string, endMark: string) {
     performance.measure(measureName, startMark, endMark);
     const measure = performance.getEntriesByName(measureName)[0];
-    console.log(`[Perf] ${measureName}: ${measure.duration.toFixed(2)}ms`);
+    logger.log(`[Perf] ${measureName}: ${measure.duration.toFixed(2)}ms`);
   },
 
   /**
@@ -128,19 +130,21 @@ export const perf = {
   logNavigationTiming() {
     const timing = this.getNavigationTiming();
     if (!timing) {
-      console.log('[Perf] Navigation timing not available');
+      logger.log('[Perf] Navigation timing not available');
       return;
     }
 
-    console.group('[Perf] Navigation Timing');
-    console.log(`DNS: ${timing.dns.toFixed(2)}ms`);
-    console.log(`TCP: ${timing.tcp.toFixed(2)}ms`);
-    console.log(`TTFB: ${timing.ttfb.toFixed(2)}ms`);
-    console.log(`Download: ${timing.download.toFixed(2)}ms`);
-    console.log(`DOM Interactive: ${timing.domInteractive.toFixed(2)}ms`);
-    console.log(`DOM Complete: ${timing.domComplete.toFixed(2)}ms`);
-    console.log(`Load Complete: ${timing.loadComplete.toFixed(2)}ms`);
-    console.groupEnd();
+    if (import.meta.env.DEV) {
+      console.group('[Perf] Navigation Timing');
+      console.log(`DNS: ${timing.dns.toFixed(2)}ms`);
+      console.log(`TCP: ${timing.tcp.toFixed(2)}ms`);
+      console.log(`TTFB: ${timing.ttfb.toFixed(2)}ms`);
+      console.log(`Download: ${timing.download.toFixed(2)}ms`);
+      console.log(`DOM Interactive: ${timing.domInteractive.toFixed(2)}ms`);
+      console.log(`DOM Complete: ${timing.domComplete.toFixed(2)}ms`);
+      console.log(`Load Complete: ${timing.loadComplete.toFixed(2)}ms`);
+      console.groupEnd();
+    }
   },
 };
 

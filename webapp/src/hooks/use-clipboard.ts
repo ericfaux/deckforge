@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import toast from 'react-hot-toast';
+import { logger } from '@/lib/logger';
 
 interface UseClipboardOptions {
   timeout?: number;
@@ -29,7 +30,7 @@ export function useClipboard(options: UseClipboardOptions = {}): UseClipboardRet
 
   const copy = async (text: string): Promise<boolean> => {
     if (!navigator?.clipboard) {
-      console.warn('Clipboard API not available');
+      logger.warn('Clipboard API not available');
       toast.error(errorMessage);
       return false;
     }

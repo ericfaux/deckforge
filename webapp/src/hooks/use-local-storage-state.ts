@@ -1,4 +1,5 @@
 import { useState, useEffect, Dispatch, SetStateAction } from 'react';
+import { logger } from '@/lib/logger';
 
 /**
  * Simplified localStorage hook that syncs across tabs
@@ -22,7 +23,7 @@ export function useLocalStorageState<T>(
       const item = window.localStorage.getItem(key);
       return item ? JSON.parse(item) : defaultValue;
     } catch (error) {
-      console.warn(`Error reading localStorage key "${key}":`, error);
+      logger.warn(`Error reading localStorage key "${key}":`, error);
       return defaultValue;
     }
   });
@@ -35,7 +36,7 @@ export function useLocalStorageState<T>(
     try {
       window.localStorage.setItem(key, JSON.stringify(value));
     } catch (error) {
-      console.warn(`Error setting localStorage key "${key}":`, error);
+      logger.warn(`Error setting localStorage key "${key}":`, error);
     }
   }, [key, value]);
 
@@ -50,7 +51,7 @@ export function useLocalStorageState<T>(
         try {
           setValue(JSON.parse(e.newValue));
         } catch (error) {
-          console.warn(`Error parsing storage event for key "${key}":`, error);
+          logger.warn(`Error parsing storage event for key "${key}":`, error);
         }
       }
     };

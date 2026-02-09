@@ -93,7 +93,7 @@ export default function Marketplace() {
 
       // If the marketplace table doesn't exist yet, show seed data
       if (error.message?.includes('marketplace_designs') || error.message?.includes('schema cache')) {
-        console.log('Marketplace: showing seed data (database table not yet created)');
+        // Fallback to seed data when marketplace table doesn't exist yet
         setDesigns(filterSeedDesigns({
           category: category !== 'all' ? category : undefined,
           sortBy,

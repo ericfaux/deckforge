@@ -1,6 +1,7 @@
 // API client for DeckForge backend
 import { createClient } from '@supabase/supabase-js';
 import { compressImage, formatFileSize } from './image-compression';
+import { logger } from './logger';
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || '';
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://hvulzgcqdwurrhaebhyy.supabase.co';
@@ -263,12 +264,12 @@ export const assetsAPI = {
         // Log compression results
         if (compressedFile.size < originalSize) {
           const savings = ((1 - compressedFile.size / originalSize) * 100).toFixed(1);
-          console.log(
+          logger.log(
             `Image compressed: ${formatFileSize(originalSize)} → ${formatFileSize(compressedFile.size)} (${savings}% smaller)`
           );
         }
       } catch (error) {
-        console.warn('Image compression failed, uploading original:', error);
+        logger.warn('Image compression failed, uploading original:', error);
         // Continue with original file if compression fails
       }
     }
