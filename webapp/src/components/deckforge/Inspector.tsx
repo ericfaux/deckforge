@@ -1,5 +1,5 @@
-import { Download, Grid3X3, RotateCcw, ChevronDown, Lock, Unlock, ArrowUp, ArrowDown, ChevronsUp, ChevronsDown, GripVertical } from 'lucide-react';
-import { useState, useEffect, memo, useMemo, useRef } from 'react';
+import { Download, Grid3X3, RotateCcw, ChevronDown, Lock, Unlock, ArrowUp, ArrowDown, ChevronsUp, ChevronsDown, GripVertical, Maximize2, Minimize2 } from 'lucide-react';
+import { useState, useEffect, useCallback, memo, useMemo, useRef } from 'react';
 import { usePanelResize } from '@/hooks/use-panel-resize';
 import { useDeckForgeStore, CanvasObject } from '@/store/deckforge';
 import { useAuthStore } from '@/store/auth';
@@ -17,6 +17,7 @@ import { HueRotateDial } from './HueRotateDial';
 import { GradientPicker } from './GradientPicker';
 import { ColorPicker } from './ColorPicker';
 import { UnifiedColorPicker, FillMode, GradientConfig } from './UnifiedColorPicker';
+import { CollapsibleSection } from './CollapsibleSection';
 import { useDeckDimensions } from './WorkbenchStage';
 import { getMmPerPixel } from '@/lib/deck-guides';
 import { getDeckSize } from '@/lib/deck-sizes';
@@ -29,6 +30,24 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
+
+const DEFAULT_SECTIONS: Record<string, boolean> = {
+  'layer-transform': true,
+  'text-properties': true,
+  'appearance': true,
+  'filters': false,
+  'effects': false,
+  'advanced': false,
+};
+
+function loadSectionState(): Record<string, boolean> {
+  try {
+    const saved = localStorage.getItem('inspector-sections');
+    return saved ? { ...DEFAULT_SECTIONS, ...JSON.parse(saved) } : { ...DEFAULT_SECTIONS };
+  } catch {
+    return { ...DEFAULT_SECTIONS };
+  }
+}
 
 // Helper to check if all values are the same, or return 'mixed'
 function getSharedValue<T>(values: T[]): T | 'mixed' {
@@ -233,6 +252,33 @@ export function Inspector() {
   // Ref for scrollable properties container
   const propertiesPanelRef = useRef<HTMLDivElement>(null);
 
+  // Collapsible section state with localStorage persistence
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>(loadSectionState);
+
+  useEffect(() => {
+    localStorage.setItem('inspector-sections', JSON.stringify(openSections));
+  }, [openSections]);
+
+  const toggleSection = useCallback((key: string, open: boolean) => {
+    setOpenSections(prev => ({ ...prev, [key]: open }));
+  }, []);
+
+  const expandAll = useCallback(() => {
+    setOpenSections(prev => {
+      const next: Record<string, boolean> = {};
+      for (const k of Object.keys(prev)) next[k] = true;
+      return next;
+    });
+  }, []);
+
+  const collapseAll = useCallback(() => {
+    setOpenSections(prev => {
+      const next: Record<string, boolean> = {};
+      for (const k of Object.keys(prev)) next[k] = false;
+      return next;
+    });
+  }, []);
+
   // Auto-scroll to relevant section when object type changes
   useEffect(() => {
     if (!selectedObject || !propertiesPanelRef.current) return;
@@ -360,11 +406,29 @@ export function Inspector() {
       {/* Properties panel */}
       <div ref={propertiesPanelRef} className="flex-1 overflow-auto">
         {selectedObject ? (
-          <div className="p-3 space-y-4">
-            <div className="py-2 border-b border-border flex items-center justify-between">
-              <span className="font-display text-[10px] uppercase tracking-widest text-muted-foreground">
-                Properties
-              </span>
+          <div className="space-y-0">
+            <div className="px-3 pt-3 pb-2 border-b border-border flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="font-display text-[10px] uppercase tracking-widest text-muted-foreground">
+                  Properties
+                </span>
+                <div className="flex items-center gap-0.5">
+                  <button
+                    onClick={expandAll}
+                    className="p-1 text-muted-foreground hover:text-foreground transition-colors"
+                    title="Expand all sections"
+                  >
+                    <Maximize2 className="w-3 h-3" />
+                  </button>
+                  <button
+                    onClick={collapseAll}
+                    className="p-1 text-muted-foreground hover:text-foreground transition-colors"
+                    title="Collapse all sections"
+                  >
+                    <Minimize2 className="w-3 h-3" />
+                  </button>
+                </div>
+              </div>
               <button
                 onClick={() => updateWithHistory({ locked: !selectedObject.locked })}
                 className={`flex items-center gap-1.5 px-2 py-1 text-xs transition-colors ${
@@ -388,6 +452,18 @@ export function Inspector() {
               </button>
             </div>
 
+            {/* ═══════════ LAYER & TRANSFORM ═══════════ */}
+            <CollapsibleSection
+              title="Layer & Transform"
+              isOpen={openSections['layer-transform'] ?? true}
+              onToggle={(open) => toggleSection('layer-transform', open)}
+              activeCount={
+                (selectedObject.rotation !== 0 ? 1 : 0) +
+                (selectedObject.scaleX !== 1 ? 1 : 0) +
+                (selectedObject.scaleY !== 1 ? 1 : 0)
+              }
+            >
+            <div className="space-y-4">
             {/* Layer Ordering */}
             <div className="space-y-2">
               <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
@@ -442,55 +518,6 @@ export function Inspector() {
               <p className="text-[9px] text-muted-foreground">
                 Move layer in front of or behind other objects
               </p>
-            </div>
-
-            {/* Opacity */}
-            <div className="space-y-2">
-              <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                Opacity
-              </Label>
-              <div className="flex items-center gap-3">
-                <Slider
-                  value={[selectedObject.opacity * 100]}
-                  onValueChange={([value]) => updateWithHistory({ opacity: value / 100 })}
-                  max={100}
-                  min={0}
-                  step={1}
-                  className="flex-1"
-                />
-                <span className="text-[11px] font-mono w-10 text-right">
-                  {Math.round(selectedObject.opacity * 100)}%
-                </span>
-              </div>
-            </div>
-
-            {/* Blend Mode */}
-            <div className="space-y-2">
-              <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                Blend Mode
-              </Label>
-              <select
-                value={selectedObject.mixBlendMode || 'normal'}
-                onChange={(e) => updateWithHistory({ mixBlendMode: e.target.value as any })}
-                className="w-full h-8 text-xs bg-secondary border border-border px-2"
-              >
-                <option value="normal">Normal</option>
-                <option value="multiply">Multiply</option>
-                <option value="screen">Screen</option>
-                <option value="overlay">Overlay</option>
-                <option value="darken">Darken</option>
-                <option value="lighten">Lighten</option>
-                <option value="color-dodge">Color Dodge</option>
-                <option value="color-burn">Color Burn</option>
-                <option value="hard-light">Hard Light</option>
-                <option value="soft-light">Soft Light</option>
-                <option value="difference">Difference</option>
-                <option value="exclusion">Exclusion</option>
-                <option value="hue">Hue</option>
-                <option value="saturation">Saturation</option>
-                <option value="color">Color</option>
-                <option value="luminosity">Luminosity</option>
-              </select>
             </div>
 
             {/* Rotation */}
@@ -554,6 +581,69 @@ export function Inspector() {
 
             {/* Real-world dimensions (mm) */}
             <RealDimensions object={selectedObject} />
+            </div>
+            </CollapsibleSection>
+
+            {/* ═══════════ APPEARANCE ═══════════ */}
+            <CollapsibleSection
+              title="Appearance"
+              isOpen={openSections['appearance'] ?? true}
+              onToggle={(open) => toggleSection('appearance', open)}
+              activeCount={
+                (selectedObject.opacity < 1 ? 1 : 0) +
+                (selectedObject.mixBlendMode && selectedObject.mixBlendMode !== 'normal' ? 1 : 0) +
+                ((selectedObject.type === 'text' || selectedObject.type === 'shape') && selectedObject.fill ? 1 : 0)
+              }
+            >
+            <div className="space-y-4">
+            {/* Opacity */}
+            <div className="space-y-2">
+              <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                Opacity
+              </Label>
+              <div className="flex items-center gap-3">
+                <Slider
+                  value={[selectedObject.opacity * 100]}
+                  onValueChange={([value]) => updateWithHistory({ opacity: value / 100 })}
+                  max={100}
+                  min={0}
+                  step={1}
+                  className="flex-1"
+                />
+                <span className="text-[11px] font-mono w-10 text-right">
+                  {Math.round(selectedObject.opacity * 100)}%
+                </span>
+              </div>
+            </div>
+
+            {/* Blend Mode */}
+            <div className="space-y-2">
+              <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                Blend Mode
+              </Label>
+              <select
+                value={selectedObject.mixBlendMode || 'normal'}
+                onChange={(e) => updateWithHistory({ mixBlendMode: e.target.value as any })}
+                className="w-full h-8 text-xs bg-secondary border border-border px-2"
+              >
+                <option value="normal">Normal</option>
+                <option value="multiply">Multiply</option>
+                <option value="screen">Screen</option>
+                <option value="overlay">Overlay</option>
+                <option value="darken">Darken</option>
+                <option value="lighten">Lighten</option>
+                <option value="color-dodge">Color Dodge</option>
+                <option value="color-burn">Color Burn</option>
+                <option value="hard-light">Hard Light</option>
+                <option value="soft-light">Soft Light</option>
+                <option value="difference">Difference</option>
+                <option value="exclusion">Exclusion</option>
+                <option value="hue">Hue</option>
+                <option value="saturation">Saturation</option>
+                <option value="color">Color</option>
+                <option value="luminosity">Luminosity</option>
+              </select>
+            </div>
 
             {/* Color (for text/shapes) */}
             {(selectedObject.type === 'text' || selectedObject.type === 'shape') && (
@@ -600,6 +690,8 @@ export function Inspector() {
                 />
               </div>
             )}
+            </div>
+            </CollapsibleSection>
 
             {/* Pattern Controls (for shapes with patterns) */}
             {selectedObject.type === 'shape' && selectedObject.patternType && (
@@ -1466,9 +1558,24 @@ export function Inspector() {
               </div>
             )}
 
-            {/* Text specific */}
+            {/* ═══════════ TEXT PROPERTIES ═══════════ */}
             {selectedObject.type === 'text' && (
-              <div data-section="text-controls">
+              <CollapsibleSection
+                title="Text Properties"
+                isOpen={openSections['text-properties'] ?? true}
+                onToggle={(open) => toggleSection('text-properties', open)}
+                activeCount={
+                  (selectedObject.fontFamily && selectedObject.fontFamily !== 'Roboto' ? 1 : 0) +
+                  (selectedObject.letterSpacing ? 1 : 0) +
+                  (selectedObject.lineHeight && selectedObject.lineHeight !== 1.2 ? 1 : 0) +
+                  (selectedObject.textTransform && selectedObject.textTransform !== 'none' ? 1 : 0) +
+                  (selectedObject.textDecoration && selectedObject.textDecoration !== 'none' ? 1 : 0) +
+                  (selectedObject.warpType && selectedObject.warpType !== 'none' ? 1 : 0) +
+                  (selectedObject.textShadow?.enabled ? 1 : 0)
+                }
+                className="border-t border-border"
+              >
+              <div data-section="text-controls" className="space-y-4">
                 <div className="space-y-2">
                   <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
                     Text
@@ -1847,16 +1954,31 @@ export function Inspector() {
                   </AccordionItem>
                 </Accordion>
               </div>
+              </CollapsibleSection>
             )}
 
             {/* ═══════════ FILTERS SECTION ═══════════ */}
-            <div className="pt-4 border-t border-border space-y-4">
-              <div className="py-2">
-                <span className="font-display text-[10px] uppercase tracking-widest text-muted-foreground">
-                  Filters
-                </span>
-              </div>
-
+            <CollapsibleSection
+              title="Filters"
+              isOpen={openSections['filters'] ?? false}
+              onToggle={(open) => toggleSection('filters', open)}
+              activeCount={
+                ((selectedObject.contrast ?? 100) !== 100 ? 1 : 0) +
+                ((selectedObject.brightness ?? 100) !== 100 ? 1 : 0) +
+                ((selectedObject.grayscale ?? 0) !== 0 ? 1 : 0) +
+                (selectedObject.threshold ? 1 : 0) +
+                ((selectedObject.blur ?? 0) !== 0 ? 1 : 0) +
+                ((selectedObject.saturate ?? 100) !== 100 ? 1 : 0) +
+                ((selectedObject.sepia ?? 0) !== 0 ? 1 : 0) +
+                ((selectedObject.hueRotate ?? 0) !== 0 ? 1 : 0) +
+                ((selectedObject.posterize ?? 32) !== 32 ? 1 : 0) +
+                (selectedObject.invert ? 1 : 0) +
+                (selectedObject.pixelate ? 1 : 0) +
+                (selectedObject.colorize ? 1 : 0) +
+                (selectedObject.duotone?.enabled ? 1 : 0)
+              }
+            >
+            <div className="space-y-4">
               {/* Contrast */}
               <div className="space-y-2">
                 <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
@@ -2229,100 +2351,97 @@ export function Inspector() {
                 Reset All Filters
               </button>
             </div>
+            </CollapsibleSection>
 
             {/* ═══════════ EFFECTS SECTION ═══════════ */}
-            <div className="pt-4 border-t border-border">
-              <div className="py-2">
-                <span className="font-display text-[10px] uppercase tracking-widest text-muted-foreground">
-                  Effects
-                </span>
-              </div>
+            <CollapsibleSection
+              title="Effects"
+              isOpen={openSections['effects'] ?? false}
+              onToggle={(open) => toggleSection('effects', open)}
+            >
               <ObjectEffects />
-            </div>
+            </CollapsibleSection>
 
-            {/* Advanced Effects (Gradients) */}
-            <Accordion type="single" collapsible className="border-t border-border">
-              <AccordionItem value="effects" className="border-none">
-                <AccordionTrigger className="py-3 px-0 hover:no-underline">
-                  <span className="font-display text-[10px] uppercase tracking-widest text-muted-foreground">
-                    Advanced (Gradients)
-                  </span>
-                </AccordionTrigger>
-                <AccordionContent className="pb-4">
-                  <AdvancedEffects />
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
+            {/* ═══════════ ADVANCED SECTION ═══════════ */}
+            <CollapsibleSection
+              title="Advanced"
+              isOpen={openSections['advanced'] ?? false}
+              onToggle={(open) => toggleSection('advanced', open)}
+            >
+              <div className="space-y-4">
+                <AdvancedEffects />
 
-            {/* Pattern Generator Section */}
-            {(selectedObject.type === 'shape' || selectedObject.type === 'image' || selectedObject.type === 'sticker') && (
-              <div className="pt-4 border-t border-border space-y-4">
-                <div className="py-2">
-                  <span className="font-display text-[10px] uppercase tracking-widest text-muted-foreground">
-                    Pattern Generator
-                  </span>
-                </div>
+                {/* Pattern Generator */}
+                {(selectedObject.type === 'shape' || selectedObject.type === 'image' || selectedObject.type === 'sticker') && (
+                  <div className="pt-4 border-t border-border space-y-4">
+                    <div className="py-2">
+                      <span className="font-display text-[10px] uppercase tracking-widest text-muted-foreground">
+                        Pattern Generator
+                      </span>
+                    </div>
 
-                {/* Gap Control */}
-                <div className="space-y-2">
-                  <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                    Gap (spacing)
-                  </Label>
-                  <div className="flex items-center gap-3">
-                    <Slider
-                      value={[patternGap]}
-                      onValueChange={([value]) => setPatternGap(value)}
-                      max={30}
-                      min={0}
-                      step={1}
-                      className="flex-1"
-                    />
-                    <span className="text-[11px] font-mono w-10 text-right">
-                      {patternGap}px
-                    </span>
+                    {/* Gap Control */}
+                    <div className="space-y-2">
+                      <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                        Gap (spacing)
+                      </Label>
+                      <div className="flex items-center gap-3">
+                        <Slider
+                          value={[patternGap]}
+                          onValueChange={([value]) => setPatternGap(value)}
+                          max={30}
+                          min={0}
+                          step={1}
+                          className="flex-1"
+                        />
+                        <span className="text-[11px] font-mono w-10 text-right">
+                          {patternGap}px
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Random Rotation Control */}
+                    <div className="space-y-2">
+                      <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                        Random Rotation
+                      </Label>
+                      <div className="flex items-center gap-3">
+                        <Slider
+                          value={[patternRandomRotation]}
+                          onValueChange={([value]) => setPatternRandomRotation(value)}
+                          max={180}
+                          min={0}
+                          step={5}
+                          className="flex-1"
+                        />
+                        <span className="text-[11px] font-mono w-10 text-right">
+                          {patternRandomRotation}°
+                        </span>
+                      </div>
+                      <p className="text-[9px] text-muted-foreground">
+                        0° = neat grid, 180° = chaotic sticker bomb
+                      </p>
+                    </div>
+
+                    {/* Make Pattern Button */}
+                    <button
+                      onClick={() => {
+                        if (selectedId) {
+                          generatePattern(selectedId, patternGap, patternRandomRotation, DECK_WIDTH, DECK_HEIGHT);
+                        }
+                      }}
+                      className="w-full bg-primary text-primary-foreground font-display text-sm uppercase tracking-wider py-2.5 px-4 border border-primary hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
+                    >
+                      <Grid3X3 className="w-4 h-4" />
+                      Make Pattern
+                    </button>
+                    <p className="text-[9px] text-muted-foreground text-center">
+                      Tiles the selected sticker across the entire deck
+                    </p>
                   </div>
-                </div>
-
-                {/* Random Rotation Control */}
-                <div className="space-y-2">
-                  <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                    Random Rotation
-                  </Label>
-                  <div className="flex items-center gap-3">
-                    <Slider
-                      value={[patternRandomRotation]}
-                      onValueChange={([value]) => setPatternRandomRotation(value)}
-                      max={180}
-                      min={0}
-                      step={5}
-                      className="flex-1"
-                    />
-                    <span className="text-[11px] font-mono w-10 text-right">
-                      {patternRandomRotation}°
-                    </span>
-                  </div>
-                  <p className="text-[9px] text-muted-foreground">
-                    0° = neat grid, 180° = chaotic sticker bomb
-                  </p>
-                </div>
-
-                {/* Make Pattern Button */}
-                <button
-                  onClick={() => {
-                    if (selectedId) {
-                      generatePattern(selectedId, patternGap, patternRandomRotation, DECK_WIDTH, DECK_HEIGHT);
-                    }
-                  }}
-                  className="w-full bg-primary text-primary-foreground font-display text-sm uppercase tracking-wider py-2.5 px-4 border border-primary hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
-                >
-                  <Grid3X3 className="w-4 h-4" />
-                  Make Pattern
-                </button>
-                <p className="text-[9px] text-muted-foreground text-center">
-                  Tiles the selected sticker across the entire deck
-                </p>
+                )}
               </div>
-            )}
+            </CollapsibleSection>
           </div>
         ) : selectedIds.length > 1 ? (
           <MultiSelectInspector />
