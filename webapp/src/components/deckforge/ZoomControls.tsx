@@ -1,4 +1,4 @@
-import { ZoomIn, ZoomOut, Undo, Redo, Wrench, Scan, Ruler, FlipVertical2, Maximize2 } from 'lucide-react';
+import { ZoomIn, ZoomOut, Undo, Redo, Wrench, Scan, Ruler, FlipVertical2, Maximize2, Grid2x2 } from 'lucide-react';
 import { useDeckForgeStore } from '@/store/deckforge';
 import { cn } from '@/lib/utils';
 import { EnhancedTooltip } from '@/components/ui/enhanced-tooltip';
@@ -10,6 +10,7 @@ export function ZoomControls() {
     showBleedSafeZone, toggleBleedSafeZone,
     measureToolActive, toggleMeasureTool,
     showSymmetryGuide, toggleSymmetryGuide,
+    showRulers, toggleRulers,
   } = useDeckForgeStore();
 
   // Haptic feedback helper for mobile
@@ -41,6 +42,7 @@ export function ZoomControls() {
 
   const btnClass = "w-12 h-12 md:w-9 md:h-9 flex items-center justify-center transition-all active:scale-95 touch-manipulation rounded touch-target";
   const btnDefault = "hover:bg-secondary active:bg-secondary/80";
+  const btnDisabled = "disabled:opacity-30 disabled:cursor-not-allowed";
   const btnActive = "bg-accent text-accent-foreground";
 
   return (
@@ -49,7 +51,7 @@ export function ZoomControls() {
         <button
           onClick={handleUndo}
           disabled={past.length === 0}
-          className="w-12 h-12 md:w-9 md:h-9 flex items-center justify-center hover:bg-secondary active:bg-secondary/80 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed transition-all touch-manipulation rounded touch-target"
+          className={cn(btnClass, btnDefault, btnDisabled)}
         >
           <Undo className="w-5 h-5 md:w-4 md:h-4" />
         </button>
@@ -59,7 +61,7 @@ export function ZoomControls() {
         <button
           onClick={handleRedo}
           disabled={future.length === 0}
-          className="w-12 h-12 md:w-9 md:h-9 flex items-center justify-center hover:bg-secondary active:bg-secondary/80 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed transition-all touch-manipulation rounded touch-target"
+          className={cn(btnClass, btnDefault, btnDisabled)}
         >
           <Redo className="w-5 h-5 md:w-4 md:h-4" />
         </button>
@@ -104,6 +106,19 @@ export function ZoomControls() {
       </EnhancedTooltip>
 
       <div className="w-px h-10 md:h-7 bg-border mx-0.5" />
+
+      <EnhancedTooltip
+        content={showRulers ? "Hide Rulers" : "Show Rulers"}
+        shortcut="Ctrl+Shift+R"
+        side="top"
+      >
+        <button
+          onClick={() => { vibrate(10); toggleRulers(); }}
+          className={cn(btnClass, showRulers ? btnActive : btnDefault)}
+        >
+          <Grid2x2 className="w-5 h-5 md:w-4 md:h-4" />
+        </button>
+      </EnhancedTooltip>
 
       <EnhancedTooltip
         content={showHardwareGuide ? "Hide Hardware Guide" : "Show Hardware Guide"}
