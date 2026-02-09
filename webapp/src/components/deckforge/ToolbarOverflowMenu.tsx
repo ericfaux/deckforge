@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { memo, ReactNode } from 'react';
 import { MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -32,7 +32,7 @@ interface ToolbarOverflowMenuProps {
   items: OverflowItem[];
 }
 
-export function ToolbarOverflowMenu({ items }: ToolbarOverflowMenuProps) {
+export const ToolbarOverflowMenu = memo(function ToolbarOverflowMenu({ items }: ToolbarOverflowMenuProps) {
   if (items.length === 0) return null;
 
   return (
@@ -91,4 +91,4 @@ export function ToolbarOverflowMenu({ items }: ToolbarOverflowMenuProps) {
       </DropdownMenuContent>
     </DropdownMenu>
   );
-}
+});
