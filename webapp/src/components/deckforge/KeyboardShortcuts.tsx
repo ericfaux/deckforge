@@ -3,6 +3,7 @@ import { Keyboard, Search, ChevronDown, ChevronRight, Printer } from 'lucide-rea
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
@@ -206,6 +207,9 @@ export function KeyboardShortcuts({ open: controlledOpen, onOpenChange }: Keyboa
               <Keyboard className="w-5 h-5" />
               Keyboard Shortcuts
             </DialogTitle>
+            <DialogDescription className="sr-only">
+              Browse and search all keyboard shortcuts available in DeckForge
+            </DialogDescription>
             <Button
               size="sm"
               variant="outline"
