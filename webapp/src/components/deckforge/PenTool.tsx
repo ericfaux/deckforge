@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Check, X, Undo, MousePointer2 } from 'lucide-react';
+import { useColorHistory } from '@/store/colorHistory';
+import { RecentColors } from './RecentColors';
 
 interface Point {
   x: number;
@@ -32,6 +34,12 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef, deckX, deckY
   const [strokeColor, setStrokeColor] = useState('#ffffff');
   const [opacity, setOpacity] = useState(1.0);
   const [dashStyle, setDashStyle] = useState<DashStyle>('solid');
+  const { addColor } = useColorHistory();
+
+  const handleStrokeColorChange = (color: string) => {
+    setStrokeColor(color);
+    addColor(color);
+  };
   // Click+drag curve creation state
   const [isDraggingHandle, setIsDraggingHandle] = useState(false);
   const [dragStartPoint, setDragStartPoint] = useState<{ x: number; y: number } | null>(null);
@@ -537,13 +545,14 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef, deckX, deckY
             {/* Color Swatches */}
             <div className="space-y-2">
               <span className="text-xs text-muted-foreground">Color</span>
+              <RecentColors onSelect={handleStrokeColorChange} currentColor={strokeColor} />
               <div className="grid grid-cols-6 gap-1.5">
                 {['#000000', '#ffffff', '#ccff00', '#ff6600', '#00ffff', '#ff00ff'].map((color) => (
                   <button
                     key={color}
                     onClick={(e) => {
                       e.stopPropagation();
-                      setStrokeColor(color);
+                      handleStrokeColorChange(color);
                     }}
                     onMouseDown={(e) => e.stopPropagation()}
                     className={`w-8 h-8 rounded-md border-2 transition-all hover:scale-110 ${
@@ -557,7 +566,7 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef, deckX, deckY
               <input
                 type="color"
                 value={strokeColor}
-                onChange={(e) => setStrokeColor(e.target.value)}
+                onChange={(e) => handleStrokeColorChange(e.target.value)}
                 onMouseDown={(e) => e.stopPropagation()}
                 onClick={(e) => e.stopPropagation()}
                 className="w-full h-8 border border-border rounded cursor-pointer"

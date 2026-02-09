@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Pipette, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useDeckForgeStore } from '@/store/deckforge';
+import { useColorHistory } from '@/store/colorHistory';
+import { RecentColors } from './RecentColors';
 import toast from 'react-hot-toast';
 import {
   Popover,
@@ -19,6 +21,12 @@ interface ColorPickerProps {
 export function ColorPicker({ value, onChange, label, showEyedropper = true }: ColorPickerProps) {
   const [isEyedropperOpen, setIsEyedropperOpen] = useState(false);
   const { objects } = useDeckForgeStore();
+  const { addColor } = useColorHistory();
+
+  const handleColorChange = (color: string) => {
+    onChange(color);
+    addColor(color);
+  };
 
   // Extract unique colors from canvas objects
   const canvasColors = Array.from(
@@ -30,7 +38,7 @@ export function ColorPicker({ value, onChange, label, showEyedropper = true }: C
   ).slice(0, 12); // Limit to 12 most recent colors
 
   const handlePickColor = (color: string) => {
-    onChange(color);
+    handleColorChange(color);
     setIsEyedropperOpen(false);
     toast.success('Color picked!', {
       description: color.toUpperCase(),
@@ -63,7 +71,7 @@ export function ColorPicker({ value, onChange, label, showEyedropper = true }: C
         <input
           type="color"
           value={value}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={(e) => handleColorChange(e.target.value)}
           className="flex-1 h-10 border border-border rounded cursor-pointer min-w-0"
         />
 
@@ -119,12 +127,15 @@ export function ColorPicker({ value, onChange, label, showEyedropper = true }: C
         )}
       </div>
 
+      {/* Recent colors */}
+      <RecentColors onSelect={handleColorChange} currentColor={value} />
+
       {/* Preset color swatches */}
       <div className="grid grid-cols-8 gap-1.5">
         {presetColors.map((color) => (
           <button
             key={color}
-            onClick={() => onChange(color)}
+            onClick={() => handleColorChange(color)}
             className={`w-8 h-8 rounded border-2 transition-all hover:scale-110 ${
               value.toLowerCase() === color.toLowerCase()
                 ? 'border-accent ring-2 ring-accent/30'
@@ -144,7 +155,7 @@ export function ColorPicker({ value, onChange, label, showEyedropper = true }: C
           onChange={(e) => {
             const val = e.target.value;
             if (/^#[0-9A-Fa-f]{0,6}$/.test(val) || val === '') {
-              onChange(val);
+              handleColorChange(val);
             }
           }}
           placeholder="#000000"
