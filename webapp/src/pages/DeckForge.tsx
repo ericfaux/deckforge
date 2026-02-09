@@ -83,6 +83,7 @@ export default function DeckForge() {
   const [isInitializing, setIsInitializing] = useState(true);
   const [saveStatus, setSaveStatus] = useState<string>('');
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const lastSavedPastLengthRef = useRef(past.length);
   const [isExporting, setIsExporting] = useState(false);
   const [loadingModal, setLoadingModal] = useState<string | null>(null);
   const [isVersionHistoryOpen, setIsVersionHistoryOpen] = useState(false);
@@ -133,6 +134,8 @@ export default function DeckForge() {
         designName,
       });
       setLocalSaveStatus('saved');
+      lastSavedPastLengthRef.current = past.length;
+      setHasUnsavedChanges(false);
       setTimeout(() => setLocalSaveStatus('idle'), 3000);
       toastUtils.success('Design saved locally!', 'Login to save to cloud and access from anywhere');
       return;
@@ -152,6 +155,7 @@ export default function DeckForge() {
           name: canvasState.name,
         });
         setSaveStatus('Saved!');
+        lastSavedPastLengthRef.current = past.length;
         setHasUnsavedChanges(false);
         toastUtils.success('Design saved successfully', 'Your changes have been saved to the cloud');
       } else {
@@ -162,6 +166,7 @@ export default function DeckForge() {
         });
         setDesignId(result.design.id);
         setSaveStatus('Saved!');
+        lastSavedPastLengthRef.current = past.length;
         setHasUnsavedChanges(false);
         toastUtils.success('Design created successfully', 'Your design has been saved');
       }
@@ -204,6 +209,7 @@ export default function DeckForge() {
         name: canvasState.name,
       });
       setSaveStatus('Auto-saved');
+      lastSavedPastLengthRef.current = past.length;
       setHasUnsavedChanges(false);
       setTimeout(() => setSaveStatus(''), 2000);
     } catch (err) {
@@ -422,12 +428,14 @@ export default function DeckForge() {
     return () => clearInterval(interval);
   }, [objects.length, createVersion]);
 
-  // Track unsaved changes
+  // Track unsaved changes by comparing past length to saved snapshot
   useEffect(() => {
-    if (past.length > 0 && !isSaving) {
+    if (past.length !== lastSavedPastLengthRef.current) {
       setHasUnsavedChanges(true);
+    } else {
+      setHasUnsavedChanges(false);
     }
-  }, [past.length, isSaving]);
+  }, [past.length]);
 
   // Auto-save after changes (debounced to reduce DB calls)
   useEffect(() => {
@@ -1239,13 +1247,18 @@ export default function DeckForge() {
                 </TooltipContent>
               </Tooltip>
               
-              {/* Saved status indicator */}
-              {(localSaveStatus === 'saved' || (saveStatus && saveStatus.includes('Saved'))) && (
+              {/* Save status indicator */}
+              {(localSaveStatus === 'saved' || (saveStatus && saveStatus.includes('Saved'))) ? (
                 <div className="flex items-center gap-1.5 animate-in fade-in-50 duration-300">
                   <div className="w-2 h-2 bg-green-500 rounded-full" />
                   <span className="text-[11px] text-green-600 font-medium">Saved</span>
                 </div>
-              )}
+              ) : hasUnsavedChanges && !isSaving ? (
+                <div className="flex items-center gap-1.5 animate-in fade-in-50 duration-300">
+                  <div className="w-2 h-2 bg-amber-500 rounded-full" />
+                  <span className="text-[11px] text-amber-600 font-medium hidden sm:inline">Unsaved changes</span>
+                </div>
+              ) : null}
 
               <Tooltip delayDuration={300}>
                 <TooltipTrigger asChild>
