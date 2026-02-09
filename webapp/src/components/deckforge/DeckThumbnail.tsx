@@ -110,18 +110,31 @@ const seedVisuals: Record<string, (w: number, h: number, clipId: string) => Reac
     );
   },
   'seed-005': (w, h) => {
-    // Carbon Fiber Pro - woven carbon pattern
+    // Carbon Fiber Pro - woven carbon fiber texture
     const cfId = `cf-pat-${Math.random().toString(36).slice(2, 6)}`;
+    const cfWeaveId = `cf-weave-${Math.random().toString(36).slice(2, 6)}`;
     return (
       <>
         <defs>
-          <pattern id={cfId} width={8} height={8} patternUnits="userSpaceOnUse">
-            <rect width={8} height={8} fill="#1a1a1a" />
-            <rect x={0} y={0} width={4} height={4} fill="#222222" />
-            <rect x={4} y={4} width={4} height={4} fill="#222222" />
+          {/* Carbon fiber weave pattern - diagonal twill, not a checkerboard */}
+          <pattern id={cfId} width={6} height={6} patternUnits="userSpaceOnUse">
+            <rect width={6} height={6} fill="#111111" />
+            {/* Diagonal weave lines */}
+            <rect x={0} y={0} width={3} height={2} fill="#1e1e1e" />
+            <rect x={3} y={2} width={3} height={2} fill="#1e1e1e" />
+            <rect x={0} y={4} width={3} height={2} fill="#1e1e1e" />
           </pattern>
+          {/* Subtle sheen overlay */}
+          <linearGradient id={cfWeaveId} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#333333" stopOpacity={0.15} />
+            <stop offset="40%" stopColor="#000000" stopOpacity={0} />
+            <stop offset="60%" stopColor="#333333" stopOpacity={0.1} />
+            <stop offset="100%" stopColor="#000000" stopOpacity={0} />
+          </linearGradient>
         </defs>
+        <rect width={w} height={h} fill="#111111" />
         <rect width={w} height={h} fill={`url(#${cfId})`} />
+        <rect width={w} height={h} fill={`url(#${cfWeaveId})`} />
         {/* Accent lines */}
         <line x1={w * 0.15} y1={0} x2={w * 0.15} y2={h} stroke="#ffd700" strokeWidth={1.5} opacity={0.6} />
         <line x1={w * 0.85} y1={0} x2={w * 0.85} y2={h} stroke="#ffd700" strokeWidth={1.5} opacity={0.6} />
@@ -299,18 +312,17 @@ export function DeckThumbnail({ designId, category, title, thumbnailUrl, classNa
 
         {/* Clipped deck content */}
         <g clipPath={`url(#${clipId})`}>
+          {/* Solid fallback background - ensures no transparency shows through */}
+          <rect width={W} height={H} fill="#1a1a1a" />
           {thumbnailUrl ? (
-            <>
-              <rect width={W} height={H} fill="#1a1a1a" />
-              <image
-                href={thumbnailUrl}
-                x={0}
-                y={0}
-                width={W}
-                height={H}
-                preserveAspectRatio="xMidYMid slice"
-              />
-            </>
+            <image
+              href={thumbnailUrl}
+              x={0}
+              y={0}
+              width={W}
+              height={H}
+              preserveAspectRatio="xMidYMid slice"
+            />
           ) : seedVisual ? (
             seedVisual(W, H, clipId)
           ) : (

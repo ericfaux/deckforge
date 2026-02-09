@@ -17,7 +17,9 @@ export function generateThumbnail(template: Template): string {
   const ctx = canvas.getContext('2d');
   if (!ctx) return '';
 
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  // Draw solid fallback background (no transparency in thumbnails)
+  ctx.fillStyle = '#1a1a1a';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   for (const obj of template.objects) {
     ctx.save();
