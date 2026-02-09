@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Download, Instagram, MessageCircle, Printer, FileImage, Loader2, Crown, Sparkles, FileText } from 'lucide-react';
 import { exportToPNG, exportToPDF } from '@/lib/export';
@@ -206,6 +206,9 @@ export function ExportPresetsModal({ open, onClose }: ExportPresetsModalProps) {
             <Download className="w-5 h-5 text-primary" />
             Quick Export
           </DialogTitle>
+          <DialogDescription className="sr-only">
+            Export your design in popular formats and sizes
+          </DialogDescription>
         </DialogHeader>
 
         <div className="py-4">
