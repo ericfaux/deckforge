@@ -17,6 +17,8 @@ import { HueRotateDial } from './HueRotateDial';
 import { GradientPicker } from './GradientPicker';
 import { ColorPicker } from './ColorPicker';
 import { UnifiedColorPicker, FillMode, GradientConfig } from './UnifiedColorPicker';
+import { useColorHistory } from '@/store/colorHistory';
+import { RecentColors } from './RecentColors';
 import { CollapsibleSection } from './CollapsibleSection';
 import { useDeckDimensions } from './WorkbenchStage';
 import { getMmPerPixel } from '@/lib/deck-guides';
@@ -229,6 +231,7 @@ function RealDimensions({ object }: { object: CanvasObject }) {
 export function Inspector() {
   const { objects, selectedId, selectedIds, updateObject, saveToHistory, generatePattern, moveLayer, bringToFront, sendToBack } = useDeckForgeStore();
   const { isAuthenticated } = useAuthStore();
+  const { addColor } = useColorHistory();
   
   // Get current deck dimensions (dynamic based on selected size)
   const { width: DECK_WIDTH, height: DECK_HEIGHT } = useDeckDimensions();
@@ -1939,12 +1942,16 @@ export function Inspector() {
                             <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
                               Shadow Color
                             </Label>
+                            <RecentColors
+                              onSelect={(color) => { addColor(color); updateWithHistory({ textShadow: { ...selectedObject.textShadow!, color } }); }}
+                              currentColor={selectedObject.textShadow?.color}
+                            />
                             <input
                               type="color"
                               value={selectedObject.textShadow?.color || '#000000'}
-                              onChange={(e) => updateWithHistory({
+                              onChange={(e) => { addColor(e.target.value); updateWithHistory({
                                 textShadow: { ...selectedObject.textShadow!, color: e.target.value }
-                              })}
+                              }); }}
                               className="w-full h-8 cursor-pointer"
                             />
                           </div>
@@ -2222,25 +2229,31 @@ export function Inspector() {
                   </button>
                 </div>
                 {selectedObject.colorize && (
-                  <div className="flex items-center gap-2 pt-1">
-                    <input
-                      type="color"
-                      value={selectedObject.colorize}
-                      onChange={(e) => updateWithHistory({ colorize: e.target.value })}
-                      className="w-8 h-8 border border-border cursor-pointer bg-transparent"
-                    />
-                    <div className="flex gap-1">
-                      {['#ccff00', '#ff6600', '#00ffff', '#ff00ff', '#ffffff'].map((color) => (
-                        <button
-                          key={color}
-                          onClick={() => updateWithHistory({ colorize: color })}
-                          className={`w-6 h-6 border ${
-                            selectedObject.colorize === color ? 'border-primary' : 'border-border'
-                          }`}
-                          style={{ backgroundColor: color }}
-                        />
-                      ))}
+                  <div className="space-y-2 pt-1">
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="color"
+                        value={selectedObject.colorize}
+                        onChange={(e) => { addColor(e.target.value); updateWithHistory({ colorize: e.target.value }); }}
+                        className="w-8 h-8 border border-border cursor-pointer bg-transparent"
+                      />
+                      <div className="flex gap-1">
+                        {['#ccff00', '#ff6600', '#00ffff', '#ff00ff', '#ffffff'].map((color) => (
+                          <button
+                            key={color}
+                            onClick={() => { addColor(color); updateWithHistory({ colorize: color }); }}
+                            className={`w-6 h-6 border ${
+                              selectedObject.colorize === color ? 'border-primary' : 'border-border'
+                            }`}
+                            style={{ backgroundColor: color }}
+                          />
+                        ))}
+                      </div>
                     </div>
+                    <RecentColors
+                      onSelect={(color) => { addColor(color); updateWithHistory({ colorize: color }); }}
+                      currentColor={selectedObject.colorize}
+                    />
                   </div>
                 )}
                 <p className="text-[9px] text-muted-foreground">
@@ -2280,18 +2293,18 @@ export function Inspector() {
                       <input
                         type="color"
                         value={selectedObject.duotone?.color1 || '#000000'}
-                        onChange={(e) => updateWithHistory({
+                        onChange={(e) => { addColor(e.target.value); updateWithHistory({
                           duotone: { ...selectedObject.duotone!, color1: e.target.value }
-                        })}
+                        }); }}
                         className="w-8 h-6 border border-border cursor-pointer bg-transparent"
                       />
                       <div className="flex gap-1">
                         {['#000000', '#1a1a1a', '#0000ff', '#ff0000'].map((c) => (
                           <button
                             key={c}
-                            onClick={() => updateWithHistory({
+                            onClick={() => { addColor(c); updateWithHistory({
                               duotone: { ...selectedObject.duotone!, color1: c }
-                            })}
+                            }); }}
                             className="w-5 h-5 border border-border"
                             style={{ backgroundColor: c }}
                           />
@@ -2303,24 +2316,28 @@ export function Inspector() {
                       <input
                         type="color"
                         value={selectedObject.duotone?.color2 || '#ccff00'}
-                        onChange={(e) => updateWithHistory({
+                        onChange={(e) => { addColor(e.target.value); updateWithHistory({
                           duotone: { ...selectedObject.duotone!, color2: e.target.value }
-                        })}
+                        }); }}
                         className="w-8 h-6 border border-border cursor-pointer bg-transparent"
                       />
                       <div className="flex gap-1">
                         {['#ccff00', '#00ffff', '#ff00ff', '#ffff00'].map((c) => (
                           <button
                             key={c}
-                            onClick={() => updateWithHistory({
+                            onClick={() => { addColor(c); updateWithHistory({
                               duotone: { ...selectedObject.duotone!, color2: c }
-                            })}
+                            }); }}
                             className="w-5 h-5 border border-border"
                             style={{ backgroundColor: c }}
                           />
                         ))}
                       </div>
                     </div>
+                    <RecentColors
+                      onSelect={(color) => { addColor(color); updateWithHistory({ duotone: { ...selectedObject.duotone!, color1: color } }); }}
+                      currentColor={selectedObject.duotone?.color1}
+                    />
                   </div>
                 )}
                 <p className="text-[9px] text-muted-foreground">

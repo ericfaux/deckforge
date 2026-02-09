@@ -1,4 +1,6 @@
 import { useDeckForgeStore, CanvasObject } from '@/store/deckforge';
+import { useColorHistory } from '@/store/colorHistory';
+import { RecentColors } from './RecentColors';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import {
@@ -13,6 +15,8 @@ export function ObjectEffects() {
   const selectedObject = objects.find((obj) => obj.id === selectedId);
 
   if (!selectedObject) return null;
+
+  const { addColor } = useColorHistory();
 
   const updateWithHistory = (updates: Partial<CanvasObject>) => {
     if (!selectedId) return;
@@ -94,12 +98,16 @@ export function ObjectEffects() {
                 <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
                   Shadow Color
                 </Label>
+                <RecentColors
+                  onSelect={(color) => { addColor(color); updateWithHistory({ dropShadow: { ...selectedObject.dropShadow!, color } }); }}
+                  currentColor={selectedObject.dropShadow?.color}
+                />
                 <input
                   type="color"
                   value={selectedObject.dropShadow?.color?.replace(/rgba?\(|\)|[\s,]+/g, '#') || '#000000'}
-                  onChange={(e) => updateWithHistory({
+                  onChange={(e) => { addColor(e.target.value); updateWithHistory({
                     dropShadow: { ...selectedObject.dropShadow!, color: e.target.value }
-                  })}
+                  }); }}
                   className="w-full h-8 cursor-pointer"
                 />
               </div>
@@ -165,12 +173,16 @@ export function ObjectEffects() {
                 <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
                   Glow Color
                 </Label>
+                <RecentColors
+                  onSelect={(color) => { addColor(color); updateWithHistory({ glow: { ...selectedObject.glow!, color } }); }}
+                  currentColor={selectedObject.glow?.color}
+                />
                 <input
                   type="color"
                   value={selectedObject.glow?.color || '#ffffff'}
-                  onChange={(e) => updateWithHistory({
+                  onChange={(e) => { addColor(e.target.value); updateWithHistory({
                     glow: { ...selectedObject.glow!, color: e.target.value }
-                  })}
+                  }); }}
                   className="w-full h-8 cursor-pointer"
                 />
               </div>
@@ -235,12 +247,16 @@ export function ObjectEffects() {
                 <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
                   Stroke Color
                 </Label>
+                <RecentColors
+                  onSelect={(color) => { addColor(color); updateWithHistory({ outlineStroke: { ...selectedObject.outlineStroke!, color } }); }}
+                  currentColor={selectedObject.outlineStroke?.color}
+                />
                 <input
                   type="color"
                   value={selectedObject.outlineStroke?.color || '#000000'}
-                  onChange={(e) => updateWithHistory({
+                  onChange={(e) => { addColor(e.target.value); updateWithHistory({
                     outlineStroke: { ...selectedObject.outlineStroke!, color: e.target.value }
-                  })}
+                  }); }}
                   className="w-full h-8 cursor-pointer"
                 />
               </div>

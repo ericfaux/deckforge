@@ -10,6 +10,8 @@ import { assetsAPI } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 import { Button } from '@/components/ui/button';
 import { importSVG, validateSVGFile } from '@/lib/svg-import';
+import { useColorHistory } from '@/store/colorHistory';
+import { RecentColors } from './RecentColors';
 import toast from 'react-hot-toast';
 import { toastUtils } from '@/lib/toast-utils';
 
@@ -173,6 +175,12 @@ function GraphicsContent({ onAddObject, deckCenterX, deckCenterY }: {
   deckCenterY: number;
 }) {
   const [shapeColor, setShapeColor] = useState('#ffffff');
+  const { addColor } = useColorHistory();
+
+  const handleShapeColorChange = (color: string) => {
+    setShapeColor(color);
+    addColor(color);
+  };
 
   const addShape = (asset: typeof graphicAssets[0]) => {
     onAddObject({
@@ -195,15 +203,18 @@ function GraphicsContent({ onAddObject, deckCenterX, deckCenterY }: {
   return (
     <div className="space-y-3">
       {/* Color Picker */}
-      <div className="flex items-center gap-2 p-2 border border-border rounded">
-        <label className="text-[10px] uppercase tracking-wider text-muted-foreground">Color:</label>
-        <input
-          type="color"
-          value={shapeColor}
-          onChange={(e) => setShapeColor(e.target.value)}
-          className="w-8 h-8 border border-border rounded cursor-pointer"
-        />
-        <span className="text-[10px] font-mono">{shapeColor}</span>
+      <div className="space-y-2 p-2 border border-border rounded">
+        <div className="flex items-center gap-2">
+          <label className="text-[10px] uppercase tracking-wider text-muted-foreground">Color:</label>
+          <input
+            type="color"
+            value={shapeColor}
+            onChange={(e) => handleShapeColorChange(e.target.value)}
+            className="w-8 h-8 border border-border rounded cursor-pointer"
+          />
+          <span className="text-[10px] font-mono">{shapeColor}</span>
+        </div>
+        <RecentColors onSelect={handleShapeColorChange} currentColor={shapeColor} />
       </div>
 
       <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
@@ -263,6 +274,12 @@ function StickersContent({ onAddObject, deckCenterX, deckCenterY }: {
 }) {
   const [activeCategory, setActiveCategory] = useState<keyof typeof stickerCategories>('edgy');
   const [stickerColor, setStickerColor] = useState('#ffffff');
+  const { addColor } = useColorHistory();
+
+  const handleStickerColorChange = (color: string) => {
+    setStickerColor(color);
+    addColor(color);
+  };
 
   const addSticker = (iconName: string) => {
     onAddObject({
@@ -289,15 +306,18 @@ function StickersContent({ onAddObject, deckCenterX, deckCenterY }: {
       </p>
 
       {/* Color Picker */}
-      <div className="flex items-center gap-2 p-2 border border-border rounded">
-        <label className="text-[10px] uppercase tracking-wider text-muted-foreground">Color:</label>
-        <input
-          type="color"
-          value={stickerColor}
-          onChange={(e) => setStickerColor(e.target.value)}
-          className="w-8 h-8 border border-border rounded cursor-pointer"
-        />
-        <span className="text-[10px] font-mono">{stickerColor}</span>
+      <div className="space-y-2 p-2 border border-border rounded">
+        <div className="flex items-center gap-2">
+          <label className="text-[10px] uppercase tracking-wider text-muted-foreground">Color:</label>
+          <input
+            type="color"
+            value={stickerColor}
+            onChange={(e) => handleStickerColorChange(e.target.value)}
+            className="w-8 h-8 border border-border rounded cursor-pointer"
+          />
+          <span className="text-[10px] font-mono">{stickerColor}</span>
+        </div>
+        <RecentColors onSelect={handleStickerColorChange} currentColor={stickerColor} />
       </div>
 
       {/* Category tabs */}
@@ -350,6 +370,17 @@ function PatternsContent({ onAddObject, deckCenterX, deckCenterY }: {
 }) {
   const [primaryColor, setPrimaryColor] = useState('#1e3a8a'); // Dark blue
   const [secondaryColor, setSecondaryColor] = useState('#3b82f6'); // Light blue
+  const { addColor } = useColorHistory();
+
+  const handlePrimaryColorChange = (color: string) => {
+    setPrimaryColor(color);
+    addColor(color);
+  };
+
+  const handleSecondaryColorChange = (color: string) => {
+    setSecondaryColor(color);
+    addColor(color);
+  };
   const [scale, setScale] = useState(20);
 
   const generatePatternCSS = (patternId: string): string => {
@@ -402,31 +433,34 @@ function PatternsContent({ onAddObject, deckCenterX, deckCenterY }: {
       </p>
 
       {/* Color pickers */}
-      <div className="grid grid-cols-2 gap-2">
-        <div className="space-y-1">
-          <span className="text-[9px] uppercase tracking-widest text-muted-foreground">Primary</span>
-          <div className="flex items-center gap-2">
-            <input
-              type="color"
-              value={primaryColor}
-              onChange={(e) => setPrimaryColor(e.target.value)}
-              className="w-8 h-8 border border-border cursor-pointer bg-transparent"
-            />
-            <span className="text-[9px] font-mono">{primaryColor}</span>
+      <div className="space-y-2">
+        <div className="grid grid-cols-2 gap-2">
+          <div className="space-y-1">
+            <span className="text-[9px] uppercase tracking-widest text-muted-foreground">Primary</span>
+            <div className="flex items-center gap-2">
+              <input
+                type="color"
+                value={primaryColor}
+                onChange={(e) => handlePrimaryColorChange(e.target.value)}
+                className="w-8 h-8 border border-border cursor-pointer bg-transparent"
+              />
+              <span className="text-[9px] font-mono">{primaryColor}</span>
+            </div>
+          </div>
+          <div className="space-y-1">
+            <span className="text-[9px] uppercase tracking-widest text-muted-foreground">Secondary</span>
+            <div className="flex items-center gap-2">
+              <input
+                type="color"
+                value={secondaryColor}
+                onChange={(e) => handleSecondaryColorChange(e.target.value)}
+                className="w-8 h-8 border border-border cursor-pointer bg-transparent"
+              />
+              <span className="text-[9px] font-mono">{secondaryColor}</span>
+            </div>
           </div>
         </div>
-        <div className="space-y-1">
-          <span className="text-[9px] uppercase tracking-widest text-muted-foreground">Secondary</span>
-          <div className="flex items-center gap-2">
-            <input
-              type="color"
-              value={secondaryColor}
-              onChange={(e) => setSecondaryColor(e.target.value)}
-              className="w-8 h-8 border border-border cursor-pointer bg-transparent"
-            />
-            <span className="text-[9px] font-mono">{secondaryColor}</span>
-          </div>
-        </div>
+        <RecentColors onSelect={handlePrimaryColorChange} currentColor={primaryColor} />
       </div>
 
       {/* Scale slider */}
@@ -544,6 +578,12 @@ function LinesContent({ onAddObject, deckCenterX, deckCenterY }: {
 }) {
   const [strokeColor, setStrokeColor] = useState('#ffffff');
   const [strokeWidth, setStrokeWidth] = useState(3);
+  const { addColor } = useColorHistory();
+
+  const handleLineColorChange = (color: string) => {
+    setStrokeColor(color);
+    addColor(color);
+  };
 
   const addLine = (lineType: 'straight' | 'curved' | 'zigzag' | 'dashed') => {
     onAddObject({
@@ -575,18 +615,19 @@ function LinesContent({ onAddObject, deckCenterX, deckCenterY }: {
       {/* Stroke Color */}
       <div className="space-y-2">
         <span className="text-[9px] uppercase tracking-widest text-muted-foreground">Stroke Color</span>
+        <RecentColors onSelect={handleLineColorChange} currentColor={strokeColor} />
         <div className="flex items-center gap-2">
           <input
             type="color"
             value={strokeColor}
-            onChange={(e) => setStrokeColor(e.target.value)}
+            onChange={(e) => handleLineColorChange(e.target.value)}
             className="w-8 h-8 border border-border cursor-pointer bg-transparent"
           />
           <div className="flex gap-1">
             {['#ffffff', '#ccff00', '#ff6600', '#00ffff', '#ff00ff', '#000000'].map((color) => (
               <button
                 key={color}
-                onClick={() => setStrokeColor(color)}
+                onClick={() => handleLineColorChange(color)}
                 className={`w-5 h-5 border ${
                   strokeColor === color ? 'border-primary' : 'border-border'
                 }`}

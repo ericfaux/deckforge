@@ -5,6 +5,8 @@ import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { useDeckForgeStore } from '@/store/deckforge';
+import { useColorHistory } from '@/store/colorHistory';
+import { RecentColors } from './RecentColors';
 import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
 
@@ -132,20 +134,7 @@ function buildRadialGradientCSS(stops: GradientStop[], cx = 50, cy = 50): string
 
 // ─── LocalStorage for saved palette / recent colors ──────────────
 
-const LS_RECENT = 'deckforge-recent-colors';
 const LS_SAVED = 'deckforge-saved-palette';
-
-function getRecentColors(): string[] {
-  try {
-    return JSON.parse(localStorage.getItem(LS_RECENT) || '[]').slice(0, 12);
-  } catch { return []; }
-}
-
-function addRecentColor(color: string) {
-  const recent = getRecentColors().filter(c => c.toLowerCase() !== color.toLowerCase());
-  recent.unshift(color);
-  localStorage.setItem(LS_RECENT, JSON.stringify(recent.slice(0, 12)));
-}
 
 function getSavedPalette(): string[] {
   try {
@@ -575,7 +564,7 @@ export function UnifiedColorPicker({
 }: UnifiedColorPickerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<FillMode>(fillMode);
-  const [recentColors, setRecentColors] = useState<string[]>(() => getRecentColors());
+  const { addColor } = useColorHistory();
   const [savedPalette, setSavedPalette] = useState<string[]>(() => getSavedPalette());
   const [showPalette, setShowPalette] = useState(false);
   const { objects } = useDeckForgeStore();
@@ -597,9 +586,8 @@ export function UnifiedColorPicker({
 
   const handleColorChange = useCallback((c: string) => {
     onColorChange(c);
-    addRecentColor(c);
-    setRecentColors(getRecentColors());
-  }, [onColorChange]);
+    addColor(c);
+  }, [onColorChange, addColor]);
 
   const handleTabChange = useCallback((tab: FillMode) => {
     setActiveTab(tab);
@@ -857,27 +845,7 @@ export function UnifiedColorPicker({
               )}
 
               {/* Recent colors */}
-              {recentColors.length > 0 && (
-                <div className="space-y-1">
-                  <span className="text-[9px] uppercase tracking-widest text-muted-foreground">Recent</span>
-                  <div className="grid grid-cols-8 gap-1">
-                    {recentColors.map((c, idx) => (
-                      <button
-                        key={`${c}-${idx}`}
-                        onClick={() => handleColorChange(c)}
-                        className={cn(
-                          "w-7 h-7 rounded border transition-all hover:scale-110",
-                          color.toLowerCase() === c.toLowerCase()
-                            ? "border-accent ring-1 ring-accent/30"
-                            : "border-border/50"
-                        )}
-                        style={{ backgroundColor: c }}
-                        title={c}
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
+              <RecentColors onSelect={handleColorChange} currentColor={color} />
 
               {/* Saved palette */}
               <div className="space-y-1">

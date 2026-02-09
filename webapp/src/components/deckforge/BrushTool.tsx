@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { X } from 'lucide-react';
 import type { BrushType, BrushPoint } from '@/store/deckforge';
+import { useColorHistory } from '@/store/colorHistory';
+import { RecentColors } from './RecentColors';
 
 // ---- Smoothing Algorithms ----
 
@@ -248,7 +250,13 @@ export function BrushTool({
   const [brushOpacity, setBrushOpacity] = useState(1.0);
   const [brushHardness, setBrushHardness] = useState(100);
   const [brushColor, setBrushColor] = useState('#ffffff');
+  const { addColor } = useColorHistory();
   const [pressureSensitivity, setPressureSensitivity] = useState(false);
+
+  const handleBrushColorChange = (color: string) => {
+    setBrushColor(color);
+    addColor(color);
+  };
   const [smoothing, setSmoothing] = useState(50);
 
   const [isDrawing, setIsDrawing] = useState(false);
@@ -612,6 +620,7 @@ export function BrushTool({
             {/* Color */}
             <div className="space-y-1.5">
               <span className="text-xs text-muted-foreground">Color</span>
+              <RecentColors onSelect={handleBrushColorChange} currentColor={brushColor} />
               <div className="grid grid-cols-6 gap-1.5">
                 {['#000000', '#ffffff', '#ccff00', '#ff6600', '#00ffff', '#ff00ff'].map(
                   (color) => (
@@ -619,7 +628,7 @@ export function BrushTool({
                       key={color}
                       onClick={(e) => {
                         e.stopPropagation();
-                        setBrushColor(color);
+                        handleBrushColorChange(color);
                       }}
                       onMouseDown={(e) => e.stopPropagation()}
                       className={`w-8 h-8 rounded-md border-2 transition-all hover:scale-110 ${
@@ -636,7 +645,7 @@ export function BrushTool({
               <input
                 type="color"
                 value={brushColor}
-                onChange={(e) => setBrushColor(e.target.value)}
+                onChange={(e) => handleBrushColorChange(e.target.value)}
                 onMouseDown={(e) => e.stopPropagation()}
                 onPointerDown={(e) => e.stopPropagation()}
                 className="w-full h-8 border border-border rounded cursor-pointer"
