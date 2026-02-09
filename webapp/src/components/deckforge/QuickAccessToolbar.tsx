@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { memo, useState, useMemo } from 'react';
 import { useDeckForgeStore } from '@/store/deckforge';
 import { Button } from '@/components/ui/button';
 import { EnhancedTooltip } from '@/components/ui/enhanced-tooltip';
@@ -27,7 +27,7 @@ import { toastUtils } from '@/lib/toast-utils';
  * Quick Access Toolbar - Common actions for selected objects
  * Shows only when objects are selected
  */
-export function QuickAccessToolbar() {
+export const QuickAccessToolbar = memo(function QuickAccessToolbar() {
   const {
     selectedIds,
     objects,
@@ -373,4 +373,4 @@ export function QuickAccessToolbar() {
       />
     </div>
   );
-}
+});

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { memo, useState } from 'react';
 import { Ruler, Check } from 'lucide-react';
 import { useDeckForgeStore } from '@/store/deckforge';
 import { DECK_SIZES, getDeckSize } from '@/lib/deck-sizes';
@@ -6,13 +6,13 @@ import { Button } from '@/components/ui/button';
 import { EnhancedTooltip } from '@/components/ui/enhanced-tooltip';
 import { toastUtils } from '@/lib/toast-utils';
 
-export function DeckSizeSelector() {
+export const DeckSizeSelector = memo(function DeckSizeSelector() {
   const { deckSizeId, setDeckSize } = useDeckForgeStore();
   const [isOpen, setIsOpen] = useState(false);
-  
+
   const currentSize = getDeckSize(deckSizeId);
-  
-  console.log('[DeckSizeSelector] Render - isOpen:', isOpen, 'currentSize:', currentSize.name);
+
+  if (import.meta.env.DEV) console.log('[DeckSizeSelector] Render - isOpen:', isOpen, 'currentSize:', currentSize.name);
 
   return (
     <div className="relative">
@@ -21,7 +21,7 @@ export function DeckSizeSelector() {
           variant="outline"
           size="sm"
           onClick={() => {
-            console.log('[DeckSizeSelector] Button clicked, isOpen:', isOpen);
+            if (import.meta.env.DEV) console.log('[DeckSizeSelector] Button clicked, isOpen:', isOpen);
             setIsOpen(!isOpen);
           }}
           className="gap-2 border-primary/30 hover:border-primary relative"
@@ -41,7 +41,7 @@ export function DeckSizeSelector() {
           <div
             className="fixed inset-0 z-[9998] bg-black/20"
             onClick={() => {
-              console.log('[DeckSizeSelector] Backdrop clicked');
+              if (import.meta.env.DEV) console.log('[DeckSizeSelector] Backdrop clicked');
               setIsOpen(false);
             }}
           />
@@ -68,10 +68,10 @@ export function DeckSizeSelector() {
                   <button
                     key={size.id}
                     onClick={() => {
-                      console.log('[DeckSizeSelector] Size clicked:', size.id);
+                      if (import.meta.env.DEV) console.log('[DeckSizeSelector] Size clicked:', size.id);
                       setDeckSize(size.id);
                       setIsOpen(false);
-                      console.log('[DeckSizeSelector] Deck size changed to:', size.name);
+                      if (import.meta.env.DEV) console.log('[DeckSizeSelector] Deck size changed to:', size.name);
                       toastUtils.success(
                         `Deck size changed to ${size.name}`,
                         `${size.width}mm × ${size.length}mm • ${size.recommended}`
@@ -119,4 +119,4 @@ export function DeckSizeSelector() {
       )}
     </div>
   );
-}
+});
