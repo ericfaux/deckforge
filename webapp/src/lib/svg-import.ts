@@ -1,4 +1,5 @@
 import { CanvasObject } from '@/store/deckforge';
+import { logger } from './logger';
 
 /**
  * Parse SVG file and convert to canvas objects
@@ -248,7 +249,7 @@ function parseComplexShape(
     
     document.body.removeChild(tempSvg);
   } catch (err) {
-    console.warn('Failed to get accurate bounding box, using defaults', err);
+    logger.warn('Failed to get accurate bounding box, using defaults', err);
   }
   
   // Clone the element and wrap in a standalone SVG

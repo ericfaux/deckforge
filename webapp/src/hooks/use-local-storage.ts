@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { logger } from '@/lib/logger';
 
 /**
  * Custom hook for persisting state in localStorage with type safety
@@ -20,7 +21,7 @@ export function useLocalStorage<T>(
       const item = window.localStorage.getItem(key);
       return item ? JSON.parse(item) : initialValue;
     } catch (error) {
-      console.warn(`Error reading localStorage key "${key}":`, error);
+      logger.warn(`Error reading localStorage key "${key}":`, error);
       return initialValue;
     }
   });
@@ -84,7 +85,7 @@ export function useLocalStorage<T>(
           const newValue = e.newValue ? JSON.parse(e.newValue) : initialValue;
           setStoredValue(newValue);
         } catch (error) {
-          console.warn(`Error parsing localStorage value for key "${key}":`, error);
+          logger.warn(`Error parsing localStorage value for key "${key}":`, error);
         }
       }
     };

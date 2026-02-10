@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import toast from 'react-hot-toast';
+import { logger } from '@/lib/logger';
 
 export interface UseCopyToClipboardReturn {
   copied: boolean;
@@ -39,7 +40,7 @@ export function useCopyToClipboard(
   const copy = useCallback(
     async (text: string): Promise<boolean> => {
       if (!navigator?.clipboard) {
-        console.warn('Clipboard API not available');
+        logger.warn('Clipboard API not available');
         if (showToast) {
           toast.error(errorMessage);
         }

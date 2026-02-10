@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { logger } from '@/lib/logger';
 
 /**
  * Custom hook for persisting state in sessionStorage with type safety
@@ -21,7 +22,7 @@ export function useSessionStorage<T>(
       const item = window.sessionStorage.getItem(key);
       return item ? JSON.parse(item) : initialValue;
     } catch (error) {
-      console.warn(`Error reading sessionStorage key "${key}":`, error);
+      logger.warn(`Error reading sessionStorage key "${key}":`, error);
       return initialValue;
     }
   });

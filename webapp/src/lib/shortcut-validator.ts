@@ -1,4 +1,5 @@
 import { SHORTCUTS } from './shortcuts';
+import { logger } from './logger';
 
 interface ShortcutConflict {
   shortcut: string | string[];
@@ -89,12 +90,12 @@ export function logShortcutConflicts() {
   const conflicts = validateShortcuts();
   
   if (conflicts.length === 0) {
-    console.log('✅ No keyboard shortcut conflicts detected');
+    logger.log('No keyboard shortcut conflicts detected');
     return;
   }
 
-  console.warn(`⚠️ Found ${conflicts.length} keyboard shortcut conflicts:`);
+  logger.warn(`Found ${conflicts.length} keyboard shortcut conflicts:`);
   conflicts.forEach(({ shortcut, actions }) => {
-    console.warn(`  "${shortcut}" is used by:`, actions);
+    logger.warn(`  "${shortcut}" is used by:`, actions);
   });
 }

@@ -27,6 +27,7 @@ import { getDeckSize } from '@/lib/deck-sizes';
 import { useSwipeGesture } from '@/hooks/use-swipe-gesture';
 import { useLongPress } from '@/hooks/use-long-press';
 import { generateArcPath, generateWarpPath, pathPointsToSvgPath, hasTextWarp } from '@/lib/text-warp';
+import { logger } from '@/lib/logger';
 
 // Legacy deck dimensions (kept for backward compatibility - DO NOT USE)
 // Use useDeckDimensions() hook instead for dynamic sizing
@@ -1490,7 +1491,7 @@ export function WorkbenchStage() {
 
   // Force re-center when deck size changes
   useEffect(() => {
-    console.log('[DeckForge] Deck size changed:', deckSizeId, `→ ${deckWidth}x${deckHeight}px`);
+    logger.log('[DeckForge] Deck size changed:', deckSizeId, `→ ${deckWidth}x${deckHeight}px`);
     // Trigger re-calculation of deck position by forcing container size update
     if (containerRef.current) {
       setContainerSize({
@@ -1534,7 +1535,7 @@ export function WorkbenchStage() {
     
     // Perform undo
     undo();
-    console.log('[WorkbenchStage] Swipe undo triggered');
+    logger.log('[WorkbenchStage] Swipe undo triggered');
   }, [past.length, undo]);
 
   const handleSwipeRedo = useCallback(() => {
@@ -1551,7 +1552,7 @@ export function WorkbenchStage() {
     
     // Perform redo
     redo();
-    console.log('[WorkbenchStage] Swipe redo triggered');
+    logger.log('[WorkbenchStage] Swipe redo triggered');
   }, [future.length, redo]);
 
   // Add swipe gesture support (3-finger swipes for undo/redo)
@@ -1567,7 +1568,8 @@ export function WorkbenchStage() {
     if (containerRef.current && swipeRef.current !== containerRef.current) {
       swipeRef.current = containerRef.current;
     }
-  }, [swipeRef]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Handle wheel zoom
   const handleWheel = useCallback((e: React.WheelEvent) => {
