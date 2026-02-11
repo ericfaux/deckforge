@@ -1,5 +1,5 @@
 import { X, Skull, Flame, Zap, Sword, Radio, Disc3, Music2, Triangle, Hexagon, Circle, Square, Star, Heart, Crown, Anchor, Target, Eye, Hand, Rocket, Ghost, Bug, Cat, Dog, Fish, Bird, Leaf, Sun, Moon, Cloud, Sparkles, Upload, Trash2, Loader2, FileImage, Mountain, Waves, Pizza, Coffee, Gamepad2, Headphones, Camera, Feather, Compass, Crosshair, Swords, Shield, Award, Trophy, Medal, Laugh, Frown, Smile, Glasses, Watch, Lock, Key, Fingerprint, Bomb, Cherry, Dumbbell, Link, Bike, Footprints, Cigarette, Sprout, Drumstick, Wine, Beer, Gem, Zap as Lightning, Brain, Fingerprint as Print, Bandage, Siren, Gauge, Plane, Car, Bus, Train } from 'lucide-react';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useDeckForgeStore, ToolType, CanvasObject, TextureType } from '@/store/deckforge';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -275,10 +275,28 @@ function StickersContent({ onAddObject, deckCenterX, deckCenterY }: {
   const [activeCategory, setActiveCategory] = useState<keyof typeof stickerCategories>('edgy');
   const [stickerColor, setStickerColor] = useState('#ffffff');
   const { addColor } = useColorHistory();
+  const { selectedIds, objects, updateObject } = useDeckForgeStore();
+
+  // Sync color picker with selected sticker's color
+  useEffect(() => {
+    if (selectedIds.length === 1) {
+      const obj = objects.find((o) => o.id === selectedIds[0]);
+      if (obj?.type === 'sticker' && obj.stroke) {
+        setStickerColor(obj.stroke);
+      }
+    }
+  }, [selectedIds, objects]);
 
   const handleStickerColorChange = (color: string) => {
     setStickerColor(color);
     addColor(color);
+    // Also update any currently selected stickers
+    selectedIds.forEach((id) => {
+      const obj = objects.find((o) => o.id === id);
+      if (obj?.type === 'sticker') {
+        updateObject(id, { stroke: color });
+      }
+    });
   };
 
   const addSticker = (iconName: string) => {
