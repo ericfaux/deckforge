@@ -488,11 +488,12 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef, deckX, deckY
       </g>
 
       {/* Floating toolbar */}
-      <foreignObject x={20} y={100} width={240} height={420}>
+      <foreignObject x={20} y={100} width={240} height={Math.min(620, viewportHeight - 120)}>
         <div
-          className="bg-card border border-border rounded-lg p-3 shadow-2xl"
+          className="bg-card border border-border rounded-lg p-3 shadow-2xl max-h-full overflow-y-auto"
           onMouseDown={(e) => e.stopPropagation()}
           onClick={(e) => e.stopPropagation()}
+          onWheel={(e) => e.stopPropagation()}
         >
           <div className="flex flex-col gap-2.5">
             {/* Mode selector */}
