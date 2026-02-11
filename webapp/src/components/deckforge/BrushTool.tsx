@@ -95,7 +95,7 @@ function smoothPoints(raw: BrushPoint[], smoothingLevel: number): BrushPoint[] {
 
 // ---- SVG Path Generators ----
 
-function buildStrokePath(points: BrushPoint[]): string {
+export function buildStrokePath(points: BrushPoint[]): string {
   if (points.length === 0) return '';
   let d = `M ${points[0].x} ${points[0].y}`;
   for (let i = 1; i < points.length; i++) {
@@ -105,7 +105,7 @@ function buildStrokePath(points: BrushPoint[]): string {
 }
 
 // Generate variable-width outline path from points with pressure
-function buildVariableWidthPath(
+export function buildVariableWidthPath(
   points: BrushPoint[],
   baseSize: number,
   pressureSensitivity: boolean,

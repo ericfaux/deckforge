@@ -20,8 +20,8 @@ import { CanvasContextMenu } from './ContextMenu';
 import { ContextMenu as ContextMenuRoot, ContextMenuTrigger } from '@/components/ui/context-menu';
 import { SelectionBox } from './SelectionBox';
 import { MultiSelectBoundingBox } from './MultiSelectBoundingBox';
-import type { LucideIcon } from 'lucide-react';
-import { Skull, Flame, Zap, Sword, Ghost, Bug, Eye, Target, Radio, Disc3, Music2, Rocket, Crown, Anchor, Sun, Moon, Triangle, Hexagon, Circle, Square, Star, Heart, Sparkles, Hand, Cat, Dog, Fish, Bird, Leaf, Cloud, Undo2, Redo2 } from 'lucide-react';
+import { Undo2, Redo2 } from 'lucide-react';
+import { iconMap } from '@/lib/icon-map';
 import toast from 'react-hot-toast';
 import { getDeckSize } from '@/lib/deck-sizes';
 import { useSwipeGesture } from '@/hooks/use-swipe-gesture';
@@ -47,39 +47,6 @@ export function useDeckDimensions() {
   };
 }
 
-// Map icon names to Lucide components
-const iconMap: Record<string, LucideIcon> = {
-  Skull,
-  Flame,
-  Zap,
-  Sword,
-  Ghost,
-  Bug,
-  Eye,
-  Target,
-  Radio,
-  Disc: Disc3,
-  Music: Music2,
-  Rocket,
-  Crown,
-  Anchor,
-  Sun,
-  Moon,
-  Triangle,
-  Hexagon,
-  Circle,
-  Square,
-  Star,
-  Heart,
-  Sparkles,
-  Hand,
-  Cat,
-  Dog,
-  Fish,
-  Bird,
-  Leaf,
-  Cloud,
-};
 
 // Generate deck path for SVG
 // Uses accurate fingerboard proportions: nose is slightly rounder than tail

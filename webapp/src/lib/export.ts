@@ -1,5 +1,9 @@
 import { CanvasObject } from '@/store/deckforge';
 import { generateArcPath, generateWarpPath, pathPointsToSvgPath, hasTextWarp } from '@/lib/text-warp';
+import { buildStrokePath, buildVariableWidthPath } from '@/components/deckforge/BrushTool';
+import { iconMap } from '@/lib/icon-map';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { createElement } from 'react';
 
 // Default deck dimensions (32mm standard size)
 const DEFAULT_DECK_WIDTH = 96;
@@ -95,38 +99,7 @@ export async function exportToPNG(
 
   // Render each object in order (bottom to top)
   for (const obj of objects) {
-    ctx.save();
-
-    // Apply transformations
-    const centerX = obj.x + (obj.width * obj.scaleX) / 2;
-    const centerY = obj.y + (obj.height * obj.scaleY) / 2;
-
-    ctx.translate(centerX, centerY);
-    ctx.rotate((obj.rotation * Math.PI) / 180);
-    ctx.globalAlpha = obj.opacity;
-
-    // Apply blend mode
-    if (obj.blendMode && obj.blendMode !== 'normal') {
-      ctx.globalCompositeOperation = obj.blendMode;
-    }
-
-    const x = -(obj.width * obj.scaleX) / 2;
-    const y = -(obj.height * obj.scaleY) / 2;
-    const width = obj.width * obj.scaleX;
-    const height = obj.height * obj.scaleY;
-
-    // Render based on object type
-    if (obj.type === 'image' && obj.src) {
-      await renderImage(ctx, obj.src, x, y, width, height, obj);
-    } else if (obj.type === 'text' && obj.text) {
-      renderText(ctx, obj.text, x, y, width, height, obj, objects);
-    } else if (obj.type === 'shape') {
-      renderShape(ctx, x, y, width, height, obj);
-    } else if (obj.type === 'line') {
-      renderLine(ctx, obj);
-    }
-
-    ctx.restore();
+    await renderObject(ctx, obj, objects);
   }
 
   // Convert to blob
@@ -178,6 +151,317 @@ async function renderImage(
     };
 
     img.src = src;
+  });
+}
+
+/**
+ * Render a single object to the canvas context.
+ * Handles all object types including groups (recursive).
+ */
+async function renderObject(
+  ctx: CanvasRenderingContext2D,
+  obj: CanvasObject,
+  allObjects: CanvasObject[]
+): Promise<void> {
+  // Skip hidden objects
+  if (obj.hidden) return;
+
+  ctx.save();
+
+  if (obj.type === 'group' && obj.children && obj.children.length > 0) {
+    // Groups use origin-based transform (translate to obj.x/y, then rotate/scale)
+    ctx.translate(obj.x, obj.y);
+    ctx.rotate((obj.rotation * Math.PI) / 180);
+    ctx.scale(obj.scaleX, obj.scaleY);
+    ctx.globalAlpha *= obj.opacity;
+
+    if (obj.mixBlendMode && obj.mixBlendMode !== 'normal') {
+      ctx.globalCompositeOperation = obj.mixBlendMode;
+    }
+
+    for (const child of obj.children) {
+      await renderObject(ctx, child, allObjects);
+    }
+  } else if (obj.type === 'path' && obj.brushType) {
+    // Brush strokes use absolute coordinates - apply rotation around center
+    const centerX = obj.x + (obj.width * obj.scaleX) / 2;
+    const centerY = obj.y + (obj.height * obj.scaleY) / 2;
+    ctx.translate(centerX, centerY);
+    ctx.rotate((obj.rotation * Math.PI) / 180);
+    ctx.globalAlpha *= obj.opacity;
+    ctx.translate(-centerX, -centerY);
+
+    await renderBrushStrokeCanvas(ctx, obj);
+  } else if (obj.type === 'path' && obj.pathPoints && obj.pathPoints.length > 0) {
+    // Pen tool paths use absolute coordinates - apply rotation around center
+    const centerX = obj.x + (obj.width * obj.scaleX) / 2;
+    const centerY = obj.y + (obj.height * obj.scaleY) / 2;
+    ctx.translate(centerX, centerY);
+    ctx.rotate((obj.rotation * Math.PI) / 180);
+    ctx.globalAlpha *= obj.opacity;
+    ctx.translate(-centerX, -centerY);
+
+    renderPenPath(ctx, obj);
+  } else {
+    // Standard center-based transform for image, text, shape, line, sticker, texture
+    const centerX = obj.x + (obj.width * obj.scaleX) / 2;
+    const centerY = obj.y + (obj.height * obj.scaleY) / 2;
+    ctx.translate(centerX, centerY);
+    ctx.rotate((obj.rotation * Math.PI) / 180);
+    ctx.globalAlpha *= obj.opacity;
+
+    if (obj.blendMode && obj.blendMode !== 'normal') {
+      ctx.globalCompositeOperation = obj.blendMode;
+    }
+    if (obj.mixBlendMode && obj.mixBlendMode !== 'normal') {
+      ctx.globalCompositeOperation = obj.mixBlendMode;
+    }
+
+    const x = -(obj.width * obj.scaleX) / 2;
+    const y = -(obj.height * obj.scaleY) / 2;
+    const w = obj.width * obj.scaleX;
+    const h = obj.height * obj.scaleY;
+
+    if (obj.type === 'image' && obj.src) {
+      await renderImage(ctx, obj.src, x, y, w, h, obj);
+    } else if (obj.type === 'text' && obj.text) {
+      renderText(ctx, obj.text, x, y, w, h, obj, allObjects);
+    } else if (obj.type === 'shape') {
+      renderShape(ctx, x, y, w, h, obj);
+    } else if (obj.type === 'line') {
+      renderLine(ctx, obj);
+    } else if (obj.type === 'sticker' && obj.iconName) {
+      await renderSticker(ctx, x, y, w, h, obj);
+    } else if (obj.type === 'texture' && obj.textureUrl) {
+      await renderTexture(ctx, x, y, w, h, obj);
+    }
+  }
+
+  ctx.restore();
+}
+
+/**
+ * Render a pen tool path (bezier curves) to Canvas 2D.
+ * Path points are in absolute coordinates.
+ */
+function renderPenPath(
+  ctx: CanvasRenderingContext2D,
+  obj: CanvasObject
+): void {
+  if (!obj.pathPoints || obj.pathPoints.length === 0) return;
+
+  ctx.beginPath();
+
+  const p0 = obj.pathPoints[0];
+  ctx.moveTo(p0.x, p0.y);
+
+  for (let i = 1; i < obj.pathPoints.length; i++) {
+    const point = obj.pathPoints[i];
+    if (point.cp1x !== undefined && point.cp1y !== undefined) {
+      if (point.cp2x !== undefined && point.cp2y !== undefined) {
+        ctx.bezierCurveTo(
+          point.cp1x, point.cp1y,
+          point.cp2x, point.cp2y,
+          point.x, point.y
+        );
+      } else {
+        ctx.quadraticCurveTo(
+          point.cp1x, point.cp1y,
+          point.x, point.y
+        );
+      }
+    } else {
+      ctx.lineTo(point.x, point.y);
+    }
+  }
+
+  if (obj.pathClosed) {
+    ctx.closePath();
+    ctx.fillStyle = obj.fill || '#000000';
+    ctx.fill();
+  }
+
+  if (obj.stroke) {
+    ctx.strokeStyle = obj.stroke;
+    ctx.lineWidth = obj.strokeWidth || 2;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    // Handle dash style
+    const sw = obj.strokeWidth || 2;
+    if (obj.strokeDashStyle === 'dashed') {
+      ctx.setLineDash([sw * 4, sw * 3]);
+    } else if (obj.strokeDashStyle === 'dotted') {
+      ctx.setLineDash([sw * 0.5, sw * 2]);
+    }
+
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+}
+
+/**
+ * Render brush strokes (pencil, marker, calligraphy, spray) to Canvas 2D.
+ * Points are in absolute coordinates (context already transformed).
+ */
+async function renderBrushStrokeCanvas(
+  ctx: CanvasRenderingContext2D,
+  obj: CanvasObject
+): Promise<void> {
+  const brushType = obj.brushType || 'pencil';
+  const color = obj.stroke || '#ffffff';
+  const size = obj.brushSize || 4;
+  const points = obj.brushPoints || [];
+
+  if (brushType === 'spray' && obj.sprayDots && obj.sprayDots.length > 0) {
+    ctx.fillStyle = color;
+    for (const dot of obj.sprayDots) {
+      ctx.beginPath();
+      ctx.arc(dot.x, dot.y, dot.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    return;
+  }
+
+  if (brushType === 'calligraphy' && points.length >= 2) {
+    const outlinePath = buildVariableWidthPath(points, size, true, 45);
+    if (outlinePath) {
+      const path2d = new Path2D(outlinePath);
+      ctx.fillStyle = color;
+      ctx.fill(path2d);
+    }
+    return;
+  }
+
+  if (brushType === 'marker') {
+    const pts = obj.pathPoints?.length
+      ? obj.pathPoints.map(p => ({ ...p, pressure: 0.5 }))
+      : points;
+    if (pts.length >= 2) {
+      const pathD = buildStrokePath(pts);
+      if (pathD) {
+        const path2d = new Path2D(pathD);
+        ctx.strokeStyle = color;
+        ctx.lineWidth = size;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.globalAlpha *= 0.6;
+        ctx.stroke(path2d);
+      }
+    }
+    return;
+  }
+
+  // Pencil (default)
+  const hasPressure = points.length >= 2 && points.some(p => p.pressure !== 0.5);
+  if (hasPressure && points.length >= 2) {
+    const outlinePath = buildVariableWidthPath(points, size, true);
+    if (outlinePath) {
+      const path2d = new Path2D(outlinePath);
+      ctx.fillStyle = color;
+      ctx.fill(path2d);
+    }
+  } else {
+    const pts = obj.pathPoints?.length
+      ? obj.pathPoints.map(p => ({ ...p, pressure: 0.5 }))
+      : points;
+    if (pts.length >= 2) {
+      const pathD = buildStrokePath(pts);
+      if (pathD) {
+        const path2d = new Path2D(pathD);
+        ctx.strokeStyle = color;
+        ctx.lineWidth = size;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.stroke(path2d);
+      }
+    }
+  }
+}
+
+/**
+ * Render a Lucide icon sticker to Canvas 2D.
+ * Converts the React icon component to SVG, then draws as image.
+ */
+async function renderSticker(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  obj: CanvasObject
+): Promise<void> {
+  const IconComponent = iconMap[obj.iconName!];
+  if (!IconComponent) return;
+
+  const strokeW = obj.strokeWidth || 3;
+  const strokeColor = obj.stroke || '#ffffff';
+  const fillColor = obj.solidFill ? strokeColor : 'none';
+
+  // Render icon component to SVG markup
+  const svgMarkup = renderToStaticMarkup(
+    createElement(IconComponent, {
+      width: 24,
+      height: 24,
+      strokeWidth: strokeW,
+      stroke: strokeColor,
+      fill: fillColor,
+    })
+  );
+
+  // Ensure SVG has namespace
+  const svgString = svgMarkup.includes('xmlns')
+    ? svgMarkup
+    : svgMarkup.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"');
+
+  const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+
+  return new Promise<void>((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      ctx.drawImage(img, x, y, width, height);
+      URL.revokeObjectURL(url);
+      resolve();
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      resolve();
+    };
+    img.src = url;
+  });
+}
+
+/**
+ * Render a texture image with blend mode to Canvas 2D.
+ */
+async function renderTexture(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  obj: CanvasObject
+): Promise<void> {
+  if (!obj.textureUrl) return;
+
+  // Apply blend mode for texture
+  const blendMode = obj.blendMode || obj.mixBlendMode || 'multiply';
+  if (blendMode && blendMode !== 'normal') {
+    ctx.globalCompositeOperation = blendMode;
+  }
+
+  return new Promise<void>((resolve) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      ctx.drawImage(img, x, y, width, height);
+      resolve();
+    };
+    img.onerror = () => {
+      resolve();
+    };
+    img.src = obj.textureUrl!;
   });
 }
 
