@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { marketplaceAPI, MarketplaceDesign } from '@/lib/marketplace';
+import { marketplaceSeedDesigns } from '@/lib/marketplace-seed';
 import { Heart, Download, DollarSign, ExternalLink, ShoppingCart, Loader2, Star, Eye, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import toast from 'react-hot-toast';
@@ -22,15 +23,32 @@ export default function MarketplaceDesignPage() {
 
   const loadDesign = async () => {
     if (!id) return;
-    
+
     setLoading(true);
     try {
+      // Seed designs exist only in local data, not in the database
+      if (id.startsWith('seed-')) {
+        const seedDesign = marketplaceSeedDesigns.find(d => d.id === id);
+        if (seedDesign) {
+          setDesign(seedDesign);
+          setIsFavorited(seedDesign.is_favorited || false);
+        }
+        return;
+      }
+
       const data = await marketplaceAPI.getDesign(id);
       setDesign(data);
       setIsFavorited(data.is_favorited || false);
     } catch (error: any) {
-      toast.error('Failed to load design');
-      console.error(error);
+      console.error('Failed to load design:', error);
+      // If the API fails, try falling back to seed data
+      const seedDesign = marketplaceSeedDesigns.find(d => d.id === id);
+      if (seedDesign) {
+        setDesign(seedDesign);
+        setIsFavorited(seedDesign.is_favorited || false);
+      } else {
+        toast.error('Failed to load design');
+      }
     } finally {
       setLoading(false);
     }
