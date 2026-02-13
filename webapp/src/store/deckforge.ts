@@ -440,6 +440,7 @@ export const useDeckForgeStore = create<DeckForgeState>((set, get) => ({
     set({
       objects: [...state.objects, newObj],
       selectedId: newObj.id,
+      selectedIds: [newObj.id],
     });
   },
 
@@ -453,6 +454,7 @@ export const useDeckForgeStore = create<DeckForgeState>((set, get) => ({
     set({
       objects: [...state.objects, ...newObjs],
       selectedId: null,
+      selectedIds: [],
     });
   },
 
@@ -467,9 +469,11 @@ export const useDeckForgeStore = create<DeckForgeState>((set, get) => ({
   deleteObject: (id) => {
     const state = get();
     state.saveToHistory();
+    const newSelectedIds = state.selectedIds.filter(sid => sid !== id);
     set({
       objects: state.objects.filter((obj) => obj.id !== id),
       selectedId: state.selectedId === id ? null : state.selectedId,
+      selectedIds: newSelectedIds,
     });
   },
 
@@ -758,6 +762,7 @@ export const useDeckForgeStore = create<DeckForgeState>((set, get) => ({
       objects: previous.objects,
       future: [{ objects: JSON.parse(JSON.stringify(objects)) }, ...future],
       selectedId: null,
+      selectedIds: [],
       undoRedoChangedIds: changedIds,
       lastAction: 'undo',
     });
@@ -790,6 +795,7 @@ export const useDeckForgeStore = create<DeckForgeState>((set, get) => ({
       objects: next.objects,
       future: newFuture,
       selectedId: null,
+      selectedIds: [],
       undoRedoChangedIds: changedIds,
       lastAction: 'redo',
     });
@@ -889,6 +895,7 @@ export const useDeckForgeStore = create<DeckForgeState>((set, get) => ({
     set({
       objects: [...filteredObjects, ...tiledObjects],
       selectedId: null,
+      selectedIds: [],
     });
   },
 
@@ -931,6 +938,7 @@ export const useDeckForgeStore = create<DeckForgeState>((set, get) => ({
     set({
       objects: [...state.objects, ...duplicatedObjects],
       selectedId: null,
+      selectedIds: [],
     });
   },
 
@@ -978,6 +986,7 @@ export const useDeckForgeStore = create<DeckForgeState>((set, get) => ({
       objects,
       textureOverlays: designData.textureOverlays || defaultTextureOverlays,
       selectedId: null,
+      selectedIds: [],
       past: [],
       future: [],
       designName: designData.name || 'Untitled Design',
@@ -1005,6 +1014,7 @@ export const useDeckForgeStore = create<DeckForgeState>((set, get) => ({
     set({
       objects: [],
       selectedId: null,
+      selectedIds: [],
       past: [],
       future: [],
       textureOverlays: defaultTextureOverlays,
@@ -1068,6 +1078,7 @@ export const useDeckForgeStore = create<DeckForgeState>((set, get) => ({
       objects: JSON.parse(JSON.stringify(version.objects)),
       textureOverlays: JSON.parse(JSON.stringify(version.textureOverlays)),
       selectedId: null,
+      selectedIds: [],
       past: [],
       future: [],
       currentVersionId: versionId,
