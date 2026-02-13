@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, memo } from 'react';
-import { Search, ChevronDown, Upload, Clock, X } from 'lucide-react';
+import { Search, ChevronDown, Upload, Clock, X, Loader2, WifiOff } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import {
   GoogleFont,
@@ -23,6 +23,8 @@ interface GoogleFontPickerProps {
   onChange: (fontFamily: string) => void;
   userFonts: Font[];
   onUploadClick: () => void;
+  loading?: boolean;
+  error?: string;
 }
 
 // Individual font item with Intersection Observer for lazy loading preview
@@ -127,7 +129,7 @@ const SORTS: { value: FontSort; label: string }[] = [
   { value: 'recent', label: 'Recent' },
 ];
 
-export function GoogleFontPicker({ value, onChange, userFonts, onUploadClick }: GoogleFontPickerProps) {
+export function GoogleFontPicker({ value, onChange, userFonts, onUploadClick, loading, error }: GoogleFontPickerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState<FontCategory | 'all'>('all');
@@ -290,6 +292,20 @@ export function GoogleFontPicker({ value, onChange, userFonts, onUploadClick }: 
                   ))}
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Loading / error status */}
+          {loading && (
+            <div className="px-3 py-1.5 border-b border-border flex items-center gap-1.5 text-[10px] text-muted-foreground">
+              <Loader2 className="w-3 h-3 animate-spin" />
+              Loading custom fonts...
+            </div>
+          )}
+          {!loading && error && (
+            <div className="px-3 py-1.5 border-b border-border flex items-center gap-1.5 text-[10px] text-muted-foreground">
+              <WifiOff className="w-3 h-3" />
+              Using offline fonts
             </div>
           )}
 
