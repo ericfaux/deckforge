@@ -20,12 +20,19 @@ import {
   AlignHorizontalJustifyCenter,
   ArrowRightLeft,
   ArrowUpDown,
+  MoveUp,
+  MoveDown,
+  Bold,
+  Italic,
+  FlipHorizontal2,
+  FlipVertical2,
+  Ungroup,
 } from 'lucide-react';
 import { toastUtils } from '@/lib/toast-utils';
 
 /**
  * Quick Access Toolbar - Common actions for selected objects
- * Shows only when objects are selected
+ * Shows contextual actions based on selection type
  */
 export const QuickAccessToolbar = memo(function QuickAccessToolbar() {
   const {
@@ -39,6 +46,7 @@ export const QuickAccessToolbar = memo(function QuickAccessToolbar() {
     updateObject,
     saveToHistory,
     groupObjects,
+    ungroupObject,
     alignObjects,
     distributeObjects,
   } = useDeckForgeStore();
@@ -56,18 +64,31 @@ export const QuickAccessToolbar = memo(function QuickAccessToolbar() {
   }, [objects, selectedIds]);
 
   // Memoize computed properties
-  const { allLocked, anyLocked, allHidden, anyHidden } = useMemo(() => {
+  const { allLocked, allHidden } = useMemo(() => {
     return {
       allLocked: selectedObjects.length > 0 && selectedObjects.every((obj) => obj.locked),
-      anyLocked: selectedObjects.some((obj) => obj.locked),
       allHidden: selectedObjects.length > 0 && selectedObjects.every((obj) => obj.hidden),
-      anyHidden: selectedObjects.some((obj) => obj.hidden),
+    };
+  }, [selectedObjects]);
+
+  // Memoize selection type detection
+  const { hasText, hasFlippable, hasGroup, singleTextObj } = useMemo(() => {
+    const textObjs = selectedObjects.filter((obj) => obj.type === 'text');
+    const flippableObjs = selectedObjects.filter((obj) =>
+      ['shape', 'sticker', 'image', 'path'].includes(obj.type)
+    );
+    const groupObjs = selectedObjects.filter((obj) => obj.type === 'group');
+    return {
+      hasText: textObjs.length > 0,
+      hasFlippable: flippableObjs.length > 0,
+      hasGroup: groupObjs.length > 0,
+      singleTextObj: textObjs.length === 1 && selectedObjects.length === 1 ? textObjs[0] : null,
     };
   }, [selectedObjects]);
 
   const handleDuplicate = () => {
     if (selectedIds.length === 0) return;
-    
+
     saveToHistory();
     selectedIds.forEach((id) => {
       const obj = objects.find((o) => o.id === id);
@@ -100,14 +121,22 @@ export const QuickAccessToolbar = memo(function QuickAccessToolbar() {
 
   const handleGroup = () => {
     if (selectedIds.length < 2) return;
-    
+
     groupObjects(selectedIds);
     toastUtils.success('Objects grouped');
   };
 
+  const handleUngroup = () => {
+    const groupObjs = selectedObjects.filter((obj) => obj.type === 'group');
+    if (groupObjs.length === 0) return;
+
+    groupObjs.forEach((obj) => ungroupObject(obj.id));
+    toastUtils.success('Ungrouped');
+  };
+
   const handleToggleLock = () => {
     if (selectedIds.length === 0) return;
-    
+
     saveToHistory();
     const newLockState = !allLocked;
     selectedIds.forEach((id) => {
@@ -118,13 +147,91 @@ export const QuickAccessToolbar = memo(function QuickAccessToolbar() {
 
   const handleToggleVisibility = () => {
     if (selectedIds.length === 0) return;
-    
+
     saveToHistory();
     const newHiddenState = !allHidden;
     selectedIds.forEach((id) => {
       updateObject(id, { hidden: newHiddenState });
     });
     toastUtils.success(newHiddenState ? 'Hidden' : 'Visible');
+  };
+
+  const handleBringForward = () => {
+    if (selectedIds.length === 0) return;
+    saveToHistory();
+    const newObjects = [...objects];
+    // Process from end to start to avoid index shifting issues
+    const indices = selectedIds
+      .map((id) => newObjects.findIndex((o) => o.id === id))
+      .filter((i) => i !== -1)
+      .sort((a, b) => b - a);
+    for (const idx of indices) {
+      if (idx < newObjects.length - 1) {
+        [newObjects[idx], newObjects[idx + 1]] = [newObjects[idx + 1], newObjects[idx]];
+      }
+    }
+    useDeckForgeStore.setState({ objects: newObjects });
+    toastUtils.success('Brought forward');
+  };
+
+  const handleSendBackward = () => {
+    if (selectedIds.length === 0) return;
+    saveToHistory();
+    const newObjects = [...objects];
+    // Process from start to end to avoid index shifting issues
+    const indices = selectedIds
+      .map((id) => newObjects.findIndex((o) => o.id === id))
+      .filter((i) => i !== -1)
+      .sort((a, b) => a - b);
+    for (const idx of indices) {
+      if (idx > 0) {
+        [newObjects[idx], newObjects[idx - 1]] = [newObjects[idx - 1], newObjects[idx]];
+      }
+    }
+    useDeckForgeStore.setState({ objects: newObjects });
+    toastUtils.success('Sent backward');
+  };
+
+  const handleToggleBold = () => {
+    if (!singleTextObj) return;
+    saveToHistory();
+    const newWeight = singleTextObj.fontWeight === '700' ? '400' : '700';
+    updateObject(singleTextObj.id, { fontWeight: newWeight });
+  };
+
+  const handleToggleItalic = () => {
+    if (!singleTextObj) return;
+    saveToHistory();
+    const newStyle = singleTextObj.fontStyle === 'italic' ? 'normal' : 'italic';
+    updateObject(singleTextObj.id, { fontStyle: newStyle });
+  };
+
+  const handleTextAlign = (align: 'left' | 'center' | 'right') => {
+    if (!singleTextObj) return;
+    saveToHistory();
+    updateObject(singleTextObj.id, { align });
+  };
+
+  const handleFlipHorizontal = () => {
+    if (selectedIds.length === 0) return;
+    saveToHistory();
+    selectedObjects
+      .filter((obj) => ['shape', 'sticker', 'image', 'path'].includes(obj.type))
+      .forEach((obj) => {
+        updateObject(obj.id, { flipH: !obj.flipH });
+      });
+    toastUtils.success('Flipped horizontally');
+  };
+
+  const handleFlipVertical = () => {
+    if (selectedIds.length === 0) return;
+    saveToHistory();
+    selectedObjects
+      .filter((obj) => ['shape', 'sticker', 'image', 'path'].includes(obj.type))
+      .forEach((obj) => {
+        updateObject(obj.id, { flipV: !obj.flipV });
+      });
+    toastUtils.success('Flipped vertically');
   };
 
   const handleAlign = (alignment: 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom') => {
@@ -166,7 +273,7 @@ export const QuickAccessToolbar = memo(function QuickAccessToolbar() {
             <Undo2 className="h-4 w-4" />
           </Button>
         </EnhancedTooltip>
-        
+
         <EnhancedTooltip content="Redo" shortcut="Ctrl+Shift+Z">
           <Button
             variant="ghost"
@@ -183,6 +290,7 @@ export const QuickAccessToolbar = memo(function QuickAccessToolbar() {
       {/* Selection-dependent actions */}
       {hasSelection && (
         <>
+          {/* Common actions: Duplicate, Delete */}
           <div className="flex items-center gap-1 border-r border-border pr-2 shrink-0">
             <EnhancedTooltip content="Duplicate" shortcut="Ctrl+D">
               <Button
@@ -207,6 +315,32 @@ export const QuickAccessToolbar = memo(function QuickAccessToolbar() {
             </EnhancedTooltip>
           </div>
 
+          {/* Z-ordering: Bring Forward, Send Backward */}
+          <div className="flex items-center gap-1 border-r border-border pr-2 shrink-0">
+            <EnhancedTooltip content="Bring Forward" shortcut="Ctrl+]">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0"
+                onClick={handleBringForward}
+              >
+                <MoveUp className="h-4 w-4" />
+              </Button>
+            </EnhancedTooltip>
+
+            <EnhancedTooltip content="Send Backward" shortcut="Ctrl+[">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0"
+                onClick={handleSendBackward}
+              >
+                <MoveDown className="h-4 w-4" />
+              </Button>
+            </EnhancedTooltip>
+          </div>
+
+          {/* Lock/Unlock, Hide/Show */}
           <div className="flex items-center gap-1 border-r border-border pr-2 shrink-0">
             <EnhancedTooltip content={allLocked ? 'Unlock' : 'Lock'}>
               <Button
@@ -239,25 +373,129 @@ export const QuickAccessToolbar = memo(function QuickAccessToolbar() {
             </EnhancedTooltip>
           </div>
 
-          {multipleSelected && (
+          {/* Group (2+ objects) / Ungroup (group selected) */}
+          {(multipleSelected || hasGroup) && (
             <div className="flex items-center gap-1 border-r border-border pr-2 shrink-0">
-              <EnhancedTooltip content="Group" shortcut="Ctrl+G">
+              {multipleSelected && (
+                <EnhancedTooltip content="Group" shortcut="Ctrl+G">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    onClick={handleGroup}
+                  >
+                    <Layers className="h-4 w-4" />
+                  </Button>
+                </EnhancedTooltip>
+              )}
+              {hasGroup && (
+                <EnhancedTooltip content="Ungroup" shortcut="Ctrl+Shift+G">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    onClick={handleUngroup}
+                  >
+                    <Ungroup className="h-4 w-4" />
+                  </Button>
+                </EnhancedTooltip>
+              )}
+            </div>
+          )}
+
+          {/* Text formatting: Bold, Italic, Text Alignment */}
+          {singleTextObj && (
+            <div className="flex items-center gap-1 border-r border-border pr-2 shrink-0">
+              <EnhancedTooltip content="Bold" shortcut="Ctrl+B">
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-8 w-8 p-0"
-                  onClick={handleGroup}
+                  className={`h-8 w-8 p-0 ${singleTextObj.fontWeight === '700' ? 'bg-accent text-accent-foreground' : ''}`}
+                  onClick={handleToggleBold}
                 >
-                  <Layers className="h-4 w-4" />
+                  <Bold className="h-4 w-4" />
+                </Button>
+              </EnhancedTooltip>
+
+              <EnhancedTooltip content="Italic" shortcut="Ctrl+I">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={`h-8 w-8 p-0 ${singleTextObj.fontStyle === 'italic' ? 'bg-accent text-accent-foreground' : ''}`}
+                  onClick={handleToggleItalic}
+                >
+                  <Italic className="h-4 w-4" />
+                </Button>
+              </EnhancedTooltip>
+
+              <div className="w-px h-5 bg-border mx-0.5" />
+
+              <EnhancedTooltip content="Align text left">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={`h-8 w-8 p-0 ${(!singleTextObj.align || singleTextObj.align === 'left') ? 'bg-accent text-accent-foreground' : ''}`}
+                  onClick={() => handleTextAlign('left')}
+                >
+                  <AlignLeft className="h-4 w-4" />
+                </Button>
+              </EnhancedTooltip>
+
+              <EnhancedTooltip content="Align text center">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={`h-8 w-8 p-0 ${singleTextObj.align === 'center' ? 'bg-accent text-accent-foreground' : ''}`}
+                  onClick={() => handleTextAlign('center')}
+                >
+                  <AlignCenter className="h-4 w-4" />
+                </Button>
+              </EnhancedTooltip>
+
+              <EnhancedTooltip content="Align text right">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={`h-8 w-8 p-0 ${singleTextObj.align === 'right' ? 'bg-accent text-accent-foreground' : ''}`}
+                  onClick={() => handleTextAlign('right')}
+                >
+                  <AlignRight className="h-4 w-4" />
                 </Button>
               </EnhancedTooltip>
             </div>
           )}
 
-          {/* Alignment - available for single or multiple selection */}
-          {hasSelection && (
+          {/* Flip: for shapes, stickers, images, paths */}
+          {hasFlippable && (
+            <div className="flex items-center gap-1 border-r border-border pr-2 shrink-0">
+              <EnhancedTooltip content="Flip Horizontal">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0"
+                  onClick={handleFlipHorizontal}
+                >
+                  <FlipHorizontal2 className="h-4 w-4" />
+                </Button>
+              </EnhancedTooltip>
+
+              <EnhancedTooltip content="Flip Vertical">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0"
+                  onClick={handleFlipVertical}
+                >
+                  <FlipVertical2 className="h-4 w-4" />
+                </Button>
+              </EnhancedTooltip>
+            </div>
+          )}
+
+          {/* Alignment - available for multiple selection */}
+          {multipleSelected && (
             <div className="flex items-center gap-1 shrink-0">
-              <EnhancedTooltip content={multipleSelected ? "Align objects left" : "Align to left edge"}>
+              <EnhancedTooltip content="Align objects left">
                 <Button
                   variant="ghost"
                   size="sm"
@@ -268,7 +506,7 @@ export const QuickAccessToolbar = memo(function QuickAccessToolbar() {
                 </Button>
               </EnhancedTooltip>
 
-              <EnhancedTooltip content={multipleSelected ? "Align objects center" : "Center horizontally"}>
+              <EnhancedTooltip content="Align objects center">
                 <Button
                   variant="ghost"
                   size="sm"
@@ -279,7 +517,7 @@ export const QuickAccessToolbar = memo(function QuickAccessToolbar() {
                 </Button>
               </EnhancedTooltip>
 
-              <EnhancedTooltip content={multipleSelected ? "Align objects right" : "Align to right edge"}>
+              <EnhancedTooltip content="Align objects right">
                 <Button
                   variant="ghost"
                   size="sm"
@@ -290,7 +528,7 @@ export const QuickAccessToolbar = memo(function QuickAccessToolbar() {
                 </Button>
               </EnhancedTooltip>
 
-              <EnhancedTooltip content={multipleSelected ? "Align objects top" : "Align to top edge"}>
+              <EnhancedTooltip content="Align objects top">
                 <Button
                   variant="ghost"
                   size="sm"
@@ -301,7 +539,7 @@ export const QuickAccessToolbar = memo(function QuickAccessToolbar() {
                 </Button>
               </EnhancedTooltip>
 
-              <EnhancedTooltip content={multipleSelected ? "Align objects middle" : "Center vertically"}>
+              <EnhancedTooltip content="Align objects middle">
                 <Button
                   variant="ghost"
                   size="sm"
@@ -312,7 +550,7 @@ export const QuickAccessToolbar = memo(function QuickAccessToolbar() {
                 </Button>
               </EnhancedTooltip>
 
-              <EnhancedTooltip content={multipleSelected ? "Align objects bottom" : "Align to bottom edge"}>
+              <EnhancedTooltip content="Align objects bottom">
                 <Button
                   variant="ghost"
                   size="sm"
