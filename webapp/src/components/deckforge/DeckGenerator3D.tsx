@@ -1,5 +1,5 @@
-import React, { useRef, useState, useCallback } from 'react';
-import { Canvas } from '@react-three/fiber';
+import React, { useRef, useState, useCallback, useEffect } from 'react';
+import { Canvas, useThree } from '@react-three/fiber';
 import { OrbitControls, PerspectiveCamera } from '@react-three/drei';
 import * as THREE from 'three';
 import { STLExporter } from 'three/examples/jsm/exporters/STLExporter.js';
@@ -71,35 +71,37 @@ const DECK_PRESETS = {
 function generateDeckGeometry(params: DeckParams): THREE.BufferGeometry {
   const { length, width, concaveDepth, noseKick, tailKick, thickness, wheelbase, truckHoleSpacing, holeSize } = params;
   
-  const widthSegments = 30;  // Enough for smooth concave
-  const lengthSegments = 50;  // Enough for smooth kicks, not too many (causes ripples)
+  const widthSegments = 64;  // High enough for smooth concave and edge transitions
+  const lengthSegments = 100;  // High enough for smooth kicks and rounded nose/tail
   
   const noseKickRad = (noseKick * Math.PI) / 180;
   const tailKickRad = (tailKick * Math.PI) / 180;
   
-  // Helper: Check if point is inside deck outline (popsicle shape with rounded nose/tail)
+  // Helper: Check if point is inside deck outline (popsicle shape with semicircular nose/tail)
   const isInsideDeckOutline = (normalizedX: number, normalizedZ: number): boolean => {
+    const zFromCenter = Math.abs(normalizedZ - 0.5) * 2; // 0 at center, 1 at edges
+
     // Center section (middle 70%) is full width rectangular
     if (normalizedX >= 0.15 && normalizedX <= 0.85) {
-      return true; // Full width in center
+      return zFromCenter <= 1.0;
     }
-    
-    // Nose (last 15%) - rounded semicircle
+
+    // Nose (last 15%) - true semicircle: z^2 + x^2 <= r^2
     if (normalizedX > 0.85) {
-      const noseProgress = (normalizedX - 0.85) / 0.15; // 0 to 1
-      const maxWidth = 1 - noseProgress; // Tapers from full width to 0
-      const zFromCenter = Math.abs(normalizedZ - 0.5) * 2; // 0 at center, 1 at edges
-      return zFromCenter <= maxWidth; // Inside the tapered region
-    }
-    
-    // Tail (first 15%) - rounded semicircle
-    if (normalizedX < 0.15) {
-      const tailProgress = normalizedX / 0.15; // 0 to 1
-      const maxWidth = tailProgress; // Tapers from 0 to full width
-      const zFromCenter = Math.abs(normalizedZ - 0.5) * 2;
+      const noseProgress = (normalizedX - 0.85) / 0.15; // 0 to 1 (center to tip)
+      // Semicircle: maxWidth = sqrt(1 - noseProgress^2) instead of linear (1 - noseProgress)
+      const maxWidth = Math.sqrt(1 - noseProgress * noseProgress);
       return zFromCenter <= maxWidth;
     }
-    
+
+    // Tail (first 15%) - true semicircle
+    if (normalizedX < 0.15) {
+      const tailProgress = 1 - (normalizedX / 0.15); // 0 at body, 1 at tip
+      // Semicircle: maxWidth = sqrt(1 - tailProgress^2) instead of linear
+      const maxWidth = Math.sqrt(1 - tailProgress * tailProgress);
+      return zFromCenter <= maxWidth;
+    }
+
     return false;
   };
   
@@ -317,7 +319,7 @@ function generateDeckGeometry(params: DeckParams): THREE.BufferGeometry {
   }
   
   // 4. TRUCK HOLE WALLS (create cylinder walls for each hole)
-  const holeSegments = 16;  // Smoothness of hole circles
+  const holeSegments = 32;  // Smooth hole circles
   for (const hole of truckHoles) {
     const holeVerts: number[] = [];
     const holeBottomVerts: number[] = [];
@@ -394,23 +396,67 @@ function validateGeometry(geometry: THREE.BufferGeometry): { valid: boolean; err
   };
 }
 
+/** Dispose WebGL resources (renderer, scene) on unmount to prevent context loss */
+function ResourceCleanup() {
+  const { gl, scene } = useThree();
+  useEffect(() => {
+    return () => {
+      scene.traverse((obj) => {
+        if (obj instanceof THREE.Mesh) {
+          obj.geometry?.dispose();
+          if (Array.isArray(obj.material)) {
+            obj.material.forEach((m) => m.dispose());
+          } else {
+            obj.material?.dispose();
+          }
+        }
+      });
+      gl.dispose();
+    };
+  }, [gl, scene]);
+  return null;
+}
+
 function FingerboardDeck({ params, textureUrl }: { params: DeckParams; textureUrl: string | null }) {
   const meshRef = useRef<THREE.Mesh>(null);
   const [texture, setTexture] = useState<THREE.Texture | null>(null);
+  const prevTextureRef = useRef<THREE.Texture | null>(null);
 
-  // Load texture
-  React.useEffect(() => {
+  // Load texture — dispose previous texture to avoid leaks
+  useEffect(() => {
     if (textureUrl) {
       const loader = new THREE.TextureLoader();
       loader.load(textureUrl, (loadedTexture) => {
         loadedTexture.wrapS = THREE.RepeatWrapping;
         loadedTexture.wrapT = THREE.RepeatWrapping;
+        if (prevTextureRef.current) {
+          prevTextureRef.current.dispose();
+        }
+        prevTextureRef.current = loadedTexture;
         setTexture(loadedTexture);
       });
     }
+    return () => {
+      if (prevTextureRef.current) {
+        prevTextureRef.current.dispose();
+        prevTextureRef.current = null;
+      }
+    };
   }, [textureUrl]);
 
   const geometry = React.useMemo(() => generateDeckGeometry(params), [params]);
+
+  // Dispose old geometry when params change
+  const prevGeometryRef = useRef<THREE.BufferGeometry | null>(null);
+  useEffect(() => {
+    if (prevGeometryRef.current && prevGeometryRef.current !== geometry) {
+      prevGeometryRef.current.dispose();
+    }
+    prevGeometryRef.current = geometry;
+    return () => {
+      geometry.dispose();
+    };
+  }, [geometry]);
 
   return (
     <mesh ref={meshRef} geometry={geometry} castShadow receiveShadow>
@@ -428,6 +474,7 @@ function FingerboardDeck({ params, textureUrl }: { params: DeckParams; textureUr
 function Scene({ params, textureUrl }: { params: DeckParams; textureUrl: string | null }) {
   return (
     <>
+      <ResourceCleanup />
       {/* Camera positioned for 96mm object - much closer and angled nicely */}
       <PerspectiveCamera makeDefault position={[80, 50, 80]} fov={40} />
       <OrbitControls
@@ -854,7 +901,7 @@ export default function DeckGenerator3D({ objects, onClose }: DeckGenerator3DPro
             <div className="text-gray-400 mt-1">Auto-rotating...</div>
           </div>
           
-          <Canvas shadows>
+          <Canvas shadows dpr={[1, 2]}>
             <Scene params={params} textureUrl={textureUrl} />
           </Canvas>
         </div>
