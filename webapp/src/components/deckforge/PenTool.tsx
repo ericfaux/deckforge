@@ -44,6 +44,10 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef, deckX, deckY
   const [isDraggingHandle, setIsDraggingHandle] = useState(false);
   const [dragStartPoint, setDragStartPoint] = useState<{ x: number; y: number } | null>(null);
 
+  // Double-click/double-tap detection for finishing path (industry standard)
+  const lastClickTimeRef = useRef<number>(0);
+  const lastClickCoordsRef = useRef<{ x: number; y: number } | null>(null);
+
   useEffect(() => {
     if (!isActive) {
       setPoints([]);
@@ -52,6 +56,8 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef, deckX, deckY
       setMode('click');
       setIsDraggingHandle(false);
       setDragStartPoint(null);
+      lastClickTimeRef.current = 0;
+      lastClickCoordsRef.current = null;
     }
   }, [isActive]);
 
@@ -224,6 +230,23 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef, deckX, deckY
       const coords = getCoords(e);
       const dragDist = coords ? Math.hypot(coords.x - dragStartPoint.x, coords.y - dragStartPoint.y) : 0;
 
+      const now = Date.now();
+      const timeSinceLastClick = now - lastClickTimeRef.current;
+      const lastCoords = lastClickCoordsRef.current;
+      const spatiallyClose = lastCoords
+        ? Math.hypot(dragStartPoint.x - lastCoords.x, dragStartPoint.y - lastCoords.y) < 10 / stageScale
+        : false;
+
+      // Double-click/double-tap: finish the path without adding the second point
+      if (timeSinceLastClick < 300 && spatiallyClose && dragDist <= 3 && points.length >= 2) {
+        setIsDraggingHandle(false);
+        setDragStartPoint(null);
+        lastClickTimeRef.current = 0;
+        lastClickCoordsRef.current = null;
+        handleComplete();
+        return;
+      }
+
       let newPoint: Point;
       if (dragDist > 3) {
         // Dragged — create smooth point with control handles
@@ -240,14 +263,11 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef, deckX, deckY
         newPoint = { x: dragStartPoint.x, y: dragStartPoint.y };
       }
 
-      const newPoints = [...points, newPoint];
-      setPoints(newPoints);
+      setPoints(prev => [...prev, newPoint]);
 
-      // Auto-complete on second point for quick lines
-      if (newPoints.length === 2 && dragDist <= 3 && !newPoints[0].cpOutX) {
-        // Two corner points with no curves — complete as a simple line
-        // (Don't auto-complete — let user keep adding points)
-      }
+      // Record click time and position for double-click detection
+      lastClickTimeRef.current = now;
+      lastClickCoordsRef.current = { x: dragStartPoint.x, y: dragStartPoint.y };
 
       setIsDraggingHandle(false);
       setDragStartPoint(null);
@@ -280,6 +300,40 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef, deckX, deckY
     setMode(newMode);
     setPoints([]);
   };
+
+  // Touch event handlers for mobile support
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    if (!isActive || !stageRef.current || e.touches.length !== 1) return;
+    e.preventDefault();
+    const touch = e.touches[0];
+    handleStageMouseDown({
+      clientX: touch.clientX,
+      clientY: touch.clientY,
+      stopPropagation: () => e.stopPropagation(),
+    } as React.MouseEvent);
+  }, [isActive, stageRef, handleStageMouseDown]);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (!isActive || !stageRef.current || e.touches.length !== 1) return;
+    e.preventDefault();
+    const touch = e.touches[0];
+    handleStageMouseMove({
+      clientX: touch.clientX,
+      clientY: touch.clientY,
+      stopPropagation: () => e.stopPropagation(),
+    } as React.MouseEvent);
+  }, [isActive, stageRef, handleStageMouseMove]);
+
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+    if (!isActive) return;
+    e.preventDefault();
+    const touch = e.changedTouches[0];
+    handleStageMouseUp({
+      clientX: touch.clientX,
+      clientY: touch.clientY,
+      stopPropagation: () => e.stopPropagation(),
+    } as React.MouseEvent);
+  }, [isActive, handleStageMouseUp]);
 
   if (!isActive) return null;
 
@@ -315,12 +369,16 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef, deckX, deckY
         height={viewportHeight}
         fill="rgba(0,0,0,0.01)"
         style={{
-          cursor: mode === 'draw' ? 'crosshair' : 'crosshair',
-          pointerEvents: 'all'
+          cursor: 'crosshair',
+          pointerEvents: 'all',
+          touchAction: 'none',
         }}
         onMouseDown={handleStageMouseDown}
         onMouseMove={handleStageMouseMove}
         onMouseUp={handleStageMouseUp}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
       />
 
       {/* Draw path and handles in deck space */}
@@ -637,13 +695,13 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef, deckX, deckY
               <p className="text-xs text-muted-foreground text-center leading-relaxed">
                 {mode === 'click'
                   ? points.length === 0
-                    ? 'Click to place points. Drag to curve.'
+                    ? 'Tap to place points. Hold & drag to curve.'
                     : points.length >= 3
-                      ? 'Click first point to close, or Enter to finish'
-                      : `${points.length} point${points.length !== 1 ? 's' : ''} — keep clicking`
+                      ? 'Double-tap to finish. Tap first point to close.'
+                      : `${points.length} point${points.length !== 1 ? 's' : ''} — double-tap to finish`
                   : isDrawing
                     ? 'Drawing...'
-                    : 'Click and drag to draw'
+                    : 'Tap and drag to draw'
                 }
               </p>
               <div className="flex gap-1.5">
@@ -659,9 +717,9 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef, deckX, deckY
                 {points.length >= 2 && (
                   <button
                     onClick={handleCompleteClick}
-                    className="flex-1 py-2 px-3 text-xs bg-accent text-accent-foreground border border-accent rounded transition-colors flex items-center justify-center gap-1"
+                    className="flex-1 py-3 px-4 text-sm font-semibold bg-accent text-accent-foreground border-2 border-accent rounded-lg shadow-lg transition-colors flex items-center justify-center gap-1.5"
                   >
-                    <Check className="w-3.5 h-3.5" />
+                    <Check className="w-4 h-4" />
                     Done
                   </button>
                 )}
