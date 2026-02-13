@@ -65,6 +65,7 @@ import { toastUtils } from '@/lib/toast-utils';
 import toast from 'react-hot-toast';
 import { saveToLocalStorage, getLatestAutosave, hasAutosaveData, clearAutosaveData, type AutosaveData } from '@/lib/autosave';
 import { AutosaveRecoveryDialog } from '@/components/deckforge/AutosaveRecoveryDialog';
+import { OnboardingTour } from '@/components/deckforge/OnboardingTour';
 
 export default function DeckForge() {
   const { selectedId, selectedIds, deleteObject, undo, redo, getCanvasState, currentDesignId, setDesignId, setSaving, isSaving, objects, designName, createVersion, past, future, updateObject, saveToHistory, addObject, selectObject, setActiveTool, stageScale, setStageScale, arrayDuplicate, showRulers, toggleRulers, showBleedSafeZone, toggleBleedSafeZone, showSymmetryGuide, toggleSymmetryGuide, toggleHardwareGuide, showHardwareGuide, measureToolActive, toggleMeasureTool, groupObjects, ungroupObject, flashCopiedObject, flashPastedObject, lastAction, undoRedoChangedIds, deckSizeId, backgroundColor, backgroundFillType, backgroundGradient, textureOverlays, loadDesign, setBackgroundColor, setDeckSize, isolatedGroupId, exitIsolationMode, setSelectedIds } = useDeckForgeStore();
@@ -1228,7 +1229,9 @@ export default function DeckForge() {
               </div>
               
               {/* Deck Size Selector */}
-              <DeckSizeSelector />
+              <span data-tour="deck-size">
+                <DeckSizeSelector />
+              </span>
 
               {/* Ruler Toggle - Always Visible */}
               <Tooltip delayDuration={300}>
@@ -1315,6 +1318,7 @@ export default function DeckForge() {
                         variant="outline"
                         disabled={isExporting}
                         className="gap-2"
+                        data-tour="export"
                       >
                         {isExporting ? (
                           <Loader2 className="w-4 h-4 animate-spin" />
@@ -1605,16 +1609,22 @@ export default function DeckForge() {
         {/* Desktop layout */}
         {!isMobile && (
           <>
-            <ToolRail />
+            <div data-tour="tools" className="shrink-0 h-full">
+              <ToolRail />
+            </div>
             <ComponentErrorBoundary componentName="Tool Drawer">
               <ToolDrawer />
             </ComponentErrorBoundary>
-            <ComponentErrorBoundary componentName="Canvas">
-              <WorkbenchStage />
-            </ComponentErrorBoundary>
-            <ComponentErrorBoundary componentName="Inspector">
-              <Inspector />
-            </ComponentErrorBoundary>
+            <div data-tour="canvas" className="flex-1 min-w-0 h-full">
+              <ComponentErrorBoundary componentName="Canvas">
+                <WorkbenchStage />
+              </ComponentErrorBoundary>
+            </div>
+            <div data-tour="layers" className="shrink-0 h-full">
+              <ComponentErrorBoundary componentName="Inspector">
+                <Inspector />
+              </ComponentErrorBoundary>
+            </div>
           </>
         )}
 
@@ -1903,6 +1913,9 @@ export default function DeckForge() {
       
       {/* Alignment Tools (appears when multiple objects selected) */}
       <AlignmentTools />
+
+      {/* Onboarding Tour (first-run only) */}
+      {!isMobile && <OnboardingTour />}
     </div>
   );
 }
