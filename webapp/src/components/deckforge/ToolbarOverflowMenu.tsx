@@ -64,7 +64,7 @@ export const ToolbarOverflowMenu = memo(function ToolbarOverflowMenu({ items }: 
           <DropdownMenuItem
             key={item.id}
             disabled={item.disabled}
-            onClick={item.onClick}
+            onSelect={item.onClick}
             className="gap-3 py-2"
           >
             <span className="w-5 h-5 flex items-center justify-center shrink-0 text-muted-foreground">
