@@ -36,7 +36,7 @@ import { getDeckSize } from '@/lib/deck-sizes';
 import { useDeckForgeStore, CanvasObject } from '@/store/deckforge';
 import { useAuthStore } from '@/store/auth';
 import { designsAPI } from '@/lib/api';
-import { exportToPNG, exportToSVG, exportToPDF, downloadBlob } from '@/lib/export';
+// Export functions are lazy-loaded on demand to avoid pulling export.ts into the initial bundle
 import { preloadUserFonts } from '@/lib/fonts';
 import { Button } from '@/components/ui/button';
 import {
@@ -229,6 +229,7 @@ export default function DeckForge() {
 
     try {
       // Export at 300 DPI for print quality (300dpi / 25.4mm per inch ≈ 12x scale)
+      const { exportToPNG, downloadBlob } = await import('@/lib/export');
       const blob = await exportToPNG(objects, {
         scale: 12,
         format: 'png',
@@ -262,6 +263,7 @@ export default function DeckForge() {
 
     try {
       // Export at 72 DPI for screen (72dpi / 25.4mm ≈ 3x scale)
+      const { exportToPNG, downloadBlob } = await import('@/lib/export');
       const blob = await exportToPNG(objects, {
         scale: 3,
         format: 'png',
@@ -294,6 +296,7 @@ export default function DeckForge() {
     setSaveStatus('Exporting SVG...');
 
     try {
+      const { exportToSVG, downloadBlob } = await import('@/lib/export');
       const blob = await exportToSVG(objects, {
         includeBackground: true,
         width: deckWidth,
@@ -324,6 +327,8 @@ export default function DeckForge() {
     setSaveStatus('Exporting PDF...');
 
     try {
+      // Lazy-load PDF export (pulls in jspdf + html2canvas only on demand)
+      const { exportToPDF, downloadBlob } = await import('@/lib/export');
       const blob = await exportToPDF(objects, {
         scale: 12,
         includeBackground: true,
@@ -354,6 +359,7 @@ export default function DeckForge() {
     setSaveStatus('Quick exporting...');
 
     try {
+      const { exportToPNG, downloadBlob } = await import('@/lib/export');
       const blob = await exportToPNG(objects, {
         scale: 1,
         format: 'png',
