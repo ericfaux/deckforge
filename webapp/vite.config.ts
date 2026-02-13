@@ -23,26 +23,16 @@ export default defineConfig(({ mode }) => ({
     rollupOptions: {
       output: {
         manualChunks: {
-          // Core React and UI libraries
+          // Core — always in initial load
           'vendor-react': ['react', 'react-dom', 'react-router-dom'],
           'vendor-ui': ['lucide-react', 'react-hot-toast'],
-
-          // Heavy libraries
           'vendor-supabase': ['@supabase/supabase-js'],
           'vendor-konva': ['konva', 'react-konva'],
-          'vendor-three': ['three', '@react-three/fiber', '@react-three/drei'],
-          'jspdf': ['jspdf'],
 
-          // Our component groups (lazy loaded)
-          'modals': [
-            './src/components/deckforge/ExportPreview.tsx',
-            './src/components/deckforge/ExportPresetsModal.tsx',
-            './src/components/deckforge/VersionHistory.tsx',
-            './src/components/deckforge/ShareModal.tsx',
-            './src/components/deckforge/BrandKitModal.tsx',
-            './src/components/deckforge/FontUploadModal.tsx',
-            './src/components/deckforge/ArrayDuplicateModal.tsx',
-          ],
+          // Lazy-loaded heavy deps (each loads on demand, not in initial bundle)
+          'vendor-three': ['three', '@react-three/fiber', '@react-three/drei'],
+          'vendor-jspdf': ['jspdf'],
+          'vendor-paper': ['paper'],
         },
       },
     },
