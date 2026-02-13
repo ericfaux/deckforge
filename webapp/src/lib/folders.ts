@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_BASE = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
 
 export interface Folder {
   id: string;
@@ -22,7 +22,7 @@ export interface Tag {
 export const foldersAPI = {
   async list(): Promise<Folder[]> {
     const token = localStorage.getItem('token');
-    const response = await axios.get(`${API_BASE}/folders`, {
+    const response = await axios.get(`${API_BASE}/api/folders`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     return response.data.folders;
@@ -31,7 +31,7 @@ export const foldersAPI = {
   async create(name: string, color?: string): Promise<Folder> {
     const token = localStorage.getItem('token');
     const response = await axios.post(
-      `${API_BASE}/folders`,
+      `${API_BASE}/api/folders`,
       { name, color },
       { headers: { Authorization: `Bearer ${token}` } }
     );
@@ -41,7 +41,7 @@ export const foldersAPI = {
   async update(id: string, updates: { name?: string; color?: string }): Promise<Folder> {
     const token = localStorage.getItem('token');
     const response = await axios.patch(
-      `${API_BASE}/folders/${id}`,
+      `${API_BASE}/api/folders/${id}`,
       updates,
       { headers: { Authorization: `Bearer ${token}` } }
     );
@@ -50,7 +50,7 @@ export const foldersAPI = {
 
   async delete(id: string): Promise<void> {
     const token = localStorage.getItem('token');
-    await axios.delete(`${API_BASE}/folders/${id}`, {
+    await axios.delete(`${API_BASE}/api/folders/${id}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
   },
@@ -58,7 +58,7 @@ export const foldersAPI = {
   async moveDesign(folderId: string, designId: string): Promise<void> {
     const token = localStorage.getItem('token');
     await axios.post(
-      `${API_BASE}/folders/${folderId}/designs/${designId}`,
+      `${API_BASE}/api/folders/${folderId}/designs/${designId}`,
       {},
       { headers: { Authorization: `Bearer ${token}` } }
     );
@@ -66,7 +66,7 @@ export const foldersAPI = {
 
   async removeDesign(folderId: string, designId: string): Promise<void> {
     const token = localStorage.getItem('token');
-    await axios.delete(`${API_BASE}/folders/${folderId}/designs/${designId}`, {
+    await axios.delete(`${API_BASE}/api/folders/${folderId}/designs/${designId}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
   },
@@ -75,7 +75,7 @@ export const foldersAPI = {
 export const tagsAPI = {
   async list(): Promise<Tag[]> {
     const token = localStorage.getItem('token');
-    const response = await axios.get(`${API_BASE}/tags`, {
+    const response = await axios.get(`${API_BASE}/api/tags`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     return response.data.tags;
@@ -84,7 +84,7 @@ export const tagsAPI = {
   async create(name: string, color?: string): Promise<Tag> {
     const token = localStorage.getItem('token');
     const response = await axios.post(
-      `${API_BASE}/tags`,
+      `${API_BASE}/api/tags`,
       { name, color },
       { headers: { Authorization: `Bearer ${token}` } }
     );
@@ -93,14 +93,14 @@ export const tagsAPI = {
 
   async delete(id: string): Promise<void> {
     const token = localStorage.getItem('token');
-    await axios.delete(`${API_BASE}/tags/${id}`, {
+    await axios.delete(`${API_BASE}/api/tags/${id}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
   },
 
   async getForDesign(designId: string): Promise<Tag[]> {
     const token = localStorage.getItem('token');
-    const response = await axios.get(`${API_BASE}/tags/design/${designId}`, {
+    const response = await axios.get(`${API_BASE}/api/tags/design/${designId}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     return response.data.tags;
@@ -109,7 +109,7 @@ export const tagsAPI = {
   async assignToDesign(tagId: string, designId: string): Promise<void> {
     const token = localStorage.getItem('token');
     await axios.post(
-      `${API_BASE}/tags/${tagId}/designs/${designId}`,
+      `${API_BASE}/api/tags/${tagId}/designs/${designId}`,
       {},
       { headers: { Authorization: `Bearer ${token}` } }
     );
@@ -117,7 +117,7 @@ export const tagsAPI = {
 
   async removeFromDesign(tagId: string, designId: string): Promise<void> {
     const token = localStorage.getItem('token');
-    await axios.delete(`${API_BASE}/tags/${tagId}/designs/${designId}`, {
+    await axios.delete(`${API_BASE}/api/tags/${tagId}/designs/${designId}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
   },

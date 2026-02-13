@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { MessageSquare, Send, Trash2, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_BASE = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
 
 interface Comment {
   id: string;
@@ -36,7 +36,7 @@ export function Comments({ designId }: CommentsProps) {
   const loadComments = async () => {
     setIsLoading(true);
     try {
-      const response = await axios.get(`${API_BASE}/comments/${designId}`);
+      const response = await axios.get(`${API_BASE}/api/comments/${designId}`);
       setComments(response.data.comments || []);
     } catch (err) {
       console.error('Failed to load comments:', err);
@@ -63,7 +63,7 @@ export function Comments({ designId }: CommentsProps) {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.post(
-        `${API_BASE}/comments/${designId}`,
+        `${API_BASE}/api/comments/${designId}`,
         { content: newComment },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -91,7 +91,7 @@ export function Comments({ designId }: CommentsProps) {
 
     try {
       const token = localStorage.getItem('token');
-      await axios.delete(`${API_BASE}/comments/${commentId}`, {
+      await axios.delete(`${API_BASE}/api/comments/${commentId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
