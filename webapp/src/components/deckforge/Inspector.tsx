@@ -23,7 +23,7 @@ import { CollapsibleSection } from './CollapsibleSection';
 import { useDeckDimensions } from './WorkbenchStage';
 import { getMmPerPixel } from '@/lib/deck-guides';
 import { getDeckSize } from '@/lib/deck-sizes';
-import { preloadUserFonts, Font, loadFont } from '@/lib/fonts';
+import { preloadUserFonts, Font, loadFont, clearUserFontsCache } from '@/lib/fonts';
 import { preloadTopFonts, loadGoogleFont, getGoogleFonts } from '@/lib/google-fonts';
 import toast from 'react-hot-toast';
 import {
@@ -251,6 +251,8 @@ export function Inspector() {
   // Font management state
   const [isFontModalOpen, setIsFontModalOpen] = useState(false);
   const [userFonts, setUserFonts] = useState<Font[]>([]);
+  const [fontsLoading, setFontsLoading] = useState(false);
+  const [fontsError, setFontsError] = useState<string | undefined>();
 
   // Ref for scrollable properties container
   const propertiesPanelRef = useRef<HTMLDivElement>(null);
@@ -310,7 +312,14 @@ export function Inspector() {
   // Load user fonts on mount (only if authenticated)
   useEffect(() => {
     if (isAuthenticated) {
-      preloadUserFonts().then(setUserFonts);
+      setFontsLoading(true);
+      setFontsError(undefined);
+      preloadUserFonts()
+        .then((result) => {
+          setUserFonts(result.fonts);
+          setFontsError(result.error);
+        })
+        .finally(() => setFontsLoading(false));
     }
   }, [isAuthenticated]);
 
@@ -1599,6 +1608,8 @@ export function Inspector() {
                     onChange={(fontFamily) => updateWithHistory({ fontFamily })}
                     userFonts={userFonts}
                     onUploadClick={() => setIsFontModalOpen(true)}
+                    loading={fontsLoading}
+                    error={fontsError}
                   />
                 </div>
                 <div className="space-y-2">

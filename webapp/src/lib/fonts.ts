@@ -3,6 +3,9 @@ import axios from 'axios';
 // Use VITE_BACKEND_URL (same as api.ts) for consistency
 const API_BASE = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
 
+const USER_FONTS_CACHE_KEY = 'deckforge_user_fonts';
+const USER_FONTS_CACHE_DURATION = 60 * 60 * 1000; // 1 hour
+
 export interface Font {
   id: string;
   user_id: string;
@@ -16,10 +19,11 @@ export interface Font {
 
 export const fontsApi = {
   // Get all user's fonts
-  async list(): Promise<Font[]> {
+  async list(signal?: AbortSignal): Promise<Font[]> {
     const token = localStorage.getItem('token');
     const response = await axios.get(`${API_BASE}/api/fonts`, {
       headers: { Authorization: `Bearer ${token}` },
+      signal,
     });
     return response.data.fonts;
   },
@@ -146,23 +150,79 @@ export const DEFAULT_FONTS: Font[] = [
   },
 ];
 
+// Get cached user fonts from localStorage
+function getCachedUserFonts(): Font[] | null {
+  try {
+    const cached = localStorage.getItem(USER_FONTS_CACHE_KEY);
+    if (cached) {
+      const data = JSON.parse(cached) as { fonts: Font[]; timestamp: number };
+      if (Date.now() - data.timestamp < USER_FONTS_CACHE_DURATION) {
+        return data.fonts;
+      }
+    }
+  } catch {
+    // Cache read failed
+  }
+  return null;
+}
+
+// Save user fonts to localStorage cache
+function cacheUserFonts(fonts: Font[]): void {
+  try {
+    localStorage.setItem(
+      USER_FONTS_CACHE_KEY,
+      JSON.stringify({ fonts, timestamp: Date.now() })
+    );
+  } catch {
+    // Cache write failed (quota exceeded, etc.)
+  }
+}
+
+// Clear user fonts cache (call on logout or font changes)
+export function clearUserFontsCache(): void {
+  try {
+    localStorage.removeItem(USER_FONTS_CACHE_KEY);
+  } catch {
+    // Ignore
+  }
+}
+
 // Preload all user fonts
-export async function preloadUserFonts() {
+export async function preloadUserFonts(): Promise<{ fonts: Font[]; fromCache: boolean; error?: string }> {
   // Check if user is authenticated before making API call
   const token = localStorage.getItem('token');
   if (!token) {
     // Not authenticated - return system fonts only
-    return DEFAULT_FONTS;
+    return { fonts: DEFAULT_FONTS, fromCache: false };
   }
 
   try {
-    const fonts = await fontsApi.list();
-    await Promise.all(fonts.map(loadFont));
-    // Combine user fonts with system defaults
-    return [...DEFAULT_FONTS, ...fonts];
+    // Use AbortController for a 5-second timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+    const fonts = await fontsApi.list(controller.signal);
+    clearTimeout(timeoutId);
+
+    // Load font faces in parallel, but don't fail if some don't load
+    await Promise.allSettled(fonts.map(loadFont));
+
+    // Cache successful result
+    cacheUserFonts(fonts);
+
+    return { fonts: [...DEFAULT_FONTS, ...fonts], fromCache: false };
   } catch (error) {
-    console.error('Failed to preload fonts:', error);
-    // Return at least system fonts on error
-    return DEFAULT_FONTS;
+    // Try localStorage cache as fallback
+    const cached = getCachedUserFonts();
+    if (cached && cached.length > 0) {
+      // Silently load cached fonts
+      await Promise.allSettled(cached.map(loadFont));
+      console.warn('[Fonts] Using cached custom fonts (backend unreachable)');
+      return { fonts: [...DEFAULT_FONTS, ...cached], fromCache: true };
+    }
+
+    // No cache available - log a concise warning instead of a scary error
+    console.warn('[Fonts] Custom fonts unavailable — using system + Google Fonts');
+    return { fonts: DEFAULT_FONTS, fromCache: false, error: 'offline' };
   }
 }
