@@ -1,5 +1,6 @@
 import { useState, useMemo, useRef } from 'react';
-import { Keyboard, Search, ChevronDown, ChevronRight, Printer } from 'lucide-react';
+import { Keyboard, Search, ChevronDown, ChevronRight, Printer, RotateCcw } from 'lucide-react';
+import { resetOnboardingTour } from './OnboardingTour';
 import {
   Dialog,
   DialogContent,
@@ -292,8 +293,22 @@ export function KeyboardShortcuts({ open: controlledOpen, onOpenChange }: Keyboa
           </div>
         </ScrollArea>
 
-        <div className="text-xs text-muted-foreground text-center pt-4 border-t">
-          Press <KeyboardKey text="?" /> anytime to view shortcuts
+        <div className="flex items-center justify-between pt-4 border-t">
+          <div className="text-xs text-muted-foreground">
+            Press <KeyboardKey text="?" /> anytime to view shortcuts
+          </div>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              resetOnboardingTour();
+              setOpen(false);
+            }}
+            className="gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+          >
+            <RotateCcw className="w-3 h-3" />
+            Replay Tour
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
