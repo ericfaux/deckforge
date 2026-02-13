@@ -1,14 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/store/auth';
 import { useDeckForgeStore } from '@/store/deckforge';
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
-import { Heart, Eye, Download, Copy, Loader2, TrendingUp, Clock, ThumbsUp, MessageSquare, X } from 'lucide-react';
+import { Heart, Eye, Download, Copy, Loader2, TrendingUp, Clock, ThumbsUp, MessageSquare, X, RefreshCw } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { Comments } from '@/components/Comments';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_BASE = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
 
 interface PublicDesign {
   id: string;
@@ -25,6 +25,7 @@ interface PublicDesign {
 export default function Gallery() {
   const [designs, setDesigns] = useState<PublicDesign[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [sort, setSort] = useState<'recent' | 'popular' | 'liked'>('recent');
   const [likedDesigns, setLikedDesigns] = useState<Set<string>>(new Set());
   const [selectedDesign, setSelectedDesign] = useState<PublicDesign | null>(null);
@@ -32,16 +33,13 @@ export default function Gallery() {
   const { loadDesign } = useDeckForgeStore();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    loadGallery();
-  }, [sort]);
-
-  const loadGallery = async () => {
+  const loadGallery = useCallback(async () => {
     setIsLoading(true);
+    setLoadError(false);
     try {
-      const response = await axios.get(`${API_BASE}/gallery?sort=${sort}&limit=50`);
+      const response = await axios.get(`${API_BASE}/api/gallery?sort=${sort}&limit=50`);
       setDesigns(response.data.designs || []);
-      
+
       // Load liked status for authenticated users
       if (isAuthenticated) {
         const liked = new Set<string>();
@@ -49,24 +47,29 @@ export default function Gallery() {
           try {
             const token = localStorage.getItem('token');
             const likedResponse = await axios.get(
-              `${API_BASE}/gallery/${design.id}/liked`,
+              `${API_BASE}/api/gallery/${design.id}/liked`,
               { headers: { Authorization: `Bearer ${token}` } }
             );
             if (likedResponse.data.liked) {
               liked.add(design.id);
             }
           } catch (err) {
-            // Ignore errors
+            // Ignore individual like-check errors
           }
         }
         setLikedDesigns(liked);
       }
     } catch (err) {
       console.error('Failed to load gallery:', err);
+      setLoadError(true);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [sort, isAuthenticated]);
+
+  useEffect(() => {
+    loadGallery();
+  }, [loadGallery]);
 
   const handleLike = async (designId: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -86,7 +89,7 @@ export default function Gallery() {
 
     try {
       if (isLiked) {
-        await axios.delete(`${API_BASE}/gallery/${designId}/like`, {
+        await axios.delete(`${API_BASE}/api/gallery/${designId}/like`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setLikedDesigns((prev) => {
@@ -101,7 +104,7 @@ export default function Gallery() {
           )
         );
       } else {
-        await axios.post(`${API_BASE}/gallery/${designId}/like`, {}, {
+        await axios.post(`${API_BASE}/api/gallery/${designId}/like`, {}, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setLikedDesigns((prev) => new Set(prev).add(designId));
@@ -185,8 +188,38 @@ export default function Gallery() {
       {/* Main content */}
       <div className="container mx-auto px-6 py-8">
         {isLoading ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+          <div className="space-y-6">
+            <div className="h-4 w-40 bg-muted animate-pulse rounded" />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="border border-border bg-card overflow-hidden">
+                  <div className="aspect-[32/98] bg-muted animate-pulse" />
+                  <div className="p-4 space-y-3">
+                    <div className="h-4 w-3/4 bg-muted animate-pulse rounded" />
+                    <div className="h-3 w-1/2 bg-muted animate-pulse rounded" />
+                    <div className="flex gap-2">
+                      <div className="h-8 flex-1 bg-muted animate-pulse rounded" />
+                      <div className="h-8 w-10 bg-muted animate-pulse rounded" />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : loadError ? (
+          <div className="text-center py-20 space-y-6">
+            <div>
+              <h2 className="text-2xl font-display uppercase tracking-widest mb-2">
+                Unable to Load Designs
+              </h2>
+              <p className="text-muted-foreground">
+                Check your connection and try again.
+              </p>
+            </div>
+            <Button onClick={loadGallery} size="lg" className="gap-2">
+              <RefreshCw className="w-4 h-4" />
+              Retry
+            </Button>
           </div>
         ) : designs.length === 0 ? (
           <div className="text-center py-20 space-y-6">

@@ -137,12 +137,12 @@ export default function Designs() {
   const togglePublic = async (designId: string, currentStatus: boolean, e: React.MouseEvent) => {
     e.stopPropagation();
     
-    const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+    const API_BASE = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
     const token = localStorage.getItem('token');
 
     try {
       await axios.patch(
-        `${API_BASE}/gallery/${designId}/visibility`,
+        `${API_BASE}/api/gallery/${designId}/visibility`,
         { is_public: !currentStatus },
         { headers: { Authorization: `Bearer ${token}` } }
       );

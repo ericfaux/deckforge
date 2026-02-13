@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_BASE = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
 
 export interface ShareResponse {
   share_token: string;
@@ -20,7 +20,7 @@ export const shareAPI = {
   async createShareLink(designId: string): Promise<ShareResponse> {
     const token = localStorage.getItem('token');
     const response = await axios.post(
-      `${API_BASE}/share/${designId}`,
+      `${API_BASE}/api/share/${designId}`,
       {},
       { headers: { Authorization: `Bearer ${token}` } }
     );
@@ -30,14 +30,14 @@ export const shareAPI = {
   // Revoke share link
   async revokeShareLink(designId: string): Promise<void> {
     const token = localStorage.getItem('token');
-    await axios.delete(`${API_BASE}/share/${designId}`, {
+    await axios.delete(`${API_BASE}/api/share/${designId}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
   },
 
   // Get shared design (public, no auth)
   async getSharedDesign(shareToken: string): Promise<SharedDesign> {
-    const response = await axios.get(`${API_BASE}/share/view/${shareToken}`);
+    const response = await axios.get(`${API_BASE}/api/share/view/${shareToken}`);
     return response.data.design;
   },
 };
