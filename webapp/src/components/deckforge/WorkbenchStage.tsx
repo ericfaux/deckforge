@@ -2281,6 +2281,7 @@ export function WorkbenchStage() {
               style={{
                 mixBlendMode: texture.blendMode,
                 opacity: texture.opacity,
+                pointerEvents: 'none',
               }}
             >
               <path
