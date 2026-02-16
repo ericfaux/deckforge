@@ -116,7 +116,7 @@ export function ToolRail() {
   }, [activeTool, setActiveTool]);
 
   return (
-    <div className={cn(
+    <div aria-label="Design tools" className={cn(
       "bg-card shrink-0",
       // Mobile: horizontal strip with border-bottom
       "w-full border-b",

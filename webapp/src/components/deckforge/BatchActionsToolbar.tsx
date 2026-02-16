@@ -59,6 +59,7 @@ export function BatchActionsToolbar() {
             onClick={() => handleAlign('left')}
             className="h-8 w-8 p-0"
             title="Align Left"
+            aria-label="Align Left"
           >
             <AlignLeft className="w-4 h-4" />
           </Button>
@@ -68,6 +69,7 @@ export function BatchActionsToolbar() {
             onClick={() => handleAlign('center')}
             className="h-8 w-8 p-0"
             title="Align Center"
+            aria-label="Align Center"
           >
             <AlignCenter className="w-4 h-4" />
           </Button>
@@ -77,6 +79,7 @@ export function BatchActionsToolbar() {
             onClick={() => handleAlign('right')}
             className="h-8 w-8 p-0"
             title="Align Right"
+            aria-label="Align Right"
           >
             <AlignRight className="w-4 h-4" />
           </Button>
@@ -93,6 +96,7 @@ export function BatchActionsToolbar() {
             onClick={() => handleAlign('top')}
             className="h-8 w-8 p-0"
             title="Align Top"
+            aria-label="Align Top"
           >
             <AlignVerticalJustifyStart className="w-4 h-4" />
           </Button>
@@ -102,6 +106,7 @@ export function BatchActionsToolbar() {
             onClick={() => handleAlign('middle')}
             className="h-8 w-8 p-0"
             title="Align Middle"
+            aria-label="Align Middle"
           >
             <AlignVerticalJustifyCenter className="w-4 h-4" />
           </Button>
@@ -111,6 +116,7 @@ export function BatchActionsToolbar() {
             onClick={() => handleAlign('bottom')}
             className="h-8 w-8 p-0"
             title="Align Bottom"
+            aria-label="Align Bottom"
           >
             <AlignVerticalJustifyEnd className="w-4 h-4" />
           </Button>
@@ -128,6 +134,7 @@ export function BatchActionsToolbar() {
                 onClick={() => handleDistribute('horizontal')}
                 className="h-8 w-8 p-0"
                 title="Distribute Horizontally"
+                aria-label="Distribute Horizontally"
               >
                 <AlignHorizontalDistributeCenter className="w-4 h-4" />
               </Button>
@@ -137,6 +144,7 @@ export function BatchActionsToolbar() {
                 onClick={() => handleDistribute('vertical')}
                 className="h-8 w-8 p-0"
                 title="Distribute Vertically"
+                aria-label="Distribute Vertically"
               >
                 <AlignVerticalDistributeCenter className="w-4 h-4" />
               </Button>

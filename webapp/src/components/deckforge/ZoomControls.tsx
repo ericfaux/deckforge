@@ -46,11 +46,12 @@ export function ZoomControls() {
   const btnActive = "bg-accent text-accent-foreground";
 
   return (
-    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1 bg-card border border-border p-1 md:p-1 shadow-lg rounded-lg">
+    <div role="contentinfo" aria-label="Canvas controls" className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1 bg-card border border-border p-1 md:p-1 shadow-lg rounded-lg">
       <EnhancedTooltip content="Undo" shortcut="Ctrl+Z" side="top">
         <button
           onClick={handleUndo}
           disabled={past.length === 0}
+          aria-label="Undo"
           className={cn(btnClass, btnDefault, btnDisabled)}
         >
           <Undo className="w-5 h-5 md:w-4 md:h-4" />
@@ -61,6 +62,7 @@ export function ZoomControls() {
         <button
           onClick={handleRedo}
           disabled={future.length === 0}
+          aria-label="Redo"
           className={cn(btnClass, btnDefault, btnDisabled)}
         >
           <Redo className="w-5 h-5 md:w-4 md:h-4" />
@@ -72,6 +74,7 @@ export function ZoomControls() {
       <EnhancedTooltip content="Zoom Out" shortcut="Ctrl+-" side="top">
         <button
           onClick={zoomOut}
+          aria-label="Zoom Out"
           className={cn(btnClass, btnDefault)}
         >
           <ZoomOut className="w-5 h-5 md:w-4 md:h-4" />
@@ -81,6 +84,7 @@ export function ZoomControls() {
       <EnhancedTooltip content="Reset Zoom" shortcut="Ctrl+0" side="top">
         <button
           onClick={() => { vibrate(10); setStageScale(1); }}
+          aria-label={`Zoom ${Math.round(stageScale * 100)}%, click to reset`}
           className="text-xs md:text-[10px] font-mono w-12 md:w-10 text-center text-muted-foreground hover:text-foreground hover:bg-secondary active:scale-95 transition-all rounded cursor-pointer h-8 flex items-center justify-center touch-target"
         >
           {Math.round(stageScale * 100)}%
@@ -90,6 +94,7 @@ export function ZoomControls() {
       <EnhancedTooltip content="Zoom In" shortcut="Ctrl+=" side="top">
         <button
           onClick={zoomIn}
+          aria-label="Zoom In"
           className={cn(btnClass, btnDefault)}
         >
           <ZoomIn className="w-5 h-5 md:w-4 md:h-4" />
@@ -99,6 +104,7 @@ export function ZoomControls() {
       <EnhancedTooltip content="Fit to Screen" shortcut="Ctrl+0" side="top">
         <button
           onClick={() => { vibrate(10); setStageScale(1); }}
+          aria-label="Fit to Screen"
           className={cn(btnClass, btnDefault)}
         >
           <Maximize2 className="w-5 h-5 md:w-4 md:h-4" />
@@ -114,6 +120,8 @@ export function ZoomControls() {
       >
         <button
           onClick={() => { vibrate(10); toggleRulers(); }}
+          aria-label={showRulers ? "Hide Rulers" : "Show Rulers"}
+          aria-pressed={showRulers}
           className={cn(btnClass, showRulers ? btnActive : btnDefault)}
         >
           <Grid2x2 className="w-5 h-5 md:w-4 md:h-4" />
@@ -127,6 +135,8 @@ export function ZoomControls() {
       >
         <button
           onClick={() => { vibrate(10); toggleHardwareGuide(); }}
+          aria-label={showHardwareGuide ? "Hide Hardware Guide" : "Show Hardware Guide"}
+          aria-pressed={showHardwareGuide}
           className={cn(btnClass, showHardwareGuide ? btnActive : btnDefault)}
         >
           <Wrench className="w-5 h-5 md:w-4 md:h-4" />
@@ -140,6 +150,8 @@ export function ZoomControls() {
       >
         <button
           onClick={() => { vibrate(10); toggleBleedSafeZone(); }}
+          aria-label={showBleedSafeZone ? "Hide Bleed & Safe Zones" : "Show Bleed & Safe Zones"}
+          aria-pressed={showBleedSafeZone}
           className={cn(btnClass, showBleedSafeZone ? btnActive : btnDefault)}
         >
           <Scan className="w-5 h-5 md:w-4 md:h-4" />
@@ -152,6 +164,8 @@ export function ZoomControls() {
       >
         <button
           onClick={() => { vibrate(10); toggleMeasureTool(); }}
+          aria-label={measureToolActive ? "Disable Measure Tool" : "Enable Measure Tool"}
+          aria-pressed={measureToolActive}
           className={cn(btnClass, measureToolActive ? btnActive : btnDefault)}
         >
           <Ruler className="w-5 h-5 md:w-4 md:h-4" />
@@ -164,6 +178,8 @@ export function ZoomControls() {
       >
         <button
           onClick={() => { vibrate(10); toggleSymmetryGuide(); }}
+          aria-label={showSymmetryGuide ? "Hide Symmetry Guide" : "Show Symmetry Guide"}
+          aria-pressed={showSymmetryGuide}
           className={cn(btnClass, showSymmetryGuide ? btnActive : btnDefault)}
         >
           <FlipVertical2 className="w-5 h-5 md:w-4 md:h-4" />
