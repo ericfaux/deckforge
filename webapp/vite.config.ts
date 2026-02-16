@@ -22,20 +22,28 @@ export default defineConfig(({ mode }) => ({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          // Core — always in initial load
-          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-          'vendor-ui': ['lucide-react', 'react-hot-toast'],
-          'vendor-supabase': ['@supabase/supabase-js'],
-          'vendor-konva': ['konva', 'react-konva'],
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return;
 
-          // Lazy-loaded heavy deps (each loads on demand, not in initial bundle)
-          'vendor-three': ['three', '@react-three/fiber', '@react-three/drei'],
-          'vendor-jspdf': ['jspdf'],
-          'vendor-paper': ['paper'],
+          // Core — always in initial load
+          if (/\/(react|react-dom|react-router-dom)\//.test(id)) return 'vendor-react';
+          if (/\/(lucide-react|react-hot-toast)\//.test(id)) return 'vendor-ui';
+          if (/\/@supabase\//.test(id)) return 'vendor-supabase';
+          if (/\/(konva|react-konva)\//.test(id)) return 'vendor-konva';
+
+          // Heavy — lazy-loaded on demand via dynamic import() or React.lazy()
+          // Split three.js core from React bindings for parallel loading
+          if (/\/@react-three\//.test(id)) return 'vendor-three-react';
+          if (/\/three\//.test(id)) return 'vendor-three';
+          if (/\/jspdf\//.test(id)) return 'vendor-jspdf';
+          if (/\/paper\//.test(id)) return 'vendor-paper';
+          if (/\/jszip\//.test(id)) return 'vendor-jszip';
+          if (/\/@imgly\//.test(id)) return 'vendor-imgly';
+          // onnxruntime-web ships separate ort.bundle.min & ort.webgpu.bundle.min
+          // files — let Vite split them naturally so each stays under 500 KB.
         },
       },
     },
-    chunkSizeWarningLimit: 300,
+    chunkSizeWarningLimit: 500,
   },
 }));

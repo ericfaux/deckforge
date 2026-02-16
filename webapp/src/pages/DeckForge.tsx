@@ -1752,11 +1752,15 @@ export default function DeckForge() {
           />
         )}
 
-        {/* Deck Mockup Preview */}
-        <DeckMockupPreview
-          isOpen={isMockupPreviewOpen}
-          onClose={() => setIsMockupPreviewOpen(false)}
-        />
+        {/* Deck Mockup Preview - separate Suspense for lazy chunk */}
+        {isMockupPreviewOpen && (
+          <Suspense fallback={<LoadingState message="Loading Mockup..." fullScreen />}>
+            <DeckMockupPreview
+              isOpen={isMockupPreviewOpen}
+              onClose={() => setIsMockupPreviewOpen(false)}
+            />
+          </Suspense>
+        )}
 
         {/* Font Upload Modal */}
         <ComponentErrorBoundary componentName="Custom Fonts" onReset={() => setIsFontUploadModalOpen(false)}>
@@ -1785,7 +1789,8 @@ export default function DeckForge() {
         />
       </Suspense>
 
-      {/* Brand Kit Modal */}
+      {/* Brand Kit Modal - lazy-loaded with Suspense */}
+      <Suspense fallback={null}>
       <BrandKitModal
         isOpen={isBrandKitModalOpen}
         onClose={() => setIsBrandKitModalOpen(false)}
@@ -1853,6 +1858,7 @@ export default function DeckForge() {
           }
         }}
       />
+      </Suspense>
 
       {/* Export modals with Suspense */}
       <Suspense fallback={null}>

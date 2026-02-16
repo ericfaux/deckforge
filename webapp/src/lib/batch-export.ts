@@ -1,4 +1,3 @@
-import JSZip from 'jszip';
 import { exportToPNG } from './export';
 import { CanvasObject } from '@/store/deckforge';
 
@@ -14,6 +13,7 @@ export async function batchExportDesigns(
   designs: DesignForExport[],
   onProgress?: (current: number, total: number) => void
 ): Promise<Blob> {
+  const { default: JSZip } = await import('jszip');
   const zip = new JSZip();
   const folder = zip.folder('deckforge-designs');
 
