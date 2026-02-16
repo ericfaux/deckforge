@@ -1,10 +1,19 @@
-import paper from 'paper';
+import type paper from 'paper';
 import { CanvasObject, PathPoint } from '@/store/deckforge';
 import { objectToSvgPath, applyTransformToPath } from './shape-to-path';
 
-// Initialize paper.js in headless mode (no canvas)
-const paperScope = new paper.PaperScope();
-paperScope.setup(new paper.Size(1000, 1000));
+// Lazy-loaded Paper.js scope — only loads when boolean ops are first used
+let _paperScope: paper.PaperScope | null = null;
+
+async function getPaperScope(): Promise<paper.PaperScope> {
+  if (!_paperScope) {
+    const paperModule = await import('paper');
+    const paper = paperModule.default;
+    _paperScope = new paper.PaperScope();
+    _paperScope.setup(new paper.Size(1000, 1000));
+  }
+  return _paperScope;
+}
 
 export type BooleanOp = 'union' | 'subtract' | 'intersect' | 'exclude';
 
@@ -12,12 +21,13 @@ export type BooleanOp = 'union' | 'subtract' | 'intersect' | 'exclude';
  * Perform a boolean operation on two SVG path data strings.
  * Returns the resulting SVG path data string, or null on failure/empty result.
  */
-export function performBooleanOp(
+export async function performBooleanOp(
   pathDataA: string,
   pathDataB: string,
   operation: BooleanOp
-): string | null {
+): Promise<string | null> {
   try {
+    const paperScope = await getPaperScope();
     const pathA = new paperScope.CompoundPath(pathDataA);
     const pathB = new paperScope.CompoundPath(pathDataB);
 
@@ -58,15 +68,17 @@ export function performBooleanOp(
  * Perform a boolean operation across multiple CanvasObjects.
  * Returns a new path-type CanvasObject with the combined result, or null on failure.
  */
-export function booleanOperationOnObjects(
+export async function booleanOperationOnObjects(
   objects: CanvasObject[],
   operation: BooleanOp
-): CanvasObject | null {
+): Promise<CanvasObject | null> {
   if (objects.length < 2) {
     return null;
   }
 
   try {
+    const paperScope = await getPaperScope();
+
     // Convert all objects to SVG path data with transforms applied
     const svgPaths: string[] = [];
     for (const obj of objects) {
@@ -80,7 +92,7 @@ export function booleanOperationOnObjects(
     // Sequentially apply the boolean operation: result = a op b, then result op c, etc.
     let currentResult = svgPaths[0];
     for (let i = 1; i < svgPaths.length; i++) {
-      const result = performBooleanOp(currentResult, svgPaths[i], operation);
+      const result = await performBooleanOp(currentResult, svgPaths[i], operation);
       if (!result) return null;
       currentResult = result;
     }

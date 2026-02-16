@@ -1168,7 +1168,7 @@ export const useDeckForgeStore = create<DeckForgeState>((set, get) => ({
 
     try {
       const { booleanOperationOnObjects } = await import('@/lib/boolean-ops');
-      const result = booleanOperationOnObjects(selectedObjects, operation);
+      const result = await booleanOperationOnObjects(selectedObjects, operation);
       if (!result) return;
 
       state.saveToHistory();
