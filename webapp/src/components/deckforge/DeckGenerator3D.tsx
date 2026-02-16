@@ -1,8 +1,17 @@
 import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { Canvas, useThree } from '@react-three/fiber';
 import { OrbitControls, PerspectiveCamera } from '@react-three/drei';
-import * as THREE from 'three';
-import { STLExporter } from 'three/examples/jsm/exporters/STLExporter.js';
+import {
+  BufferGeometry,
+  Float32BufferAttribute,
+  Mesh,
+  Texture,
+  TextureLoader,
+  RepeatWrapping,
+  DoubleSide,
+  Scene as ThreeScene,
+  MeshStandardMaterial,
+} from 'three';
 import { CanvasObject } from '@/store/deckforge';
 import { DECK_WIDTH, DECK_HEIGHT } from './WorkbenchStage';
 import toast from 'react-hot-toast';
@@ -68,7 +77,7 @@ const DECK_PRESETS = {
  * Generate a WATERTIGHT, MANIFOLD deck mesh suitable for 3D printing
  * with proper truck mounting holes
  */
-function generateDeckGeometry(params: DeckParams): THREE.BufferGeometry {
+function generateDeckGeometry(params: DeckParams): BufferGeometry {
   const { length, width, concaveDepth, noseKick, tailKick, thickness, wheelbase, truckHoleSpacing, holeSize } = params;
   
   const widthSegments = 64;  // High enough for smooth concave and edge transitions
@@ -352,8 +361,8 @@ function generateDeckGeometry(params: DeckParams): THREE.BufferGeometry {
     }
   }
   
-  const geometry = new THREE.BufferGeometry();
-  geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+  const geometry = new BufferGeometry();
+  geometry.setAttribute('position', new Float32BufferAttribute(vertices, 3));
   geometry.setIndex(indices);
   geometry.computeVertexNormals();
   
@@ -363,7 +372,7 @@ function generateDeckGeometry(params: DeckParams): THREE.BufferGeometry {
 /**
  * Validate that geometry is watertight and manifold
  */
-function validateGeometry(geometry: THREE.BufferGeometry): { valid: boolean; errors: string[] } {
+function validateGeometry(geometry: BufferGeometry): { valid: boolean; errors: string[] } {
   const errors: string[] = [];
   
   const positions = geometry.getAttribute('position');
@@ -402,7 +411,7 @@ function ResourceCleanup() {
   useEffect(() => {
     return () => {
       scene.traverse((obj) => {
-        if (obj instanceof THREE.Mesh) {
+        if (obj instanceof Mesh) {
           obj.geometry?.dispose();
           if (Array.isArray(obj.material)) {
             obj.material.forEach((m) => m.dispose());
@@ -418,17 +427,17 @@ function ResourceCleanup() {
 }
 
 function FingerboardDeck({ params, textureUrl }: { params: DeckParams; textureUrl: string | null }) {
-  const meshRef = useRef<THREE.Mesh>(null);
-  const [texture, setTexture] = useState<THREE.Texture | null>(null);
-  const prevTextureRef = useRef<THREE.Texture | null>(null);
+  const meshRef = useRef<Mesh>(null);
+  const [texture, setTexture] = useState<Texture | null>(null);
+  const prevTextureRef = useRef<Texture | null>(null);
 
   // Load texture — dispose previous texture to avoid leaks
   useEffect(() => {
     if (textureUrl) {
-      const loader = new THREE.TextureLoader();
+      const loader = new TextureLoader();
       loader.load(textureUrl, (loadedTexture) => {
-        loadedTexture.wrapS = THREE.RepeatWrapping;
-        loadedTexture.wrapT = THREE.RepeatWrapping;
+        loadedTexture.wrapS = RepeatWrapping;
+        loadedTexture.wrapT = RepeatWrapping;
         if (prevTextureRef.current) {
           prevTextureRef.current.dispose();
         }
@@ -447,7 +456,7 @@ function FingerboardDeck({ params, textureUrl }: { params: DeckParams; textureUr
   const geometry = React.useMemo(() => generateDeckGeometry(params), [params]);
 
   // Dispose old geometry when params change
-  const prevGeometryRef = useRef<THREE.BufferGeometry | null>(null);
+  const prevGeometryRef = useRef<BufferGeometry | null>(null);
   useEffect(() => {
     if (prevGeometryRef.current && prevGeometryRef.current !== geometry) {
       prevGeometryRef.current.dispose();
@@ -462,7 +471,7 @@ function FingerboardDeck({ params, textureUrl }: { params: DeckParams; textureUr
     <mesh ref={meshRef} geometry={geometry} castShadow receiveShadow>
       <meshStandardMaterial
         map={texture}
-        side={THREE.DoubleSide}
+        side={DoubleSide}
         color={texture ? '#ffffff' : '#ccaa88'}
         roughness={0.6}
         metalness={0.05}
@@ -595,7 +604,7 @@ export default function DeckGenerator3D({ objects, onClose }: DeckGenerator3DPro
     setParams(prev => ({ ...prev, [key]: value }));
   }, []);
 
-  const exportSTL = useCallback(() => {
+  const exportSTL = useCallback(async () => {
     setExporting(true);
 
     try {
@@ -609,10 +618,11 @@ export default function DeckGenerator3D({ objects, onClose }: DeckGenerator3DPro
         return;
       }
 
-      const scene = new THREE.Scene();
-      const mesh = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial());
+      const scene = new ThreeScene();
+      const mesh = new Mesh(geometry, new MeshStandardMaterial());
       scene.add(mesh);
 
+      const { STLExporter } = await import('three/examples/jsm/exporters/STLExporter.js');
       const exporter = new STLExporter();
       const stlString = exporter.parse(scene, { binary: false });  // ASCII for debugging
       const blob = new Blob([stlString], { type: 'text/plain' });
