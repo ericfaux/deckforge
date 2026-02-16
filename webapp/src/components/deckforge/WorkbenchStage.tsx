@@ -1754,6 +1754,64 @@ export function WorkbenchStage() {
     }
   }, [addObject, setActiveTool, selectObject]);
 
+  // Handle pen tool auto-save when switching tools (same as complete but does NOT deactivate tool)
+  const handlePenToolAutoSave = useCallback((pathData: string, strokeWidth: number, strokeColor: string, opacity: number, dashStyle: 'solid' | 'dashed' | 'dotted', mode: 'click' | 'draw', penPathPoints?: Array<{ x: number; y: number; cp1x?: number; cp1y?: number; cp2x?: number; cp2y?: number }>) => {
+    let pathPoints: Array<{ x: number; y: number; cp1x?: number; cp1y?: number; cp2x?: number; cp2y?: number }> = [];
+
+    if (penPathPoints && penPathPoints.length > 0) {
+      pathPoints = penPathPoints;
+    } else {
+      const commands = pathData.match(/[MLQCmlqc][^MLQCmlqc]*/g) || [];
+      commands.forEach((cmd) => {
+        const type = cmd[0];
+        const coords = cmd.slice(1).trim().split(/[\s,]+/).map(Number);
+        if (type === 'M' || type === 'm') {
+          pathPoints.push({ x: coords[0], y: coords[1] });
+        } else if (type === 'L' || type === 'l') {
+          pathPoints.push({ x: coords[0], y: coords[1] });
+        } else if (type === 'Q' || type === 'q') {
+          pathPoints.push({ x: coords[2], y: coords[3], cp1x: coords[0], cp1y: coords[1] });
+        } else if (type === 'C' || type === 'c') {
+          pathPoints.push({ x: coords[4], y: coords[5], cp1x: coords[0], cp1y: coords[1], cp2x: coords[2], cp2y: coords[3] });
+        }
+      });
+    }
+
+    if (pathPoints.length > 0) {
+      const xs = pathPoints.map(p => p.x);
+      const ys = pathPoints.map(p => p.y);
+      const minX = Math.min(...xs);
+      const maxX = Math.max(...xs);
+      const minY = Math.min(...ys);
+      const maxY = Math.max(...ys);
+      const actualWidth = maxX - minX || strokeWidth;
+      const actualHeight = maxY - minY || strokeWidth;
+      const padding = strokeWidth * 2;
+
+      addObject({
+        type: 'path' as const,
+        x: minX - padding,
+        y: minY - padding,
+        width: actualWidth + padding * 2,
+        height: actualHeight + padding * 2,
+        rotation: 0,
+        opacity,
+        scaleX: 1,
+        scaleY: 1,
+        pathPoints,
+        pathClosed: false,
+        stroke: strokeColor,
+        strokeWidth,
+        strokeDashStyle: dashStyle,
+        fill: 'none',
+      });
+
+      if (mode === 'draw') {
+        selectObject(null);
+      }
+    }
+  }, [addObject, selectObject]);
+
   // Handle brush tool stroke completion
   const handleBrushToolComplete = useCallback((data: BrushStrokeData) => {
     const points = data.smoothedPoints;
@@ -2410,6 +2468,7 @@ export function WorkbenchStage() {
         <PenTool
           isActive={activeTool === 'pen'}
           onComplete={handlePenToolComplete}
+          onAutoSave={handlePenToolAutoSave}
           onCancel={() => setActiveTool(null)}
           stageRef={svgRef}
           deckX={deckX}

@@ -18,6 +18,7 @@ type DashStyle = 'solid' | 'dashed' | 'dotted';
 interface PenToolProps {
   isActive: boolean;
   onComplete: (pathData: string, strokeWidth: number, strokeColor: string, opacity: number, dashStyle: DashStyle, mode: 'click' | 'draw', pathPoints?: Array<{ x: number; y: number; cp1x?: number; cp1y?: number; cp2x?: number; cp2y?: number }>) => void;
+  onAutoSave: (pathData: string, strokeWidth: number, strokeColor: string, opacity: number, dashStyle: DashStyle, mode: 'click' | 'draw', pathPoints?: Array<{ x: number; y: number; cp1x?: number; cp1y?: number; cp2x?: number; cp2y?: number }>) => void;
   onCancel: () => void;
   stageRef: React.RefObject<SVGSVGElement>;
   deckX: number;
@@ -25,7 +26,7 @@ interface PenToolProps {
   stageScale: number;
 }
 
-export function PenTool({ isActive, onComplete, onCancel, stageRef, deckX, deckY, stageScale }: PenToolProps) {
+export function PenTool({ isActive, onComplete, onAutoSave, onCancel, stageRef, deckX, deckY, stageScale }: PenToolProps) {
   const [points, setPoints] = useState<Point[]>([]);
   const [currentPoint, setCurrentPoint] = useState<Point | null>(null);
   const [mode, setMode] = useState<'click' | 'draw'>('click');
@@ -44,8 +45,34 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef, deckX, deckY
   const [isDraggingHandle, setIsDraggingHandle] = useState(false);
   const [dragStartPoint, setDragStartPoint] = useState<{ x: number; y: number } | null>(null);
 
+  // Refs for auto-save on tool switch
+  const isCancellingRef = useRef(false);
+  const isCompletingRef = useRef(false);
+  const stateRef = useRef({ points, strokeWidth, strokeColor, opacity, dashStyle, mode });
+
+  // Keep stateRef in sync every render
+  useEffect(() => {
+    stateRef.current = { points, strokeWidth, strokeColor, opacity, dashStyle, mode };
+  });
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!isActive) {
+      const s = stateRef.current;
+
+      // Auto-save drawn path when tool is deactivated by switching tools
+      // Skip if: explicit cancel, already completed via handleComplete, or not enough points
+      if (!isCancellingRef.current && !isCompletingRef.current && s.points.length >= 2) {
+        const pathData = buildPathData(s.points);
+        const pathPoints = buildPathPoints(s.points);
+        onAutoSave(pathData, s.strokeWidth, s.strokeColor, s.opacity, s.dashStyle, s.mode, pathPoints);
+      }
+
+      // Reset refs
+      isCancellingRef.current = false;
+      isCompletingRef.current = false;
+
+      // Clear all state
       setPoints([]);
       setCurrentPoint(null);
       setIsDrawing(false);
@@ -113,10 +140,12 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef, deckX, deckY
 
   const handleComplete = useCallback(() => {
     if (points.length < 2) {
+      isCancellingRef.current = true;
       onCancel();
       return;
     }
 
+    isCompletingRef.current = true;
     const pathData = buildPathData(points);
     const pathPoints = buildPathPoints(points);
     onComplete(pathData, strokeWidth, strokeColor, opacity, dashStyle, mode, pathPoints);
@@ -124,26 +153,46 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef, deckX, deckY
     setCurrentPoint(null);
   }, [points, buildPathData, buildPathPoints, onComplete, strokeWidth, strokeColor, opacity, dashStyle, mode]);
 
-  // ESC to cancel, Enter to complete
+  // ESC to cancel, Enter to complete, P to toggle off (with save)
   useEffect(() => {
     if (!isActive) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+
       if (e.key === 'Escape') {
+        isCancellingRef.current = true;
         onCancel();
       } else if (e.key === 'Enter' && points.length >= 2) {
         handleComplete();
+      } else if (e.key.toLowerCase() === 'p') {
+        // Intercept P key before ToolRail to properly save/cancel
+        e.stopPropagation();
+        e.preventDefault();
+        if (points.length >= 2) {
+          handleComplete();
+        } else {
+          isCancellingRef.current = true;
+          onCancel();
+        }
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    // Use capture phase so this fires before ToolRail's bubble-phase handler
+    window.addEventListener('keydown', handleKeyDown, true);
+    return () => window.removeEventListener('keydown', handleKeyDown, true);
   }, [isActive, points, onCancel, handleComplete]);
 
   // Handle click+drag for bezier curve creation
   const handleStageMouseDown = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!isActive || !stageRef.current) return;
+
+    // Double-click to complete the path (standard vector tool behavior)
+    if (mode === 'click' && e.detail >= 2 && points.length >= 2) {
+      handleComplete();
+      return;
+    }
 
     if (mode === 'draw') {
       // Freehand draw mode
@@ -164,6 +213,7 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef, deckX, deckY
       const dist = Math.hypot(coords.x - first.x, coords.y - first.y);
       if (dist < 8 / stageScale) {
         // Close and complete
+        isCompletingRef.current = true;
         const pathData = buildPathData(points, true);
         const pathPoints = buildPathPoints(points);
         onComplete(pathData, strokeWidth, strokeColor, opacity, dashStyle, mode, pathPoints);
@@ -262,6 +312,7 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef, deckX, deckY
 
   const handleCancelClick = (e: React.MouseEvent) => {
     e.stopPropagation();
+    isCancellingRef.current = true;
     onCancel();
   };
 
@@ -283,16 +334,16 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef, deckX, deckY
 
   if (!isActive) return null;
 
-  // Generate preview path
+  // Generate preview path (only show preview line after 2+ points are placed)
   const previewPoints = [...points];
-  if (currentPoint && mode === 'click' && !isDraggingHandle) {
+  if (currentPoint && mode === 'click' && !isDraggingHandle && points.length >= 2) {
     previewPoints.push(currentPoint);
   }
   const previewPath = previewPoints.length >= 2 ? buildPathData(previewPoints) : '';
 
-  // Simple line preview for current segment
+  // Simple line preview for current segment (only after 2+ points to avoid dangling initial line)
   let currentSegmentPreview = '';
-  if (points.length > 0 && currentPoint && mode === 'click' && !isDraggingHandle) {
+  if (points.length >= 2 && currentPoint && mode === 'click' && !isDraggingHandle) {
     const last = points[points.length - 1];
     if (last.cpOutX !== undefined) {
       currentSegmentPreview = `M ${last.x} ${last.y} Q ${last.cpOutX} ${last.cpOutY} ${currentPoint.x} ${currentPoint.y}`;
@@ -639,8 +690,8 @@ export function PenTool({ isActive, onComplete, onCancel, stageRef, deckX, deckY
                   ? points.length === 0
                     ? 'Click to place points. Drag to curve.'
                     : points.length >= 3
-                      ? 'Click first point to close, or Enter to finish'
-                      : `${points.length} point${points.length !== 1 ? 's' : ''} — keep clicking`
+                      ? 'Double-click or Enter to finish. Click first point to close.'
+                      : `${points.length} point${points.length !== 1 ? 's' : ''} — keep clicking. Double-click to finish.`
                   : isDrawing
                     ? 'Drawing...'
                     : 'Click and drag to draw'
