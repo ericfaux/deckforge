@@ -259,7 +259,7 @@ export const QuickAccessToolbar = memo(function QuickAccessToolbar() {
   };
 
   return (
-    <div className="flex items-center gap-1 px-2 py-1.5 bg-card border-b border-border overflow-x-auto toolbar-scroll w-full max-w-full shrink-0">
+    <div role="toolbar" aria-label="Quick actions" className="flex items-center gap-1 px-2 py-1.5 bg-card border-b border-border overflow-x-auto toolbar-scroll w-full max-w-full shrink-0">
       {/* Always visible: Undo/Redo */}
       <div className="flex items-center gap-1 border-r border-border pr-2 shrink-0">
         <EnhancedTooltip content="Undo" shortcut="Ctrl+Z">
@@ -269,6 +269,7 @@ export const QuickAccessToolbar = memo(function QuickAccessToolbar() {
             className="h-8 w-8 p-0"
             onClick={undo}
             disabled={!canUndo}
+            aria-label="Undo"
           >
             <Undo2 className="h-4 w-4" />
           </Button>
@@ -281,6 +282,7 @@ export const QuickAccessToolbar = memo(function QuickAccessToolbar() {
             className="h-8 w-8 p-0"
             onClick={redo}
             disabled={!canRedo}
+            aria-label="Redo"
           >
             <Redo2 className="h-4 w-4" />
           </Button>
@@ -298,6 +300,7 @@ export const QuickAccessToolbar = memo(function QuickAccessToolbar() {
                 size="sm"
                 className="h-8 w-8 p-0"
                 onClick={handleDuplicate}
+                aria-label="Duplicate"
               >
                 <Copy className="h-4 w-4" />
               </Button>
@@ -309,6 +312,7 @@ export const QuickAccessToolbar = memo(function QuickAccessToolbar() {
                 size="sm"
                 className="h-8 w-8 p-0"
                 onClick={handleDelete}
+                aria-label="Delete"
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
@@ -323,6 +327,7 @@ export const QuickAccessToolbar = memo(function QuickAccessToolbar() {
                 size="sm"
                 className="h-8 w-8 p-0"
                 onClick={handleBringForward}
+                aria-label="Move Up"
               >
                 <MoveUp className="h-4 w-4" />
               </Button>
@@ -334,6 +339,7 @@ export const QuickAccessToolbar = memo(function QuickAccessToolbar() {
                 size="sm"
                 className="h-8 w-8 p-0"
                 onClick={handleSendBackward}
+                aria-label="Move Down"
               >
                 <MoveDown className="h-4 w-4" />
               </Button>
@@ -348,6 +354,8 @@ export const QuickAccessToolbar = memo(function QuickAccessToolbar() {
                 size="sm"
                 className="h-8 w-8 p-0"
                 onClick={handleToggleLock}
+                aria-label={allLocked ? 'Unlock' : 'Lock'}
+                aria-pressed={allLocked}
               >
                 {allLocked ? (
                   <Unlock className="h-4 w-4" />
@@ -363,6 +371,8 @@ export const QuickAccessToolbar = memo(function QuickAccessToolbar() {
                 size="sm"
                 className="h-8 w-8 p-0"
                 onClick={handleToggleVisibility}
+                aria-label={allHidden ? 'Show' : 'Hide'}
+                aria-pressed={allHidden}
               >
                 {allHidden ? (
                   <Eye className="h-4 w-4" />
@@ -383,6 +393,7 @@ export const QuickAccessToolbar = memo(function QuickAccessToolbar() {
                     size="sm"
                     className="h-8 w-8 p-0"
                     onClick={handleGroup}
+                    aria-label="Group"
                   >
                     <Layers className="h-4 w-4" />
                   </Button>
@@ -395,6 +406,7 @@ export const QuickAccessToolbar = memo(function QuickAccessToolbar() {
                     size="sm"
                     className="h-8 w-8 p-0"
                     onClick={handleUngroup}
+                    aria-label="Ungroup"
                   >
                     <Ungroup className="h-4 w-4" />
                   </Button>
@@ -412,6 +424,8 @@ export const QuickAccessToolbar = memo(function QuickAccessToolbar() {
                   size="sm"
                   className={`h-8 w-8 p-0 ${singleTextObj.fontWeight === '700' ? 'bg-accent text-accent-foreground' : ''}`}
                   onClick={handleToggleBold}
+                  aria-label="Bold"
+                  aria-pressed={singleTextObj.fontWeight === '700'}
                 >
                   <Bold className="h-4 w-4" />
                 </Button>
@@ -423,6 +437,8 @@ export const QuickAccessToolbar = memo(function QuickAccessToolbar() {
                   size="sm"
                   className={`h-8 w-8 p-0 ${singleTextObj.fontStyle === 'italic' ? 'bg-accent text-accent-foreground' : ''}`}
                   onClick={handleToggleItalic}
+                  aria-label="Italic"
+                  aria-pressed={singleTextObj.fontStyle === 'italic'}
                 >
                   <Italic className="h-4 w-4" />
                 </Button>
@@ -436,6 +452,7 @@ export const QuickAccessToolbar = memo(function QuickAccessToolbar() {
                   size="sm"
                   className={`h-8 w-8 p-0 ${(!singleTextObj.align || singleTextObj.align === 'left') ? 'bg-accent text-accent-foreground' : ''}`}
                   onClick={() => handleTextAlign('left')}
+                  aria-label="Align text left"
                 >
                   <AlignLeft className="h-4 w-4" />
                 </Button>
@@ -447,6 +464,7 @@ export const QuickAccessToolbar = memo(function QuickAccessToolbar() {
                   size="sm"
                   className={`h-8 w-8 p-0 ${singleTextObj.align === 'center' ? 'bg-accent text-accent-foreground' : ''}`}
                   onClick={() => handleTextAlign('center')}
+                  aria-label="Align text center"
                 >
                   <AlignCenter className="h-4 w-4" />
                 </Button>
@@ -458,6 +476,7 @@ export const QuickAccessToolbar = memo(function QuickAccessToolbar() {
                   size="sm"
                   className={`h-8 w-8 p-0 ${singleTextObj.align === 'right' ? 'bg-accent text-accent-foreground' : ''}`}
                   onClick={() => handleTextAlign('right')}
+                  aria-label="Align text right"
                 >
                   <AlignRight className="h-4 w-4" />
                 </Button>
@@ -474,6 +493,7 @@ export const QuickAccessToolbar = memo(function QuickAccessToolbar() {
                   size="sm"
                   className="h-8 w-8 p-0"
                   onClick={handleFlipHorizontal}
+                  aria-label="Flip Horizontal"
                 >
                   <FlipHorizontal2 className="h-4 w-4" />
                 </Button>
@@ -485,6 +505,7 @@ export const QuickAccessToolbar = memo(function QuickAccessToolbar() {
                   size="sm"
                   className="h-8 w-8 p-0"
                   onClick={handleFlipVertical}
+                  aria-label="Flip Vertical"
                 >
                   <FlipVertical2 className="h-4 w-4" />
                 </Button>
@@ -501,6 +522,7 @@ export const QuickAccessToolbar = memo(function QuickAccessToolbar() {
                   size="sm"
                   className="h-8 w-8 p-0"
                   onClick={() => handleAlign('left')}
+                  aria-label="Align objects left"
                 >
                   <AlignLeft className="h-4 w-4" />
                 </Button>
@@ -512,6 +534,7 @@ export const QuickAccessToolbar = memo(function QuickAccessToolbar() {
                   size="sm"
                   className="h-8 w-8 p-0"
                   onClick={() => handleAlign('center')}
+                  aria-label="Align objects center"
                 >
                   <AlignHorizontalJustifyCenter className="h-4 w-4" />
                 </Button>
@@ -523,6 +546,7 @@ export const QuickAccessToolbar = memo(function QuickAccessToolbar() {
                   size="sm"
                   className="h-8 w-8 p-0"
                   onClick={() => handleAlign('right')}
+                  aria-label="Align objects right"
                 >
                   <AlignRight className="h-4 w-4" />
                 </Button>
@@ -534,6 +558,7 @@ export const QuickAccessToolbar = memo(function QuickAccessToolbar() {
                   size="sm"
                   className="h-8 w-8 p-0"
                   onClick={() => handleAlign('top')}
+                  aria-label="Align objects top"
                 >
                   <AlignLeft className="h-4 w-4 rotate-90" />
                 </Button>
@@ -545,6 +570,7 @@ export const QuickAccessToolbar = memo(function QuickAccessToolbar() {
                   size="sm"
                   className="h-8 w-8 p-0"
                   onClick={() => handleAlign('middle')}
+                  aria-label="Align objects middle"
                 >
                   <AlignVerticalJustifyCenter className="h-4 w-4" />
                 </Button>
@@ -556,6 +582,7 @@ export const QuickAccessToolbar = memo(function QuickAccessToolbar() {
                   size="sm"
                   className="h-8 w-8 p-0"
                   onClick={() => handleAlign('bottom')}
+                  aria-label="Align objects bottom"
                 >
                   <AlignRight className="h-4 w-4 rotate-90" />
                 </Button>
@@ -571,6 +598,7 @@ export const QuickAccessToolbar = memo(function QuickAccessToolbar() {
                       size="sm"
                       className="h-8 w-8 p-0"
                       onClick={() => handleDistribute('horizontal')}
+                      aria-label="Distribute horizontally"
                     >
                       <ArrowRightLeft className="h-4 w-4" />
                     </Button>
@@ -581,6 +609,7 @@ export const QuickAccessToolbar = memo(function QuickAccessToolbar() {
                       size="sm"
                       className="h-8 w-8 p-0"
                       onClick={() => handleDistribute('vertical')}
+                      aria-label="Distribute vertically"
                     >
                       <ArrowUpDown className="h-4 w-4" />
                     </Button>

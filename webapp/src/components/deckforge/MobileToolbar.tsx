@@ -83,6 +83,8 @@ export function MobileToolbar({
         {/* Expand/collapse button */}
         <button
           onClick={() => setIsExpanded(!isExpanded)}
+          aria-label={isExpanded ? "Collapse toolbar" : "Expand toolbar"}
+          aria-expanded={isExpanded}
           className="absolute -top-8 right-4 w-12 h-8 bg-card border border-border border-b-0 rounded-t-lg flex items-center justify-center hover:bg-secondary transition-colors"
         >
           {isExpanded ? (
@@ -93,10 +95,11 @@ export function MobileToolbar({
         </button>
 
         {/* Main toolbar */}
-        <div className="h-14 flex items-center justify-around px-1">
+        <div role="toolbar" aria-label="Mobile toolbar" className="h-14 flex items-center justify-around px-1">
           <button
             onClick={handleUndo}
             disabled={past.length === 0}
+            aria-label="Undo"
             className="flex flex-col items-center gap-0.5 p-2 min-w-[56px] disabled:opacity-30 disabled:cursor-not-allowed active:scale-95 transition-transform"
           >
             <Undo className="w-5 h-5" />
@@ -106,6 +109,7 @@ export function MobileToolbar({
           <button
             onClick={handleRedo}
             disabled={future.length === 0}
+            aria-label="Redo"
             className="flex flex-col items-center gap-0.5 p-2 min-w-[56px] disabled:opacity-30 disabled:cursor-not-allowed active:scale-95 transition-transform"
           >
             <Redo className="w-5 h-5" />
@@ -115,6 +119,7 @@ export function MobileToolbar({
           {selectedId && (
             <button
               onClick={handleDelete}
+              aria-label="Delete"
               className="flex flex-col items-center gap-0.5 p-2 min-w-[56px] text-destructive active:scale-95 transition-transform"
             >
               <Trash2 className="w-5 h-5" />
@@ -124,6 +129,7 @@ export function MobileToolbar({
 
           <button
             onClick={() => { vibrate(10); onOpenLayers(); }}
+            aria-label="Layers"
             className="flex flex-col items-center gap-0.5 p-2 min-w-[56px] active:scale-95 transition-transform"
           >
             <Layers className="w-5 h-5" />
@@ -132,6 +138,7 @@ export function MobileToolbar({
 
           <button
             onClick={() => { vibrate(10); onOpenInspector(); }}
+            aria-label="Properties"
             className="flex flex-col items-center gap-0.5 p-2 min-w-[56px] active:scale-95 transition-transform"
           >
             <Settings className="w-5 h-5" />
@@ -140,6 +147,7 @@ export function MobileToolbar({
 
           <button
             onClick={() => { vibrate(10); onOpenHistory(); }}
+            aria-label="History"
             className="flex flex-col items-center gap-0.5 p-2 min-w-[56px] active:scale-95 transition-transform"
           >
             <Clock className="w-5 h-5" />

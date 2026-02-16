@@ -1127,7 +1127,7 @@ export default function DeckForge() {
       <CommandPalette />
 
       {/* Header */}
-      <header className={cn(
+      <header role="banner" className={cn(
         "border-b border-border flex items-center px-4 bg-card shrink-0 overflow-x-auto toolbar-scroll",
         isMobile ? "h-14" : "h-14"
       )}>
@@ -1183,6 +1183,7 @@ export default function DeckForge() {
                       variant="ghost"
                       onClick={undo}
                       disabled={past.length === 0}
+                      aria-label={`Undo (${past.length} actions available)`}
                       className="gap-1.5 rounded-r-none border-r border-border"
                     >
                       <Undo className="w-4 h-4" />
@@ -1208,6 +1209,7 @@ export default function DeckForge() {
                       variant="ghost"
                       onClick={redo}
                       disabled={future.length === 0}
+                      aria-label={`Redo (${future.length} actions available)`}
                       className="gap-1.5 rounded-l-none"
                     >
                       <Redo className="w-4 h-4" />
@@ -1591,6 +1593,7 @@ export default function DeckForge() {
               variant="ghost"
               onClick={() => setMobileMenuOpen(true)}
               className="gap-2"
+              aria-label="Menu"
             >
               <Menu className="w-5 h-5" />
             </Button>
@@ -1609,22 +1612,22 @@ export default function DeckForge() {
         {/* Desktop layout */}
         {!isMobile && (
           <>
-            <div data-tour="tools" className="shrink-0 h-full">
+            <nav data-tour="tools" role="navigation" aria-label="Design tools" className="shrink-0 h-full">
               <ToolRail />
-            </div>
+            </nav>
             <ComponentErrorBoundary componentName="Tool Drawer">
               <ToolDrawer />
             </ComponentErrorBoundary>
-            <div data-tour="canvas" className="flex-1 min-w-0 h-full">
+            <main data-tour="canvas" role="main" aria-label="Canvas" className="flex-1 min-w-0 h-full">
               <ComponentErrorBoundary componentName="Canvas">
                 <WorkbenchStage />
               </ComponentErrorBoundary>
-            </div>
-            <div data-tour="layers" className="shrink-0 h-full">
+            </main>
+            <aside data-tour="layers" role="complementary" aria-label="Inspector" className="shrink-0 h-full">
               <ComponentErrorBoundary componentName="Inspector">
                 <Inspector />
               </ComponentErrorBoundary>
-            </div>
+            </aside>
           </>
         )}
 

@@ -211,6 +211,7 @@ function GraphicsContent({ onAddObject, deckCenterX, deckCenterY }: {
             value={shapeColor}
             onChange={(e) => handleShapeColorChange(e.target.value)}
             className="w-8 h-8 border border-border rounded cursor-pointer"
+            aria-label="Shape color"
           />
           <span className="text-[10px] font-mono">{shapeColor}</span>
         </div>
@@ -332,6 +333,7 @@ function StickersContent({ onAddObject, deckCenterX, deckCenterY }: {
             value={stickerColor}
             onChange={(e) => handleStickerColorChange(e.target.value)}
             className="w-8 h-8 border border-border rounded cursor-pointer"
+            aria-label="Sticker color"
           />
           <span className="text-[10px] font-mono">{stickerColor}</span>
         </div>
@@ -461,6 +463,7 @@ function PatternsContent({ onAddObject, deckCenterX, deckCenterY }: {
                 value={primaryColor}
                 onChange={(e) => handlePrimaryColorChange(e.target.value)}
                 className="w-8 h-8 border border-border cursor-pointer bg-transparent"
+                aria-label="Primary pattern color"
               />
               <span className="text-[9px] font-mono">{primaryColor}</span>
             </div>
@@ -473,6 +476,7 @@ function PatternsContent({ onAddObject, deckCenterX, deckCenterY }: {
                 value={secondaryColor}
                 onChange={(e) => handleSecondaryColorChange(e.target.value)}
                 className="w-8 h-8 border border-border cursor-pointer bg-transparent"
+                aria-label="Secondary pattern color"
               />
               <span className="text-[9px] font-mono">{secondaryColor}</span>
             </div>
@@ -493,6 +497,7 @@ function PatternsContent({ onAddObject, deckCenterX, deckCenterY }: {
           min={5}
           max={50}
           step={5}
+          aria-label="Pattern scale"
         />
       </div>
 
@@ -640,6 +645,7 @@ function LinesContent({ onAddObject, deckCenterX, deckCenterY }: {
             value={strokeColor}
             onChange={(e) => handleLineColorChange(e.target.value)}
             className="w-8 h-8 border border-border cursor-pointer bg-transparent"
+            aria-label="Line stroke color"
           />
           <div className="flex gap-1">
             {['#ffffff', '#ccff00', '#ff6600', '#00ffff', '#ff00ff', '#000000'].map((color) => (
@@ -913,6 +919,7 @@ function LocalUploads({ onAddObject, deckCenterX, deckCenterY }: {
         multiple
         className="hidden"
         onChange={handleFileSelect}
+        aria-label="Upload file"
       />
 
       <div
@@ -1241,6 +1248,7 @@ function CloudUploads({ onAddObject, deckCenterX, deckCenterY }: {
         multiple
         className="hidden"
         onChange={handleFileSelect}
+        aria-label="Upload file"
       />
 
       <div

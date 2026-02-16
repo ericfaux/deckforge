@@ -125,6 +125,7 @@ function MultiSelectInspector() {
           )}
         </div>
         <Slider
+          aria-label="Opacity"
           min={0}
           max={1}
           step={0.01}
@@ -142,6 +143,7 @@ function MultiSelectInspector() {
           )}
         </div>
         <select
+          aria-label="Blend Mode"
           value={sharedBlendMode === 'mixed' ? '' : sharedBlendMode}
           onChange={(e) => updateAll({ mixBlendMode: e.target.value as any })}
           className="w-full h-8 px-2 text-xs bg-background border border-border rounded"
@@ -429,6 +431,7 @@ export function Inspector() {
                     onClick={expandAll}
                     className="p-1 text-muted-foreground hover:text-foreground transition-colors"
                     title="Expand all sections"
+                    aria-label="Expand all sections"
                   >
                     <Maximize2 className="w-3 h-3" />
                   </button>
@@ -436,6 +439,7 @@ export function Inspector() {
                     onClick={collapseAll}
                     className="p-1 text-muted-foreground hover:text-foreground transition-colors"
                     title="Collapse all sections"
+                    aria-label="Collapse all sections"
                   >
                     <Minimize2 className="w-3 h-3" />
                   </button>
@@ -449,6 +453,7 @@ export function Inspector() {
                     : 'bg-secondary text-muted-foreground hover:bg-secondary/80'
                 }`}
                 title={selectedObject.locked ? 'Unlock object' : 'Lock object'}
+                aria-label={selectedObject.locked ? 'Unlock object' : 'Lock object'}
               >
                 {selectedObject.locked ? (
                   <>
@@ -539,6 +544,7 @@ export function Inspector() {
               </Label>
               <div className="flex items-center gap-2">
                 <Input
+                  aria-label="Rotation"
                   type="number"
                   value={Math.round(selectedObject.rotation)}
                   onChange={(e) => updateWithHistory({ rotation: Number(e.target.value) })}
@@ -557,6 +563,7 @@ export function Inspector() {
                 <div>
                   <span className="text-[9px] text-muted-foreground">X</span>
                   <Input
+                    aria-label="Scale X"
                     type="number"
                     step="0.1"
                     min="0.1"
@@ -574,6 +581,7 @@ export function Inspector() {
                 <div>
                   <span className="text-[9px] text-muted-foreground">Y</span>
                   <Input
+                    aria-label="Scale Y"
                     type="number"
                     step="0.1"
                     min="0.1"
@@ -615,6 +623,7 @@ export function Inspector() {
               </Label>
               <div className="flex items-center gap-3">
                 <Slider
+                  aria-label="Opacity"
                   value={[selectedObject.opacity * 100]}
                   onValueChange={([value]) => updateWithHistory({ opacity: value / 100 })}
                   max={100}
@@ -634,6 +643,7 @@ export function Inspector() {
                 Blend Mode
               </Label>
               <select
+                aria-label="Blend Mode"
                 value={selectedObject.mixBlendMode || 'normal'}
                 onChange={(e) => updateWithHistory({ mixBlendMode: e.target.value as any })}
                 className="w-full h-8 text-xs bg-secondary border border-border px-2"
@@ -720,6 +730,7 @@ export function Inspector() {
                     Pattern Type
                   </Label>
                   <select
+                    aria-label="Pattern Type"
                     value={selectedObject.patternType}
                     onChange={(e) => updateWithHistory({ patternType: e.target.value as any })}
                     className="w-full h-8 text-xs bg-secondary border-border rounded px-2"
@@ -758,6 +769,7 @@ export function Inspector() {
                   </Label>
                   <div className="flex items-center gap-3">
                     <Slider
+                      aria-label="Pattern Scale"
                       value={[selectedObject.patternScale || 20]}
                       onValueChange={([value]) => updateWithHistory({ patternScale: value })}
                       max={100}
@@ -809,6 +821,7 @@ export function Inspector() {
                       Paste image URL or select from uploads
                     </Label>
                     <Input
+                      aria-label="Image URL"
                       type="text"
                       placeholder="Image URL..."
                       value={selectedObject.fillPatternImageSrc || ''}
@@ -826,6 +839,7 @@ export function Inspector() {
                         </Label>
                         <div className="flex items-center gap-3">
                           <Slider
+                            aria-label="Tile Scale"
                             value={[selectedObject.fillPatternScale ?? 1]}
                             onValueChange={([value]) => updateWithHistory({ fillPatternScale: value })}
                             max={5}
@@ -846,6 +860,7 @@ export function Inspector() {
                         </Label>
                         <div className="flex items-center gap-3">
                           <Slider
+                            aria-label="Offset X"
                             value={[selectedObject.fillPatternOffsetX ?? 0]}
                             onValueChange={([value]) => updateWithHistory({ fillPatternOffsetX: value })}
                             max={100}
@@ -866,6 +881,7 @@ export function Inspector() {
                         </Label>
                         <div className="flex items-center gap-3">
                           <Slider
+                            aria-label="Offset Y"
                             value={[selectedObject.fillPatternOffsetY ?? 0]}
                             onValueChange={([value]) => updateWithHistory({ fillPatternOffsetY: value })}
                             max={100}
@@ -904,6 +920,9 @@ export function Inspector() {
                       Clip to Deck
                     </Label>
                     <button
+                      aria-label="Clip to Deck"
+                      role="switch"
+                      aria-checked={!!selectedObject.clipToDeck}
                       onClick={() => updateWithHistory({ clipToDeck: !selectedObject.clipToDeck })}
                       className={`w-10 h-5 rounded-full transition-colors relative ${
                         selectedObject.clipToDeck ? 'bg-primary' : 'bg-muted'
@@ -1593,6 +1612,7 @@ export function Inspector() {
                     Text
                   </Label>
                   <Input
+                    aria-label="Text content"
                     type="text"
                     value={selectedObject.text || ''}
                     onChange={(e) => updateWithHistory({ text: e.target.value })}
@@ -1617,6 +1637,7 @@ export function Inspector() {
                     Font Size
                   </Label>
                   <Input
+                    aria-label="Font Size"
                     type="number"
                     min="6"
                     max="200"
@@ -1660,6 +1681,7 @@ export function Inspector() {
                       Weight
                     </Label>
                     <select
+                      aria-label="Font Weight"
                       value={selectedObject.fontWeight || 'normal'}
                       onChange={(e) => updateWithHistory({ fontWeight: e.target.value as any })}
                       className="w-full h-8 text-xs bg-secondary border border-border px-2"
@@ -1676,6 +1698,7 @@ export function Inspector() {
                       Style
                     </Label>
                     <select
+                      aria-label="Font Style"
                       value={selectedObject.fontStyle || 'normal'}
                       onChange={(e) => updateWithHistory({ fontStyle: e.target.value as any })}
                       className="w-full h-8 text-xs bg-secondary border border-border px-2"
@@ -1692,6 +1715,7 @@ export function Inspector() {
                     Letter Spacing: {selectedObject.letterSpacing || 0}px
                   </Label>
                   <Slider
+                    aria-label="Letter Spacing"
                     value={[selectedObject.letterSpacing || 0]}
                     onValueChange={([value]) => updateWithHistory({ letterSpacing: value })}
                     max={20}
@@ -1707,6 +1731,7 @@ export function Inspector() {
                     Line Height: {(selectedObject.lineHeight || 1.2).toFixed(1)}
                   </Label>
                   <Slider
+                    aria-label="Line Height"
                     value={[selectedObject.lineHeight || 1.2]}
                     onValueChange={([value]) => updateWithHistory({ lineHeight: value })}
                     max={3}
@@ -1722,6 +1747,7 @@ export function Inspector() {
                     Transform
                   </Label>
                   <select
+                    aria-label="Text Transform"
                     value={selectedObject.textTransform || 'none'}
                     onChange={(e) => updateWithHistory({ textTransform: e.target.value as any })}
                     className="w-full h-8 text-xs bg-secondary border border-border px-2"
@@ -1739,6 +1765,7 @@ export function Inspector() {
                     Decoration
                   </Label>
                   <select
+                    aria-label="Text Decoration"
                     value={selectedObject.textDecoration || 'none'}
                     onChange={(e) => updateWithHistory({ textDecoration: e.target.value as any })}
                     className="w-full h-8 text-xs bg-secondary border border-border px-2"
@@ -1762,6 +1789,7 @@ export function Inspector() {
                           Warp Style
                         </Label>
                         <select
+                          aria-label="Warp Style"
                           value={selectedObject.warpType || 'none'}
                           onChange={(e) => {
                             const warpType = e.target.value as any;
@@ -1809,6 +1837,7 @@ export function Inspector() {
                             Intensity: {selectedObject.warpIntensity ?? 50}%
                           </Label>
                           <Slider
+                            aria-label="Warp Intensity"
                             value={[selectedObject.warpIntensity ?? 50]}
                             onValueChange={([value]) => updateWithHistory({ warpIntensity: value })}
                             max={100}
@@ -1827,6 +1856,7 @@ export function Inspector() {
                               Arc Angle: {selectedObject.arcAngle ?? 180}°
                             </Label>
                             <Slider
+                              aria-label="Arc Angle"
                               value={[selectedObject.arcAngle ?? 180]}
                               onValueChange={([value]) => updateWithHistory({ arcAngle: value })}
                               max={350}
@@ -1889,6 +1919,8 @@ export function Inspector() {
                     <AccordionContent className="space-y-3 pt-2">
                       <div className="flex items-center gap-2">
                         <input
+                          aria-label="Enable Shadow"
+                          id="text-shadow-toggle"
                           type="checkbox"
                           checked={selectedObject.textShadow?.enabled || false}
                           onChange={(e) => updateWithHistory({
@@ -1912,6 +1944,7 @@ export function Inspector() {
                               Offset X: {selectedObject.textShadow?.offsetX || 0}px
                             </Label>
                             <Slider
+                              aria-label="Shadow Offset X"
                               value={[selectedObject.textShadow?.offsetX || 2]}
                               onValueChange={([value]) => updateWithHistory({
                                 textShadow: { ...selectedObject.textShadow!, offsetX: value }
@@ -1926,6 +1959,7 @@ export function Inspector() {
                               Offset Y: {selectedObject.textShadow?.offsetY || 0}px
                             </Label>
                             <Slider
+                              aria-label="Shadow Offset Y"
                               value={[selectedObject.textShadow?.offsetY || 2]}
                               onValueChange={([value]) => updateWithHistory({
                                 textShadow: { ...selectedObject.textShadow!, offsetY: value }
@@ -1940,6 +1974,7 @@ export function Inspector() {
                               Blur: {selectedObject.textShadow?.blur || 0}px
                             </Label>
                             <Slider
+                              aria-label="Shadow Blur"
                               value={[selectedObject.textShadow?.blur || 4]}
                               onValueChange={([value]) => updateWithHistory({
                                 textShadow: { ...selectedObject.textShadow!, blur: value }
@@ -1958,6 +1993,7 @@ export function Inspector() {
                               currentColor={selectedObject.textShadow?.color}
                             />
                             <input
+                              aria-label="Shadow Color"
                               type="color"
                               value={selectedObject.textShadow?.color || '#000000'}
                               onChange={(e) => { addColor(e.target.value); updateWithHistory({
@@ -2004,6 +2040,7 @@ export function Inspector() {
                 </Label>
                 <div className="flex items-center gap-3">
                   <Slider
+                    aria-label="Contrast"
                     value={[selectedObject.contrast ?? 100]}
                     onValueChange={([value]) => updateWithHistory({ contrast: value })}
                     max={200}
@@ -2024,6 +2061,7 @@ export function Inspector() {
                 </Label>
                 <div className="flex items-center gap-3">
                   <Slider
+                    aria-label="Brightness"
                     value={[selectedObject.brightness ?? 100]}
                     onValueChange={([value]) => updateWithHistory({ brightness: value })}
                     max={200}
@@ -2044,6 +2082,7 @@ export function Inspector() {
                 </Label>
                 <div className="flex items-center gap-3">
                   <Slider
+                    aria-label="Grayscale"
                     value={[selectedObject.grayscale ?? 0]}
                     onValueChange={([value]) => updateWithHistory({ grayscale: value })}
                     max={100}
@@ -2225,6 +2264,9 @@ export function Inspector() {
                     Colorize
                   </Label>
                   <button
+                    aria-label="Colorize"
+                    role="switch"
+                    aria-checked={!!selectedObject.colorize}
                     onClick={() => updateWithHistory({
                       colorize: selectedObject.colorize ? null : '#00ff00'
                     })}
@@ -2243,6 +2285,7 @@ export function Inspector() {
                   <div className="space-y-2 pt-1">
                     <div className="flex items-center gap-2">
                       <input
+                        aria-label="Colorize color"
                         type="color"
                         value={selectedObject.colorize}
                         onChange={(e) => { addColor(e.target.value); updateWithHistory({ colorize: e.target.value }); }}
@@ -2279,6 +2322,9 @@ export function Inspector() {
                     Duotone
                   </Label>
                   <button
+                    aria-label="Duotone"
+                    role="switch"
+                    aria-checked={!!selectedObject.duotone?.enabled}
                     onClick={() => updateWithHistory({
                       duotone: {
                         enabled: !(selectedObject.duotone?.enabled),
@@ -2302,6 +2348,7 @@ export function Inspector() {
                     <div className="flex items-center gap-2">
                       <Label className="text-[9px] text-muted-foreground w-16">Shadow</Label>
                       <input
+                        aria-label="Duotone shadow color"
                         type="color"
                         value={selectedObject.duotone?.color1 || '#000000'}
                         onChange={(e) => { addColor(e.target.value); updateWithHistory({
@@ -2325,6 +2372,7 @@ export function Inspector() {
                     <div className="flex items-center gap-2">
                       <Label className="text-[9px] text-muted-foreground w-16">Highlight</Label>
                       <input
+                        aria-label="Duotone highlight color"
                         type="color"
                         value={selectedObject.duotone?.color2 || '#ccff00'}
                         onChange={(e) => { addColor(e.target.value); updateWithHistory({
