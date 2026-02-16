@@ -24,8 +24,9 @@ import { useDeckDimensions } from './WorkbenchStage';
 import { getMmPerPixel } from '@/lib/deck-guides';
 import { getDeckSize } from '@/lib/deck-sizes';
 import { preloadUserFonts, Font, loadFont, clearUserFontsCache } from '@/lib/fonts';
-import { preloadTopFonts, loadGoogleFont, getGoogleFonts } from '@/lib/google-fonts';
+import { preloadTopFonts, loadGoogleFont, getGoogleFonts, FALLBACK_FONT_FAMILIES } from '@/lib/google-fonts';
 import toast from 'react-hot-toast';
+import { toastUtils } from '@/lib/toast-utils';
 import {
   Accordion,
   AccordionContent,
@@ -319,13 +320,16 @@ export function Inspector() {
       preloadUserFonts()
         .then((result) => {
           setUserFonts(result.fonts);
-          setFontsError(result.error);
+          if (result.error) {
+            setFontsError(result.error);
+            toastUtils.info('Some fonts unavailable offline. Using cached fonts.');
+          }
         })
         .finally(() => setFontsLoading(false));
     }
   }, [isAuthenticated]);
 
-  // Preload top Google Fonts on mount
+  // Preload top Google Fonts on mount (retry + toast handled internally)
   useEffect(() => {
     preloadTopFonts();
   }, []);

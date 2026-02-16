@@ -28,14 +28,21 @@ export function FontUploadModal({ isOpen, onClose, onFontUploaded }: FontUploadM
 
   const loadUserFonts = async () => {
     setIsLoadingFonts(true);
-    try {
-      const fonts = await fontsApi.list();
-      setUserFonts(fonts);
-    } catch (error) {
-      console.error('Failed to load fonts:', error);
-    } finally {
-      setIsLoadingFonts(false);
+    let lastError: unknown;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        const fonts = await fontsApi.list();
+        setUserFonts(fonts);
+        return;
+      } catch (error) {
+        lastError = error;
+        if (attempt < 2) {
+          await new Promise(r => setTimeout(r, 1000 * Math.pow(2, attempt)));
+        }
+      }
     }
+    console.warn('[Fonts] Failed to load custom fonts after retries:', lastError);
+    setIsLoadingFonts(false);
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {

@@ -2,6 +2,8 @@
 // Provides a curated list of popular Google Fonts with categories,
 // localStorage caching, and dynamic font loading via Google Fonts CSS API.
 
+import { toastUtils } from '@/lib/toast-utils';
+
 export type FontCategory = 'sans-serif' | 'serif' | 'display' | 'handwriting' | 'monospace';
 export type FontSort = 'popular' | 'trending' | 'recent';
 
@@ -25,6 +27,43 @@ export const TOP_FONTS: string[] = [
   'Playfair Display',
   'Bebas Neue',
 ];
+
+// Minimum fallback fonts always available even when fully offline.
+// These are included in CURATED_FONTS but exported separately so the
+// font picker can guarantee they are shown.
+export const FALLBACK_FONT_FAMILIES: string[] = [
+  'Inter',
+  'Oswald',
+  'Roboto',
+  'Montserrat',
+  'Open Sans',
+  'Bebas Neue',
+];
+
+/**
+ * Retry a promise-returning function with exponential backoff.
+ */
+async function retryWithBackoff<T>(
+  fn: () => Promise<T>,
+  maxRetries: number = 3,
+  baseDelay: number = 1000,
+): Promise<T> {
+  let lastError: Error | undefined;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+      if (attempt < maxRetries) {
+        await new Promise(resolve => setTimeout(resolve, baseDelay * Math.pow(2, attempt)));
+      }
+    }
+  }
+  throw lastError;
+}
+
+// Whether the offline toast has already been shown this session
+let offlineToastShown = false;
 
 const CACHE_KEY = 'deckforge_google_fonts';
 const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
@@ -251,78 +290,83 @@ export function sortFonts(fonts: GoogleFont[], sort: FontSort): GoogleFont[] {
 const loadedFonts = new Set<string>();
 
 /**
- * Load a Google Font dynamically by injecting a <link> for the Google Fonts CSS.
+ * Inject a single <link> for a Google Fonts CSS URL and return a promise.
  */
-export function loadGoogleFont(family: string, variants?: string[]): Promise<void> {
-  if (loadedFonts.has(family)) return Promise.resolve();
-
+function injectFontLink(url: string): Promise<void> {
   return new Promise((resolve, reject) => {
-    const weights = variants?.filter(v => /^\d+$/.test(v)).join(';') || '400;700';
-    const url = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(family)}:wght@${weights}&display=swap`;
-
     const link = document.createElement('link');
     link.rel = 'stylesheet';
     link.href = url;
     link.crossOrigin = 'anonymous';
 
-    link.onload = () => {
-      loadedFonts.add(family);
-      resolve();
-    };
+    link.onload = () => resolve();
     link.onerror = () => {
-      reject(new Error(`Failed to load font: ${family}`));
+      // Remove the failed link so retries can try again
+      link.remove();
+      reject(new Error(`Failed to load font stylesheet: ${url}`));
     };
 
     document.head.appendChild(link);
   });
+}
+
+/**
+ * Load a Google Font dynamically by injecting a <link> for the Google Fonts CSS.
+ * Retries up to 3 times with exponential backoff on failure.
+ */
+export async function loadGoogleFont(family: string, variants?: string[]): Promise<void> {
+  if (loadedFonts.has(family)) return;
+
+  const weights = variants?.filter(v => /^\d+$/.test(v)).join(';') || '400;700';
+  const url = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(family)}:wght@${weights}&display=swap`;
+
+  try {
+    await retryWithBackoff(() => injectFontLink(url), 3, 1000);
+    loadedFonts.add(family);
+  } catch {
+    // Font failed to load after retries — not critical, the curated list still works
+    console.warn(`[Fonts] Could not load Google Font "${family}" after retries`);
+  }
 }
 
 /**
  * Load a Google Font for preview (lightweight, only regular weight).
+ * Retries up to 2 times with short backoff since previews are non-critical.
  */
-export function loadGoogleFontPreview(family: string): Promise<void> {
+export async function loadGoogleFontPreview(family: string): Promise<void> {
   const previewKey = `preview:${family}`;
-  if (loadedFonts.has(previewKey) || loadedFonts.has(family)) return Promise.resolve();
+  if (loadedFonts.has(previewKey) || loadedFonts.has(family)) return;
 
-  return new Promise((resolve, reject) => {
-    const url = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(family)}:wght@400&display=swap&text=${encodeURIComponent(family)}`;
+  const url = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(family)}:wght@400&display=swap&text=${encodeURIComponent(family)}`;
 
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = url;
-    link.crossOrigin = 'anonymous';
-
-    link.onload = () => {
-      loadedFonts.add(previewKey);
-      resolve();
-    };
-    link.onerror = () => {
-      // Non-critical - preview just won't render in custom font
-      resolve();
-    };
-
-    document.head.appendChild(link);
-  });
+  try {
+    await retryWithBackoff(() => injectFontLink(url), 2, 500);
+    loadedFonts.add(previewKey);
+  } catch {
+    // Non-critical — preview just won't render in custom font
+  }
 }
 
 /**
  * Preload the top 10 popular Google Fonts for fast access / offline fallback.
+ * Retries up to 3 times with exponential backoff. Shows a subtle toast if
+ * fonts are completely unreachable so the user knows they're working offline.
  */
-export function preloadTopFonts(): void {
+export async function preloadTopFonts(): Promise<void> {
   const weights = '300;400;500;600;700';
   const families = TOP_FONTS.map(f => `family=${encodeURIComponent(f)}:wght@${weights}`).join('&');
   const url = `https://fonts.googleapis.com/css2?${families}&display=swap`;
 
-  const link = document.createElement('link');
-  link.rel = 'stylesheet';
-  link.href = url;
-  link.crossOrigin = 'anonymous';
-
-  link.onload = () => {
+  try {
+    await retryWithBackoff(() => injectFontLink(url), 3, 1000);
     TOP_FONTS.forEach(f => loadedFonts.add(f));
-  };
-
-  document.head.appendChild(link);
+  } catch {
+    console.warn('[Fonts] Google Fonts CDN unreachable — using cached/fallback fonts');
+    if (!offlineToastShown) {
+      offlineToastShown = true;
+      toastUtils.info('Some fonts unavailable offline. Using cached fonts.');
+    }
+  }
 }
 
 /**
