@@ -42,6 +42,7 @@ const MarketplaceDesign = lazyWithRetry(() => import("./pages/MarketplaceDesign"
 const MarketplaceUpload = lazyWithRetry(() => import("./pages/MarketplaceUpload"));
 const DesignerDashboard = lazyWithRetry(() => import("./pages/DesignerDashboard"));
 const FingerparkBuilder = lazyWithRetry(() => import("./pages/FingerparkBuilder"));
+const ResetPassword = lazyWithRetry(() => import("./pages/ResetPassword"));
 
 const queryClient = new QueryClient();
 
@@ -63,6 +64,7 @@ const App = () => (
             <Routes>
               <Route path="/" element={<DeckForge />} />
               <Route path="/auth" element={<Auth />} />
+              <Route path="/auth/reset-password" element={<ResetPassword />} />
               <Route path="/designs" element={<Designs />} />
               <Route path="/templates" element={<Templates />} />
               <Route path="/gallery" element={<Gallery />} />
