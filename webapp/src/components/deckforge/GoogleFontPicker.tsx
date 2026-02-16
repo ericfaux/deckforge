@@ -15,6 +15,7 @@ import {
   getRecentFonts,
   addRecentFont,
   CATEGORY_LABELS,
+  FALLBACK_FONT_FAMILIES,
 } from '@/lib/google-fonts';
 import { Font } from '@/lib/fonts';
 
@@ -148,6 +149,11 @@ export function GoogleFontPicker({ value, onChange, userFonts, onUploadClick, lo
   } else {
     filteredFonts = filterByCategory(filteredFonts, category);
     filteredFonts = sortFonts(filteredFonts, sort);
+  }
+
+  // Guarantee the font list is never empty — always include fallback fonts
+  if (filteredFonts.length === 0 && !search) {
+    filteredFonts = allFonts.filter(f => FALLBACK_FONT_FAMILIES.includes(f.family));
   }
 
   // Recent fonts resolved to GoogleFont objects
@@ -365,7 +371,7 @@ export function GoogleFontPicker({ value, onChange, userFonts, onUploadClick, lo
                 )}
                 {filteredFonts.length === 0 ? (
                   <div className="px-3 py-6 text-center">
-                    <p className="text-xs text-muted-foreground">No fonts found</p>
+                    <p className="text-xs text-muted-foreground">No fonts match your search</p>
                   </div>
                 ) : (
                   filteredFonts.map((font) => (
