@@ -39,8 +39,9 @@ export default defineConfig(({ mode }) => ({
           if (/\/paper\//.test(id)) return 'vendor-paper';
           if (/\/jszip\//.test(id)) return 'vendor-jszip';
           if (/\/@imgly\//.test(id)) return 'vendor-imgly';
-          // onnxruntime-web ships separate ort.bundle.min & ort.webgpu.bundle.min
-          // files — let Vite split them naturally so each stays under 500 KB.
+          // onnxruntime-web pre-built bundles (ort.bundle.min, ort.webgpu.bundle.min)
+          // are emitted as separate ~400 KB assets by Vite automatically.
+          // Don't force them into a single chunk — let Vite split them naturally.
         },
       },
     },

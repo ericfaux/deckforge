@@ -2,7 +2,6 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { X, Eye, RotateCw, Sun, TreePine, Hammer, Moon, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { useDeckForgeStore } from '@/store/deckforge';
 import { getDeckSize } from '@/lib/deck-sizes';
-import { exportToPNG } from '@/lib/export';
 
 interface DeckMockupPreviewProps {
   isOpen: boolean;
@@ -55,6 +54,7 @@ export function DeckMockupPreview({ isOpen, onClose }: DeckMockupPreviewProps) {
 
     const capture = async () => {
       try {
+        const { exportToPNG } = await import('@/lib/export');
         const blob = await exportToPNG(objects, {
           scale: 4,
           width: deckW,
