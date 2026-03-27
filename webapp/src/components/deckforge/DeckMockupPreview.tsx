@@ -211,19 +211,41 @@ export function DeckMockupPreview({ isOpen, onClose }: DeckMockupPreviewProps) {
     }
   };
 
-  // Lighting overlay gradient (simulates light from top-left)
-  const getLightingOverlay = (): string => {
+  // Lighting overlay gradient stops for SVG (simulates light from top-left)
+  // CSS linear-gradient strings are NOT valid for SVG fill attributes, so we
+  // define proper SVG <linearGradient> stops instead.
+  const getLightingGradientStops = (): Array<{ offset: string; color: string; opacity: number }> => {
     switch (environment) {
       case 'studio':
-        return 'linear-gradient(135deg, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0.08) 30%, transparent 50%, rgba(0,0,0,0.05) 100%)';
+        return [
+          { offset: '0%', color: '#ffffff', opacity: 0.25 },
+          { offset: '30%', color: '#ffffff', opacity: 0.08 },
+          { offset: '50%', color: '#000000', opacity: 0 },
+          { offset: '100%', color: '#000000', opacity: 0.05 },
+        ];
       case 'concrete':
-        return 'linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 25%, transparent 50%, rgba(0,0,0,0.08) 100%)';
+        return [
+          { offset: '0%', color: '#ffffff', opacity: 0.15 },
+          { offset: '25%', color: '#ffffff', opacity: 0.05 },
+          { offset: '50%', color: '#000000', opacity: 0 },
+          { offset: '100%', color: '#000000', opacity: 0.08 },
+        ];
       case 'wood':
-        return 'linear-gradient(135deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.06) 30%, transparent 50%, rgba(0,0,0,0.06) 100%)';
+        return [
+          { offset: '0%', color: '#ffffff', opacity: 0.18 },
+          { offset: '30%', color: '#ffffff', opacity: 0.06 },
+          { offset: '50%', color: '#000000', opacity: 0 },
+          { offset: '100%', color: '#000000', opacity: 0.06 },
+        ];
       case 'dark':
-        return 'linear-gradient(135deg, rgba(200,200,255,0.12) 0%, rgba(100,100,200,0.04) 30%, transparent 50%, rgba(0,0,0,0.15) 100%)';
+        return [
+          { offset: '0%', color: '#c8c8ff', opacity: 0.12 },
+          { offset: '30%', color: '#6464c8', opacity: 0.04 },
+          { offset: '50%', color: '#000000', opacity: 0 },
+          { offset: '100%', color: '#000000', opacity: 0.15 },
+        ];
       default:
-        return 'none';
+        return [];
     }
   };
 
@@ -417,6 +439,12 @@ export function DeckMockupPreview({ isOpen, onClose }: DeckMockupPreviewProps) {
                     <stop offset="95%" stopColor="rgba(0,0,0,0)" />
                     <stop offset="100%" stopColor="rgba(0,0,0,0.15)" />
                   </linearGradient>
+                  {/* Lighting overlay gradient (135deg = top-left to bottom-right) */}
+                  <linearGradient id="deck-lighting" x1="0%" y1="0%" x2="100%" y2="100%">
+                    {getLightingGradientStops().map((stop, i) => (
+                      <stop key={i} offset={stop.offset} stopColor={stop.color} stopOpacity={stop.opacity} />
+                    ))}
+                  </linearGradient>
                 </defs>
 
                 {/* Design image, clipped to deck shape */}
@@ -440,7 +468,7 @@ export function DeckMockupPreview({ isOpen, onClose }: DeckMockupPreviewProps) {
                     y={0}
                     width={displayW}
                     height={displayH}
-                    fill={getLightingOverlay()}
+                    fill="url(#deck-lighting)"
                   />
 
                   {/* Gloss overlay */}
